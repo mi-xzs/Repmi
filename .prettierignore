@@ -1,0 +1,9 @@
+node_modules/
+.expo/
+dist/
+ios/
+android/
+public/
+package-lock.json
+*.log
+src/constants/exerciseCatalog.ts

@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Repmi",
+    "slug": "repmi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./src/assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./src/assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.mixzs.repmi",
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "favicon": "./src/assets/favicon.png"
+    },
+    "plugins": [
+      "@react-native-community/datetimepicker",
+      "expo-notifications"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "681281cd-66a7-4f49-ba84-ddc86213e334"
+      }
+    },
+    "owner": "mixzs"
+  }
+}

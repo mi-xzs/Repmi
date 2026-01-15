@@ -1,0 +1,20 @@
+export const colors = {
+  background: "#1A1919",
+  container: "#212020",
+  button1: '#6D6D6D',
+  button2: '#434343',
+  button3: '#313131',
+  titleText: "#B5B5B5",
+  highlight: "#858585",
+  mainText: '#B5B5B5',
+  text: "#B5B5B5",
+  accent: '#00FA9A',
+  accentDim: '#00C97A',
+  accentSubtle: 'rgba(0, 250, 154, 0.12)',
+  warning: '#FACC15',
+  // Legacy aliases
+  RadarChart: '#00FA9A',
+  RadarChart2: '#3CB371',
+  Navy: '#13131a',
+  fav: '#FFD700',
+};

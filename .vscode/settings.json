@@ -1,0 +1,18 @@
+{
+    // enable inline suggestion pop-ups in TS/TSX files
+    "editor.quickSuggestions": {
+        "other": true,
+        "comments": false,
+        "strings": true
+    },
+    "editor.suggestOnTriggerCharacters": true,
+    "editor.suggestSelection": "first",
+
+    // force IntelliSense for TS/JSX
+    "[typescript]": {
+        "editor.quickSuggestions": { "other": true, "strings": true, "comments": false }
+    },
+    "[typescriptreact]": {
+        "editor.quickSuggestions": { "other": true, "strings": true, "comments": false }
+    }
+}
