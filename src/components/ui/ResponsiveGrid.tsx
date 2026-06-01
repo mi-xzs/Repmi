@@ -58,8 +58,11 @@ export default function ResponsiveGrid({
       {React.Children.map(children, (child) => {
         if (!React.isValidElement(child)) return null;
         const el = child as React.ReactElement<{ style?: StyleProp<ViewStyle> }>;
+        // flexBasis sets the wrap point (~`cols` per row); flexGrow makes the
+        // cells stretch to fill the row — so a partial last row spreads across
+        // the full width instead of leaving dead space on the right.
         return (
-          <View style={{ width: colWidth }}>
+          <View style={{ flexGrow: 1, flexBasis: colWidth }}>
             {React.cloneElement(el, { style: [el.props.style, styles.fill] })}
           </View>
         );
