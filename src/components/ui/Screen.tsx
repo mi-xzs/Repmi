@@ -12,7 +12,7 @@ type Props = ScrollViewProps & {
 export default function Screen({ children, style, scroll = true, ...props }: Props) {
   if (!scroll) {
     return (
-      <View style={[styles.container, style as ViewStyle]}>
+      <View style={[styles.containerStatic, style as ViewStyle]}>
         <ResponsiveContent fill>{children}</ResponsiveContent>
       </View>
     );
@@ -34,6 +34,14 @@ const styles = StyleSheet.create({
   },
   container: {
     flexGrow: 1,
+    backgroundColor: colors.background,
+    padding: 16,
+  },
+  // Non-scroll wrapper: `flex: 1` (not flexGrow) so it clamps to the
+  // parent height and lets a child ScrollView get bounded, scrollable
+  // height on web (flexGrow alone keeps flexShrink:0 and grows to content).
+  containerStatic: {
+    flex: 1,
     backgroundColor: colors.background,
     padding: 16,
   },
