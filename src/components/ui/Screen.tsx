@@ -1,5 +1,6 @@
 import { ScrollView, ScrollViewProps, StyleSheet, View, ViewStyle } from "react-native";
 import { colors } from "../../theme/colors";
+import ResponsiveContent from "./ResponsiveContent";
 
 type Props = ScrollViewProps & {
   // Opt out of Screen's own ScrollView. Use this when the child renders its
@@ -10,7 +11,11 @@ type Props = ScrollViewProps & {
 
 export default function Screen({ children, style, scroll = true, ...props }: Props) {
   if (!scroll) {
-    return <View style={[styles.container, style as ViewStyle]}>{children}</View>;
+    return (
+      <View style={[styles.container, style as ViewStyle]}>
+        <ResponsiveContent fill>{children}</ResponsiveContent>
+      </View>
+    );
   }
   return (
     <ScrollView
@@ -18,7 +23,7 @@ export default function Screen({ children, style, scroll = true, ...props }: Pro
       contentContainerStyle={styles.container}
       {...props}
     >
-      {children}
+      <ResponsiveContent>{children}</ResponsiveContent>
     </ScrollView>
   );
 }
