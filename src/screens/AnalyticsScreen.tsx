@@ -121,7 +121,10 @@ function computeSectionStats(sessions: WorkoutSession[], sectionName: string) {
 // ─── component ────────────────────────────────────────────────────────────────
 
 const AnalyticsScreen: React.FC = () => {
-  const { contentMaxWidth, isWide } = useResponsive();
+  const { contentMaxWidth, isWide, width: winW } = useResponsive();
+  // Reactive pager/page width so the content fills the screen after a resize
+  // (the module-level SCREEN_W is only read once at load and goes stale).
+  const pagerW = getContentWidth(winW);
   const rootWideStyle = contentMaxWidth
     ? { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' as const }
     : null;
@@ -158,7 +161,7 @@ const AnalyticsScreen: React.FC = () => {
       setVisitedTabs((prev) => new Set([...prev, index]));
 
       Animated.spring(translateX, {
-        toValue: -index * SCREEN_W,
+        toValue: -index * pagerW,
         useNativeDriver: true,
         velocity: -velocityX, // pass flick velocity through
         tension: 68,
@@ -166,7 +169,7 @@ const AnalyticsScreen: React.FC = () => {
         overshootClamping: false,
       }).start();
     },
-    [translateX],
+    [translateX, pagerW],
   );
 
   // Drive the pager from the side-rail sub-tab param on wide web.
@@ -174,6 +177,11 @@ const AnalyticsScreen: React.FC = () => {
   useEffect(() => {
     if (isWide && typeof railTab === 'number') snapToIndex(railTab);
   }, [railTab, isWide, snapToIndex]);
+
+  // Keep the active page aligned when the window (and so pagerW) resizes.
+  useEffect(() => {
+    translateX.setValue(-tabIndexRef.current * pagerW);
+  }, [pagerW, translateX]);
 
   // ── swipe gesture ────────────────────────────────────────────────────────────
   const dragStartValue = useRef(0);
@@ -340,7 +348,7 @@ const AnalyticsScreen: React.FC = () => {
           <SwipeTabs
             tabs={TABS.map((t) => t.label)}
             translateX={translateX}
-            screenWidth={SCREEN_W}
+            screenWidth={pagerW}
             activeIndex={tabIndex}
             onTabPress={snapToIndex}
           />
@@ -354,12 +362,12 @@ const AnalyticsScreen: React.FC = () => {
           style={{
             flex: 1,
             flexDirection: 'row',
-            width: SCREEN_W * TAB_COUNT,
+            width: pagerW * TAB_COUNT,
             transform: [{ translateX }],
           }}
         >
           {/* ── WORKOUT PAGE ─────────────────────────────────────────────── */}
-          <View style={{ width: SCREEN_W, flex: 1 }}>
+          <View style={{ width: pagerW, flex: 1 }}>
             {!hasWorkouts || !workout ? (
               <View style={styles.emptyPane}>
                 <Feather name="bar-chart-2" size={40} color={colors.button1} />
@@ -631,12 +639,12 @@ const AnalyticsScreen: React.FC = () => {
           </View>
 
           {/* ── WEEKLY PAGE ──────────────────────────────────────────────── */}
-          <View style={{ width: SCREEN_W, flex: 1 }}>
+          <View style={{ width: pagerW, flex: 1 }}>
             {visitedTabs.has(1) && <WeeklyDigest workouts={workouts} />}
           </View>
 
           {/* ── OVERALL PAGE ─────────────────────────────────────────────── */}
-          <View style={{ width: SCREEN_W, flex: 1 }}>
+          <View style={{ width: pagerW, flex: 1 }}>
             {visitedTabs.has(2) &&
               (allSessions.length === 0 ? (
                 <View style={styles.emptyPane}>
