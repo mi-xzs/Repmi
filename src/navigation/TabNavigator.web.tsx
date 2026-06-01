@@ -21,16 +21,20 @@ import type { RootTabParamList } from "./types";
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export default function TabNavigator() {
-  const { isDesktop } = useResponsive();
+  // Show the side rail on any reasonably wide web viewport (tablet+, >=768px),
+  // not just full desktop — a half-screen browser window or laptop should
+  // still get the side nav. Only true phone-width web falls back to the
+  // bottom tab bar.
+  const { isWide } = useResponsive();
 
   return (
     <Tab.Navigator
       tabBar={(props) =>
-        isDesktop ? <SideRail {...props} /> : <BottomTabBar {...props} />
+        isWide ? <SideRail {...props} /> : <BottomTabBar {...props} />
       }
       screenOptions={{
         headerShown: false,
-        tabBarPosition: isDesktop ? "left" : "bottom",
+        tabBarPosition: isWide ? "left" : "bottom",
       }}
     >
       {TAB_ROUTES.map((r) =>
