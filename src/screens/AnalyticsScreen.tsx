@@ -28,7 +28,7 @@ import { styles } from './Analytics.Styles';
 import { WorkoutSession } from './WorkoutScreen';
 import { avg, best, fmtDuration, muscleSetsFromTemplate } from '../utils/analyticsHelpers';
 import SwipeTabs from '../components/ui/SwipeTabs';
-import ResponsiveGrid, { GridItem } from '../components/ui/ResponsiveGrid';
+import ResponsiveGrid from '../components/ui/ResponsiveGrid';
 import StatCard from '../components/analytics/StatCard';
 import WorkoutPicker from '../components/analytics/WorkoutPicker';
 import ExerciseProgression from '../components/analytics/ExerciseProgression';
@@ -578,59 +578,53 @@ const AnalyticsScreen: React.FC = () => {
                     </View>
 
                     {hasMuscleSets && (
-                      <GridItem span="full">
-                        <View style={styles.section}>
-                          <View style={[styles.cardHeader, { marginBottom: 8 }]}>
-                            <Feather name="target" size={14} color={accent} />
-                            <Text style={[styles.cardTitle, { marginLeft: 6 }]}>
-                              Targeted Muscles
-                            </Text>
-                          </View>
-                          <MuscleVolumeChart volumeByGroup={muscleSets} />
+                      <View style={styles.section}>
+                        <View style={[styles.cardHeader, { marginBottom: 8 }]}>
+                          <Feather name="target" size={14} color={accent} />
+                          <Text style={[styles.cardTitle, { marginLeft: 6 }]}>
+                            Targeted Muscles
+                          </Text>
                         </View>
-                      </GridItem>
+                        <MuscleVolumeChart volumeByGroup={muscleSets} />
+                      </View>
                     )}
 
                     {(weightExercises.length > 0 ||
                       bodyweightExercises.length > 0 ||
                       timedExercises.length > 0 ||
                       distanceExercises.length > 0) && (
-                      <GridItem span="full">
-                        <View style={styles.section}>
-                          <View style={[styles.cardHeader, { marginBottom: 8 }]}>
-                            <Feather name="trending-up" size={14} color={accent} />
-                            <Text style={[styles.cardTitle, { marginLeft: 6 }]}>
-                              Exercise Progression
-                            </Text>
-                          </View>
-                          <View style={[styles.card, { marginBottom: 0 }]}>
-                            <ExerciseProgression
-                              sessions={sessions}
-                              weightExercises={weightExercises}
-                              bodyweightExercises={bodyweightExercises}
-                              timedExercises={timedExercises}
-                              distanceExercises={distanceExercises}
-                            />
-                          </View>
-                        </View>
-                      </GridItem>
-                    )}
-
-                    <GridItem span="full">
-                      <View style={styles.section}>
+                      <View style={[styles.section, isWide && { flex: 1 }]}>
                         <View style={[styles.cardHeader, { marginBottom: 8 }]}>
-                          <Feather name="activity" size={14} color={accent} />
-                          <Text style={[styles.cardTitle, { marginLeft: 6 }]}>RPE Over Time</Text>
+                          <Feather name="trending-up" size={14} color={accent} />
+                          <Text style={[styles.cardTitle, { marginLeft: 6 }]}>
+                            Exercise Progression
+                          </Text>
                         </View>
-                        <View style={[styles.card, { marginBottom: 0 }]}>
-                          <RPEProgression
-                            workouts={workouts}
+                        <View style={[styles.card, { marginBottom: 0 }, isWide && { flex: 1 }]}>
+                          <ExerciseProgression
                             sessions={sessions}
-                            workoutId={workout.id}
+                            weightExercises={weightExercises}
+                            bodyweightExercises={bodyweightExercises}
+                            timedExercises={timedExercises}
+                            distanceExercises={distanceExercises}
                           />
                         </View>
                       </View>
-                    </GridItem>
+                    )}
+
+                    <View style={styles.section}>
+                      <View style={[styles.cardHeader, { marginBottom: 8 }]}>
+                        <Feather name="activity" size={14} color={accent} />
+                        <Text style={[styles.cardTitle, { marginLeft: 6 }]}>RPE Over Time</Text>
+                      </View>
+                      <View style={[styles.card, { marginBottom: 0 }, isWide && { flex: 1 }]}>
+                        <RPEProgression
+                          workouts={workouts}
+                          sessions={sessions}
+                          workoutId={workout.id}
+                        />
+                      </View>
+                    </View>
                   </ResponsiveGrid>
                 )}
                 <View style={{ height: 40 }} />
