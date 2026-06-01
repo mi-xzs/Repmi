@@ -2,6 +2,7 @@
 
 import React, { useMemo, useEffect, useState } from "react";
 import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { CONTENT_MAX_WIDTH } from "../../hooks/useResponsive";
 import Svg, {
   Path,
   Circle,
@@ -78,7 +79,7 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
     loadRPEData();
   }, [userId, workoutId]);
 
-  const screenWidth = Dimensions.get("window").width;
+  const screenWidth = Math.min(Dimensions.get("window").width, CONTENT_MAX_WIDTH);
   // Chart sits inside scroll (paddingHorizontal: 24) + card (padding: 16) = 80px of horizontal chrome.
   const WIDTH = screenWidth - 80;
   const HEIGHT = 220;
