@@ -415,30 +415,196 @@ const AnalyticsScreen: React.FC = () => {
                     </View>
 
                     {warmUpStats && warmUpStats.count > 0 && (
-                      <View style={[styles.section, { paddingTop: 12 }]}>
-                        <View style={[styles.cardHeader, { marginBottom: 8 }]}>
-                          <Feather name="sunrise" size={14} color={accent} />
-                          <Text style={[styles.cardTitle, { marginLeft: 6 }]}>Warm-up</Text>
+                      <View style={{ gap: 14 }}>
+                        <View style={[styles.section, { paddingTop: 12 }]}>
+                          <View style={[styles.cardHeader, { marginBottom: 8 }]}>
+                            <Feather name="sunrise" size={14} color={accent} />
+                            <Text style={[styles.cardTitle, { marginLeft: 6 }]}>Warm-up</Text>
+                          </View>
+                          <View style={styles.cardRow}>
+                            <StatCard
+                              label="Last"
+                              value={warmUpStats.last > 0 ? fmtDuration(warmUpStats.last) : '—'}
+                              icon="sunrise"
+                              compact
+                            />
+                            <StatCard
+                              label="Avg"
+                              value={warmUpStats.avg > 0 ? fmtDuration(warmUpStats.avg) : '—'}
+                              icon="bar-chart-2"
+                              compact
+                            />
+                            <StatCard
+                              label="Consistency"
+                              value={`${warmUpStats.consistency}%`}
+                              icon="check-circle"
+                              compact
+                            />
+                          </View>
                         </View>
-                        <View style={styles.cardRow}>
-                          <StatCard
-                            label="Last"
-                            value={warmUpStats.last > 0 ? fmtDuration(warmUpStats.last) : '—'}
-                            icon="sunrise"
-                            compact
-                          />
-                          <StatCard
-                            label="Avg"
-                            value={warmUpStats.avg > 0 ? fmtDuration(warmUpStats.avg) : '—'}
-                            icon="bar-chart-2"
-                            compact
-                          />
-                          <StatCard
-                            label="Consistency"
-                            value={`${warmUpStats.consistency}%`}
-                            icon="check-circle"
-                            compact
-                          />
+
+                        {/* Workout Structure stacked directly under Warm-up (same grid tile) */}
+                        <View style={styles.section}>
+                          <View style={[styles.cardHeader, { marginBottom: 8 }]}>
+                            <Feather name="grid" size={14} color={accent} />
+                            <Text style={[styles.cardTitle, { marginLeft: 6 }]}>
+                              Workout Structure
+                            </Text>
+                          </View>
+                          <View style={[styles.card, { marginBottom: 0 }]}>
+                            <View style={styles.structureRow}>
+                              <View style={styles.structureItem}>
+                                <Text
+                                  style={styles.structureValue}
+                                  numberOfLines={1}
+                                  adjustsFontSizeToFit
+                                >
+                                  {workout.sections.length}
+                                </Text>
+                                <Text
+                                  style={styles.structureLabel}
+                                  numberOfLines={1}
+                                  adjustsFontSizeToFit
+                                >
+                                  Exercises
+                                </Text>
+                              </View>
+                              <View style={styles.structureDivider} />
+                              <View style={styles.structureItem}>
+                                <Text
+                                  style={styles.structureValue}
+                                  numberOfLines={1}
+                                  adjustsFontSizeToFit
+                                >
+                                  {totalSets}
+                                </Text>
+                                <Text
+                                  style={styles.structureLabel}
+                                  numberOfLines={1}
+                                  adjustsFontSizeToFit
+                                >
+                                  Total Sets
+                                </Text>
+                              </View>
+                              <View style={styles.structureDivider} />
+                              <View style={styles.structureItem}>
+                                <Text
+                                  style={styles.structureValue}
+                                  numberOfLines={1}
+                                  adjustsFontSizeToFit
+                                >
+                                  {sessionCount > 0 ? sessionCount : '—'}
+                                </Text>
+                                <Text
+                                  style={styles.structureLabel}
+                                  numberOfLines={1}
+                                  adjustsFontSizeToFit
+                                >
+                                  Times Done
+                                </Text>
+                              </View>
+                              <View style={styles.structureDivider} />
+                              <View style={styles.structureItem}>
+                                <Text
+                                  style={styles.structureValue}
+                                  numberOfLines={1}
+                                  adjustsFontSizeToFit
+                                >
+                                  {lastPerformedLabel}
+                                </Text>
+                                <Text
+                                  style={styles.structureLabel}
+                                  numberOfLines={1}
+                                  adjustsFontSizeToFit
+                                >
+                                  Last Done
+                                </Text>
+                              </View>
+                            </View>
+                          </View>
+                        </View>
+                      </View>
+                    )}
+
+                    {/* When Warm-up isn't shown, render Workout Structure on its own */}
+                    {(!warmUpStats || warmUpStats.count === 0) && (
+                      <View style={styles.section}>
+                        <View style={[styles.cardHeader, { marginBottom: 8 }]}>
+                          <Feather name="grid" size={14} color={accent} />
+                          <Text style={[styles.cardTitle, { marginLeft: 6 }]}>
+                            Workout Structure
+                          </Text>
+                        </View>
+                        <View style={[styles.card, { marginBottom: 0 }]}>
+                          <View style={styles.structureRow}>
+                            <View style={styles.structureItem}>
+                              <Text
+                                style={styles.structureValue}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                              >
+                                {workout.sections.length}
+                              </Text>
+                              <Text
+                                style={styles.structureLabel}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                              >
+                                Exercises
+                              </Text>
+                            </View>
+                            <View style={styles.structureDivider} />
+                            <View style={styles.structureItem}>
+                              <Text
+                                style={styles.structureValue}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                              >
+                                {totalSets}
+                              </Text>
+                              <Text
+                                style={styles.structureLabel}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                              >
+                                Total Sets
+                              </Text>
+                            </View>
+                            <View style={styles.structureDivider} />
+                            <View style={styles.structureItem}>
+                              <Text
+                                style={styles.structureValue}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                              >
+                                {sessionCount > 0 ? sessionCount : '—'}
+                              </Text>
+                              <Text
+                                style={styles.structureLabel}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                              >
+                                Times Done
+                              </Text>
+                            </View>
+                            <View style={styles.structureDivider} />
+                            <View style={styles.structureItem}>
+                              <Text
+                                style={styles.structureValue}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                              >
+                                {lastPerformedLabel}
+                              </Text>
+                              <Text
+                                style={styles.structureLabel}
+                                numberOfLines={1}
+                                adjustsFontSizeToFit
+                              >
+                                Last Done
+                              </Text>
+                            </View>
+                          </View>
                         </View>
                       </View>
                     )}
@@ -498,84 +664,6 @@ const AnalyticsScreen: React.FC = () => {
                       </View>
                     </View>
                   ) */}
-
-                    <View style={styles.section}>
-                      <View style={[styles.cardHeader, { marginBottom: 8 }]}>
-                        <Feather name="grid" size={14} color={accent} />
-                        <Text style={[styles.cardTitle, { marginLeft: 6 }]}>Workout Structure</Text>
-                      </View>
-                      <View style={[styles.card, { marginBottom: 0 }]}>
-                        <View style={styles.structureRow}>
-                          <View style={styles.structureItem}>
-                            <Text
-                              style={styles.structureValue}
-                              numberOfLines={1}
-                              adjustsFontSizeToFit
-                            >
-                              {workout.sections.length}
-                            </Text>
-                            <Text
-                              style={styles.structureLabel}
-                              numberOfLines={1}
-                              adjustsFontSizeToFit
-                            >
-                              Exercises
-                            </Text>
-                          </View>
-                          <View style={styles.structureDivider} />
-                          <View style={styles.structureItem}>
-                            <Text
-                              style={styles.structureValue}
-                              numberOfLines={1}
-                              adjustsFontSizeToFit
-                            >
-                              {totalSets}
-                            </Text>
-                            <Text
-                              style={styles.structureLabel}
-                              numberOfLines={1}
-                              adjustsFontSizeToFit
-                            >
-                              Total Sets
-                            </Text>
-                          </View>
-                          <View style={styles.structureDivider} />
-                          <View style={styles.structureItem}>
-                            <Text
-                              style={styles.structureValue}
-                              numberOfLines={1}
-                              adjustsFontSizeToFit
-                            >
-                              {sessionCount > 0 ? sessionCount : '—'}
-                            </Text>
-                            <Text
-                              style={styles.structureLabel}
-                              numberOfLines={1}
-                              adjustsFontSizeToFit
-                            >
-                              Times Done
-                            </Text>
-                          </View>
-                          <View style={styles.structureDivider} />
-                          <View style={styles.structureItem}>
-                            <Text
-                              style={styles.structureValue}
-                              numberOfLines={1}
-                              adjustsFontSizeToFit
-                            >
-                              {lastPerformedLabel}
-                            </Text>
-                            <Text
-                              style={styles.structureLabel}
-                              numberOfLines={1}
-                              adjustsFontSizeToFit
-                            >
-                              Last Done
-                            </Text>
-                          </View>
-                        </View>
-                      </View>
-                    </View>
 
                     {hasMuscleSets && (
                       <View style={styles.section}>
