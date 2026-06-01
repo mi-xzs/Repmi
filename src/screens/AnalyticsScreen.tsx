@@ -14,7 +14,8 @@ import {
 import { Feather } from "@expo/vector-icons";
 import { useAuth } from "../services/AuthContext";
 import { loadAllSessions as sbLoadAllSessions, loadSessionsForWorkout, loadDurationsForWorkout } from "../services/sessionService";
-import { useFocusEffect } from "@react-navigation/native";
+import { useFocusEffect, useRoute, type RouteProp } from "@react-navigation/native";
+import type { RootTabParamList } from "../navigation/types";
 import { useWorkouts } from "../services/WorkoutContext";
 import { colors } from "../theme/colors";
 import { useResponsive, CONTENT_MAX_WIDTH } from "../hooks/useResponsive";
@@ -117,10 +118,13 @@ function computeSectionStats(sessions: WorkoutSession[], sectionName: string) {
 // ─── component ────────────────────────────────────────────────────────────────
 
 const AnalyticsScreen: React.FC = () => {
-  const { contentMaxWidth } = useResponsive();
+  const { contentMaxWidth, isWide } = useResponsive();
   const rootWideStyle = contentMaxWidth
     ? { maxWidth: contentMaxWidth, alignSelf: "center" as const, width: "100%" as const }
     : null;
+  // On wide web the sub-tabs live in the side rail; this screen reads the
+  // selected one from the `tab` route param instead of the in-screen pill.
+  const route = useRoute<RouteProp<RootTabParamList, "Analytics">>();
   const { workouts, isLoading } = useWorkouts();
   const { session: authSession } = useAuth();
   const { accent } = useAccent();
@@ -161,6 +165,12 @@ const AnalyticsScreen: React.FC = () => {
     },
     [translateX],
   );
+
+  // Drive the pager from the side-rail sub-tab param on wide web.
+  const railTab = route.params?.tab;
+  useEffect(() => {
+    if (isWide && typeof railTab === "number") snapToIndex(railTab);
+  }, [railTab, isWide, snapToIndex]);
 
   // ── swipe gesture ────────────────────────────────────────────────────────────
   const dragStartValue = useRef(0);
@@ -305,20 +315,24 @@ const AnalyticsScreen: React.FC = () => {
     <View style={[styles.screen, rootWideStyle]}>
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <View style={styles.header}>
-
-        {/* Tab bar + dots */}
-        <SwipeTabs
-          tabs={TABS.map(t => t.label)}
-          translateX={translateX}
-          screenWidth={SCREEN_W}
-          activeIndex={tabIndex}
-          onTabPress={snapToIndex}
-        />
-      </View>
+      {/* On wide web the sub-tabs live in the side rail, so the in-screen
+          pill bar is hidden. */}
+      {!isWide && (
+        <View style={styles.header}>
+          {/* Tab bar + dots */}
+          <SwipeTabs
+            tabs={TABS.map(t => t.label)}
+            translateX={translateX}
+            screenWidth={SCREEN_W}
+            activeIndex={tabIndex}
+            onTabPress={snapToIndex}
+          />
+        </View>
+      )}
 
       {/* ── Pager ──────────────────────────────────────────────────────────── */}
-      <View style={{ flex: 1, overflow: "hidden" }} {...panResponder.panHandlers}>
+      {/* Swipe is disabled on wide web — the rail drives the sub-tab. */}
+      <View style={{ flex: 1, overflow: "hidden" }} {...(isWide ? {} : panResponder.panHandlers)}>
         <Animated.View
           style={{
             flex:           1,

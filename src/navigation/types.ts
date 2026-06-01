@@ -15,8 +15,11 @@ export type AuthStackParamList = {
 // nested stacks, so their params are the nested stack's param list.
 export type RootTabParamList = {
   Home: NavigatorScreenParams<HomeStackParamList> | undefined;
-  Analytics: undefined;
-  Achievements: undefined;
+  // `tab` selects the screen's sub-tab index — set from the desktop side
+  // rail's nested sub-items on web (Analytics: Workout/Weekly/Overall,
+  // Achievements: Achievements/Leaderboard/Store).
+  Analytics: { tab?: number } | undefined;
+  Achievements: { tab?: number } | undefined;
   Profile: NavigatorScreenParams<ProfileStackParamList> | undefined;
 };
 

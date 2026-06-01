@@ -13,7 +13,8 @@ import { Feather } from "@expo/vector-icons";
 import { colors } from "../theme/colors";
 import { useAccent } from "../services/SettingsContext";
 import { SIDE_RAIL_WIDTH } from "../hooks/useResponsive";
-import { TAB_CONFIG, type FeatherIconName } from "./tabRoutes";
+import { TAB_CONFIG, SUB_TABS, type FeatherIconName } from "./tabRoutes";
+import type { RootTabParamList } from "./types";
 
 function SideRailItem({
   routeName,
@@ -38,6 +39,31 @@ function SideRailItem({
     >
       <Feather name={icon} size={22} color={color} />
       <Text style={[railStyles.itemLabel, { color }]} numberOfLines={1}>
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function SideSubItem({
+  label,
+  isActive,
+  onPress,
+}: {
+  label: string;
+  isActive: boolean;
+  onPress: () => void;
+}) {
+  const { accent, accentSubtle } = useAccent();
+  return (
+    <Pressable
+      onPress={onPress}
+      style={[railStyles.subItem, isActive && { backgroundColor: accentSubtle }]}
+    >
+      <Text
+        style={[railStyles.subLabel, { color: isActive ? accent : colors.button1 }]}
+        numberOfLines={1}
+      >
         {label}
       </Text>
     </Pressable>
@@ -72,13 +98,32 @@ export default function SideRail({
               navigation.navigate(route.name);
             }
           };
+          // Sub-tabs (hoisted into the rail) — shown indented under the
+          // active main tab. The current sub-tab is read from the route's
+          // `tab` param so the highlight stays in sync with the screen.
+          const subTabs = SUB_TABS[route.name as keyof RootTabParamList];
+          const activeSub =
+            (route.params as { tab?: number } | undefined)?.tab ?? 0;
           return (
-            <SideRailItem
-              key={route.key}
-              routeName={route.name}
-              isFocused={isFocused}
-              onPress={onPress}
-            />
+            <View key={route.key}>
+              <SideRailItem
+                routeName={route.name}
+                isFocused={isFocused}
+                onPress={onPress}
+              />
+              {isFocused && subTabs && (
+                <View style={railStyles.subItems}>
+                  {subTabs.map((label, i) => (
+                    <SideSubItem
+                      key={label}
+                      label={label}
+                      isActive={activeSub === i}
+                      onPress={() => navigation.navigate(route.name, { tab: i })}
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
           );
         })}
       </View>
@@ -120,6 +165,26 @@ const railStyles = StyleSheet.create({
   itemLabel: {
     fontSize: 15,
     fontWeight: "600",
+    letterSpacing: 0.2,
+  },
+  subItems: {
+    marginTop: 2,
+    marginBottom: 4,
+    marginLeft: 18,
+    paddingLeft: 14,
+    borderLeftWidth: StyleSheet.hairlineWidth,
+    borderLeftColor: "rgba(255, 255, 255, 0.10)",
+    gap: 2,
+  },
+  subItem: {
+    paddingHorizontal: 12,
+    height: 38,
+    justifyContent: "center",
+    borderRadius: 10,
+  },
+  subLabel: {
+    fontSize: 14,
+    fontWeight: "500",
     letterSpacing: 0.2,
   },
 });

@@ -41,6 +41,15 @@ export const TAB_ROUTES: TabRoute[] = [
   { name: "Profile", component: ProfileStackNavigator },
 ];
 
+// Screens whose in-screen sub-tabs are hoisted into the desktop side rail
+// as nested items (web only). The index order matches each screen's own
+// tab order, so the rail passes `{ tab: index }` and the screen drives its
+// pager from it. Keep in sync with the screens' tab lists.
+export const SUB_TABS: Partial<Record<keyof RootTabParamList, readonly string[]>> = {
+  Analytics: ["Workout", "Weekly", "Overall"],
+  Achievements: ["Achievements", "Leaderboard", "Store"],
+};
+
 // Hide the tab bar / rail on the full-screen CreateWorkout flow so the
 // workout builder gets the whole viewport on every platform.
 export function getTabBarStyle(route: RouteProp<RootTabParamList, "Home">) {
