@@ -6731,18 +6731,16 @@ function AchievementsSkeleton() {
 // ─── Screen ────────────────────────────────────────────────
 
 const AchievementsScreen: React.FC = () => {
-  const { contentMaxWidth, isWide, height: winHeight } = useResponsive();
-  // On wide web, give the screen an explicit viewport height. The nested
-  // horizontal pager doesn't reliably propagate a flex height on web, so
-  // its ScrollViews never get definite bounds to scroll within — an
-  // explicit height fixes that. Mobile keeps flex:1 (native scroll).
+  const { contentMaxWidth, isWide } = useResponsive();
+  // On wide web, center the screen in the content column. Height comes from
+  // flex:1 (matching AnalyticsScreen) — the pager row below must use `flex: 1`
+  // (not `flexGrow: 1`) for the per-page ScrollViews to get bounded heights.
   const rootStyle = contentMaxWidth
     ? {
-        height: winHeight,
+        flex: 1 as const,
         width: '100%' as const,
         maxWidth: contentMaxWidth,
         alignSelf: 'center' as const,
-        minHeight: 0,
         backgroundColor: colors.background,
       }
     : { flex: 1 as const, backgroundColor: colors.background };
@@ -7417,11 +7415,9 @@ const AchievementsScreen: React.FC = () => {
       <View style={{ flex: 1, minHeight: 0, overflow: 'hidden' }} {...(isWide ? {} : panResponder.panHandlers)}>
         <Animated.View
           style={{
+            flex: 1,
             flexDirection: 'row',
             width: SCREEN_WIDTH * TAB_COUNT,
-            flexGrow: 1,
-            minHeight: 0,
-            alignSelf: 'stretch',
             transform: [{ translateX }],
           }}
         >
