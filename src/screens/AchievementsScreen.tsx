@@ -6731,10 +6731,21 @@ function AchievementsSkeleton() {
 // ─── Screen ────────────────────────────────────────────────
 
 const AchievementsScreen: React.FC = () => {
-  const { contentMaxWidth, isWide } = useResponsive();
-  const rootWideStyle = contentMaxWidth
-    ? { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' as const }
-    : null;
+  const { contentMaxWidth, isWide, height: winHeight } = useResponsive();
+  // On wide web, give the screen an explicit viewport height. The nested
+  // horizontal pager doesn't reliably propagate a flex height on web, so
+  // its ScrollViews never get definite bounds to scroll within — an
+  // explicit height fixes that. Mobile keeps flex:1 (native scroll).
+  const rootStyle = contentMaxWidth
+    ? {
+        height: winHeight,
+        width: '100%' as const,
+        maxWidth: contentMaxWidth,
+        alignSelf: 'center' as const,
+        minHeight: 0,
+        backgroundColor: colors.background,
+      }
+    : { flex: 1 as const, backgroundColor: colors.background };
   // On wide web the sub-tabs live in the side rail; read the selected one
   // from the `tab` route param instead of the in-screen pill bar.
   const route = useRoute<RouteProp<RootTabParamList, 'Achievements'>>();
@@ -7383,7 +7394,7 @@ const AchievementsScreen: React.FC = () => {
   if (useStableLoading(isInitialLoad)) return <AchievementsSkeleton />;
 
   return (
-    <View style={[{ flex: 1, minHeight: 0, backgroundColor: colors.background }, rootWideStyle]}>
+    <View style={rootStyle}>
       {/* ── Header ─────────────────────────────────────────── */}
       {/* On wide web the sub-tabs live in the side rail, so the in-screen
           pill bar is hidden. */}
