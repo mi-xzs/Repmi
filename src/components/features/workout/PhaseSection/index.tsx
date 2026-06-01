@@ -1,7 +1,7 @@
 // src/components/features/workout/PhaseSection/index.tsx
 
 import React, { useState, useEffect, useMemo, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
-import { View, Text, Pressable, TextInput, StyleSheet, Modal } from 'react-native';
+import { View, Text, Pressable, TextInput, StyleSheet, Modal, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import DeleteButton from '../../../ui/DeleteButton';
 import AddExerciseButton from '../../../ui/AddExerciseButton';
@@ -16,6 +16,19 @@ import RepsModal from '../Shared/RepsModal';
 import PhaseExercisePickerModal from '../Shared/PhaseExercisePickerModal';
 import PhaseCategoryModal from '../Shared/PhaseCategoryModal';
 import RestTimerModal from '../../RestTimerModal';
+
+// On web, drum-wheel pickers are awkward — let reps and time be typed
+// directly. Mobile keeps the drum-wheel modals.
+const isWeb = Platform.OS === 'web';
+const webTimeInput = {
+  minWidth: 38,
+  height: 30,
+  paddingHorizontal: 4,
+  textAlign: 'center' as const,
+  color: colors.highlight,
+  backgroundColor: colors.background,
+  borderRadius: 8,
+};
 
 export type PhaseKind = 'warmup' | 'cooldown';
 
@@ -368,6 +381,33 @@ const PhaseSection = forwardRef<PhaseSectionHandle, Props>(function PhaseSection
     ];
 
     if (mode === 'timed') {
+      if (isEditMode && isWeb) {
+        return (
+          <View style={[...valueCellStyle, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
+            <TextInput
+              style={[styles.inputText, webTimeInput, hasError && { color: '#FF6B6B' }]}
+              keyboardType="numeric"
+              maxLength={2}
+              selectTextOnFocus
+              value={(row.minutes ?? 0) === 0 ? '' : String(row.minutes)}
+              placeholder="0"
+              placeholderTextColor={hasError ? '#FF6B6B' : '#999'}
+              onChangeText={(t) => updateRow(index, 'minutes', Math.min(parseInt(t.replace(/[^0-9]/g, '')) || 0, 99))}
+            />
+            <Text style={[styles.inputText, { marginHorizontal: 2 }]}>:</Text>
+            <TextInput
+              style={[styles.inputText, webTimeInput, hasError && { color: '#FF6B6B' }]}
+              keyboardType="numeric"
+              maxLength={2}
+              selectTextOnFocus
+              value={(row.seconds ?? 0) === 0 ? '' : String(row.seconds)}
+              placeholder="00"
+              placeholderTextColor={hasError ? '#FF6B6B' : '#999'}
+              onChangeText={(t) => updateRow(index, 'seconds', Math.min(parseInt(t.replace(/[^0-9]/g, '')) || 0, 59))}
+            />
+          </View>
+        );
+      }
       return (
         <Pressable
           style={valueCellStyle}
@@ -386,6 +426,23 @@ const PhaseSection = forwardRef<PhaseSectionHandle, Props>(function PhaseSection
     }
 
     if (mode === 'reps') {
+      if (isEditMode && isWeb) {
+        return (
+          <View style={[...valueCellStyle, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
+            <TextInput
+              style={[styles.inputText, webTimeInput, hasError && { color: '#FF6B6B' }]}
+              keyboardType="numeric"
+              maxLength={3}
+              selectTextOnFocus
+              value={row.reps === 0 ? '' : String(row.reps)}
+              placeholder="0"
+              placeholderTextColor={hasError ? '#FF6B6B' : '#999'}
+              onChangeText={(t) => updateRow(index, 'reps', parseInt(t.replace(/[^0-9]/g, '')) || 0)}
+            />
+            <Text style={[styles.inputText, { marginLeft: 1 }]}>×</Text>
+          </View>
+        );
+      }
       return (
         <Pressable
           style={valueCellStyle}

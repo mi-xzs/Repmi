@@ -4,7 +4,7 @@ import React, {
   useState, useMemo, useEffect, useRef,
   forwardRef, useImperativeHandle,
 } from 'react';
-import { View, Text, Pressable, TextInput } from 'react-native';
+import { View, Text, Pressable, TextInput, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import DeleteButton from '../../../ui/DeleteButton';
 import AddExerciseButton from '../../../ui/AddExerciseButton';
@@ -19,6 +19,10 @@ import TimePickerModal from '../Shared/TimePickModal';
 import QuickAdjustModal from '../Shared/QuickAdjustModal';
 import RestTimerModal from '../../RestTimerModal';
 import { findExercise } from '../../../../constants/exerciseCatalog';
+
+// On web, drum-wheel pickers are awkward — let reps be typed directly,
+// like the kg field already is. Mobile keeps the drum-wheel modal.
+const isWeb = Platform.OS === 'web';
 
 export type PreviousSet = {
   kg?: number;
@@ -549,20 +553,50 @@ const WorkoutSection = forwardRef<WorkoutSectionHandle, Props>(function WorkoutS
             {/* Reps — weight + bodyweight */}
             {(mode === 'weight' || mode === 'bodyweight') && (
               isEditMode ? (
-                <Pressable
-                  style={[styles.inputCell, { flex: midFlex }]}
-                  onPress={() => {
-                    setSelectedRowIndex(index);
-                    setRepsModalVisible(true);
-                  }}
-                >
-                  <Text style={[
-                    styles.inputText,
-                    rowIsInvalid && row.reps === 0 && { color: 'red' },
-                  ]}>
-                    {row.reps}
-                  </Text>
-                </Pressable>
+                isWeb ? (
+                  <TextInput
+                    style={[
+                      styles.inputCell,
+                      styles.inputText,
+                      { flex: midFlex, textAlign: 'center', textAlignVertical: 'center', padding: 0 },
+                      rowIsInvalid && row.reps === 0 && { color: 'red' },
+                    ]}
+                    keyboardType="numeric"
+                    maxLength={3}
+                    value={row.reps === 0 ? '' : row.reps.toString()}
+                    placeholder="0"
+                    placeholderTextColor={rowIsInvalid && row.reps === 0 ? 'red' : '#999'}
+                    onChangeText={(text) => {
+                      const val = parseInt(text) || 0;
+                      const copy = [...rows];
+                      copy[index].reps = val;
+                      setRows(copy);
+                      onChange?.(copy);
+                      if (val > 0 || copy[index].kg > 0) {
+                        setRowErrors((prev) => {
+                          const next = [...prev];
+                          next[index] = false;
+                          return next;
+                        });
+                      }
+                    }}
+                  />
+                ) : (
+                  <Pressable
+                    style={[styles.inputCell, { flex: midFlex }]}
+                    onPress={() => {
+                      setSelectedRowIndex(index);
+                      setRepsModalVisible(true);
+                    }}
+                  >
+                    <Text style={[
+                      styles.inputText,
+                      rowIsInvalid && row.reps === 0 && { color: 'red' },
+                    ]}>
+                      {row.reps}
+                    </Text>
+                  </Pressable>
+                )
               ) : active ? (
                 <Pressable
                   style={[styles.inputCell, { flex: midFlex }, cellStyle]}

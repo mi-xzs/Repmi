@@ -6,6 +6,8 @@ import {
   Modal,
   Pressable,
   ScrollView,
+  TextInput,
+  Platform,
   NativeScrollEvent,
   NativeSyntheticEvent,
 } from 'react-native';
@@ -26,6 +28,9 @@ const PICKER_H = ITEM_H * VISIBLE;
 
 const MINUTES = Array.from({ length: 10 }, (_, i) => i);
 const SECONDS = [0, 5, 10, 15, 20, 30, 45];
+
+// On web the drum wheels are awkward — let min/sec be typed directly.
+const isWeb = Platform.OS === 'web';
 
 // ─── Drum wheel ─────────────────────────────────────────────
 
@@ -144,6 +149,21 @@ export default function AddRestTimerButton({
   const draftMin = useRef(value !== undefined ? Math.floor(value / 60) : 1);
   const draftSec = useRef(value !== undefined ? value % 60 : 30);
 
+  // Web: typed min/sec, kept in sync with the draft refs that handleConfirm
+  // reads. Reset to the current value each time the modal opens.
+  const [minStr, setMinStr] = useState(String(draftMin.current));
+  const [secStr, setSecStr] = useState(String(draftSec.current));
+  useEffect(() => {
+    if (modalVisible) {
+      const m = value !== undefined ? Math.floor(value / 60) : draftMin.current;
+      const s = value !== undefined ? value % 60 : draftSec.current;
+      draftMin.current = m;
+      draftSec.current = s;
+      setMinStr(String(m));
+      setSecStr(String(s));
+    }
+  }, [modalVisible, value]);
+
   const handleMinSelect = useCallback((v: number) => {
     draftMin.current = v;
   }, []);
@@ -213,23 +233,65 @@ export default function AddRestTimerButton({
 
             <Text style={styles.title}>Rest Timer</Text>
 
-            <View style={styles.pickerRow}>
-              <DrumWheel
-                items={MINUTES}
-                initialIndex={initialMinIdx}
-                label="min"
-                onSelect={handleMinSelect}
-              />
+            {isWeb ? (
+              <View style={styles.pickerRow}>
+                <View style={webPicker.field}>
+                  <TextInput
+                    style={webPicker.input}
+                    value={minStr}
+                    onChangeText={(t) => {
+                      const digits = t.replace(/[^0-9]/g, '').slice(0, 1);
+                      setMinStr(digits);
+                      draftMin.current = Math.min(parseInt(digits) || 0, MINUTES.length - 1);
+                    }}
+                    keyboardType="numeric"
+                    maxLength={1}
+                    selectTextOnFocus
+                    placeholder="0"
+                    placeholderTextColor={colors.button1}
+                  />
+                  <Text style={webPicker.unit}>min</Text>
+                </View>
 
-              <Text style={styles.colon}>:</Text>
+                <Text style={styles.colon}>:</Text>
 
-              <DrumWheel
-                items={SECONDS}
-                initialIndex={initialSecIdx}
-                label="sec"
-                onSelect={handleSecSelect}
-              />
-            </View>
+                <View style={webPicker.field}>
+                  <TextInput
+                    style={webPicker.input}
+                    value={secStr}
+                    onChangeText={(t) => {
+                      const digits = t.replace(/[^0-9]/g, '').slice(0, 2);
+                      setSecStr(digits);
+                      draftSec.current = Math.min(parseInt(digits) || 0, 59);
+                    }}
+                    keyboardType="numeric"
+                    maxLength={2}
+                    selectTextOnFocus
+                    placeholder="00"
+                    placeholderTextColor={colors.button1}
+                  />
+                  <Text style={webPicker.unit}>sec</Text>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.pickerRow}>
+                <DrumWheel
+                  items={MINUTES}
+                  initialIndex={initialMinIdx}
+                  label="min"
+                  onSelect={handleMinSelect}
+                />
+
+                <Text style={styles.colon}>:</Text>
+
+                <DrumWheel
+                  items={SECONDS}
+                  initialIndex={initialSecIdx}
+                  label="sec"
+                  onSelect={handleSecSelect}
+                />
+              </View>
+            )}
 
             <Pressable
               style={({ pressed }) => [
@@ -416,5 +478,31 @@ const styles = StyleSheet.create({
     color: colors.button1,
     fontSize: 14,
     fontWeight: '600',
+  },
+});
+
+const webPicker = StyleSheet.create({
+  field: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  input: {
+    width: 72,
+    height: 56,
+    borderRadius: 12,
+    backgroundColor: colors.container,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.10)',
+    color: colors.highlight,
+    fontSize: 26,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  unit: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.button1,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
 });
