@@ -9,8 +9,15 @@ import {
   deleteWorkout as sbDeleteWorkout,
   migrateWorkoutsFromAsyncStorage,
 } from './workoutsService';
+import { secureGet, secureSet, secureRemove } from './secureUserCache';
+import { logError, logCacheCorruption } from './logger';
+import { WorkoutsCacheSchema, safeJsonParse } from './cacheSchemas';
 
-const CACHE_KEY = 'workouts';  // legacy AsyncStorage key, reused as a write-through cache
+// SECURITY (H3): Workouts cache contains exercise/training history —
+// sensitive enough to live in SecureStore rather than AsyncStorage. We
+// keep the legacy key + AsyncStorage as a one-time fallback so users
+// upgrading from a previous build don't lose their cache on first run.
+const CACHE_KEY = 'workouts';
 
 // Simple ID generator — no external package needed
 const generateId = (): string =>
@@ -35,20 +42,38 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
 
   // ── Hydrate from cache immediately so the UI isn't blank during the
   //    Supabase round-trip. Authoritative data replaces this once it lands.
+  //    Reads SecureStore first; falls back to the legacy AsyncStorage
+  //    entry on first run of an upgraded build.
   useEffect(() => {
     let cancelled = false;
-    AsyncStorage.getItem(CACHE_KEY)
-      .then(raw => {
+    (async () => {
+      try {
+        const secure = await secureGet(CACHE_KEY);
+        const raw = secure ?? (await AsyncStorage.getItem(CACHE_KEY));
         if (cancelled || !raw) return;
-        try {
-          const parsed: WorkoutData[] = JSON.parse(raw);
-          const migrated = parsed.map(w => (w.id ? w : { ...w, id: generateId() }));
-          setWorkouts(migrated);
-        } catch (e) {
-          console.error('WorkoutContext: corrupt workout cache', e);
+        // M6 — Zod-validate. On miss, drop the corrupt blob and let
+        // the Supabase sync re-populate.
+        const parsedResult = WorkoutsCacheSchema.safeParse(safeJsonParse(raw));
+        if (!parsedResult.success) {
+          logCacheCorruption(CACHE_KEY);
+          await secureRemove(CACHE_KEY).catch(() => {});
+          await AsyncStorage.removeItem(CACHE_KEY).catch(() => {});
+          return;
         }
-      })
-      .catch(e => console.error('WorkoutContext: cache read failed', e));
+        const parsed = parsedResult.data as WorkoutData[];
+        const migrated = parsed.map(w => (w.id ? w : { ...w, id: generateId() }));
+        setWorkouts(migrated);
+        // If we only had the legacy copy, promote it to the secure
+        // cache and drop the plaintext one so future reads stay fast
+        // AND don't expose the workout list on disk.
+        if (!secure) {
+          await secureSet(CACHE_KEY, raw);
+          await AsyncStorage.removeItem(CACHE_KEY).catch(() => {});
+        }
+      } catch (e) {
+        logError('workouts.cache.read.failed', { name: (e as Error)?.name });
+      }
+    })();
     return () => { cancelled = true; };
   }, []);
 
@@ -74,9 +99,9 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
         if (cancelled) return;
 
         setWorkouts(remote);
-        await AsyncStorage.setItem(CACHE_KEY, JSON.stringify(remote));
+        await secureSet(CACHE_KEY, JSON.stringify(remote));
       } catch (e) {
-        console.error('WorkoutContext: Supabase sync failed', e);
+        logError('workouts.sync.failed', { name: (e as Error)?.name });
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -89,8 +114,8 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
   // ── Write-through cache. Runs on every workouts change after first load.
   useEffect(() => {
     if (isLoading) return;
-    AsyncStorage.setItem(CACHE_KEY, JSON.stringify(workouts)).catch(e =>
-      console.error('WorkoutContext: cache write failed', e),
+    secureSet(CACHE_KEY, JSON.stringify(workouts)).catch(e =>
+      logError('workouts.cache.write.failed', { name: (e as Error)?.name }),
     );
   }, [workouts, isLoading]);
 
@@ -106,7 +131,7 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
 
     if (userId) {
       upsertWorkout(userId, withId).catch(e =>
-        console.error('WorkoutContext: upsert failed (saveWorkout)', e),
+        logError('workouts.upsert.failed', { op: 'save', name: (e as Error)?.name }),
       );
     }
   }, [userId]);
@@ -125,7 +150,7 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
 
     if (userId && updated) {
       upsertWorkout(userId, updated).catch(e =>
-        console.error('WorkoutContext: upsert failed (updateWorkout)', e),
+        logError('workouts.upsert.failed', { op: 'update', name: (e as Error)?.name }),
       );
     }
   }, [userId]);
@@ -141,7 +166,7 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
 
     if (userId && deletedId) {
       sbDeleteWorkout(userId, deletedId).catch(e =>
-        console.error('WorkoutContext: delete failed', e),
+        logError('workouts.delete.failed', { name: (e as Error)?.name }),
       );
     }
   }, [userId]);

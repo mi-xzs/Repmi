@@ -3,22 +3,47 @@
     "version": ">= 18.0.0",
     "appVersionSource": "remote"
   },
+  "//": [
+    "L4 — EAS Secrets reference. NEVER inline real key values here; this file",
+    "is committed to git. The `$NAME` strings below tell EAS Build to look",
+    "up secrets created via `eas secret:create --scope project --name NAME",
+    "--value ...` and substitute them into the bundle at build time. See",
+    "SECURITY_MANUAL_STEPS.md → 'L4 — EAS Secrets' for the exact CLI calls.",
+    "If any of these names are not configured as EAS secrets the build will",
+    "fail loudly rather than ship an empty value, which is the intended",
+    "behaviour for safety."
+  ],
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "$EXPO_PUBLIC_SUPABASE_URL",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "$EXPO_PUBLIC_SUPABASE_ANON_KEY",
+        "EXPO_PUBLIC_SENTRY_DSN": "$EXPO_PUBLIC_SENTRY_DSN"
       }
     },
     "preview": {
       "distribution": "internal",
       "android": {
         "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "$EXPO_PUBLIC_SUPABASE_URL",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "$EXPO_PUBLIC_SUPABASE_ANON_KEY",
+        "EXPO_PUBLIC_SENTRY_DSN": "$EXPO_PUBLIC_SENTRY_DSN"
       }
     },
     "production": {
-      "autoIncrement": true
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_SUPABASE_URL": "$EXPO_PUBLIC_SUPABASE_URL",
+        "EXPO_PUBLIC_SUPABASE_ANON_KEY": "$EXPO_PUBLIC_SUPABASE_ANON_KEY",
+        "EXPO_PUBLIC_SENTRY_DSN": "$EXPO_PUBLIC_SENTRY_DSN"
+      }
     }
   },
   "submit": {

@@ -21,6 +21,7 @@ import Animated, {
 import Svg, { Circle } from 'react-native-svg';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { secureGet, secureSet } from '../../services/secureUserCache';
 import * as Haptics from 'expo-haptics';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../theme/colors';
@@ -90,17 +91,32 @@ export function WaterIntakeBar() {
   }, []);
 
   // --- Load on focus / when day changes ---
+  // SECURITY (H3): hydration counts are stored in SecureStore. Falls
+  // back to the legacy AsyncStorage entry once per upgraded build, then
+  // migrates the value and removes the plaintext copy.
   useFocusEffect(useCallback(() => {
     let cancelled = false;
-    AsyncStorage.getItem(storageKey(userId, todayKey))
-      .then(v => {
+    (async () => {
+      const key = storageKey(userId, todayKey);
+      try {
+        let v = await secureGet(key);
+        if (v === null) {
+          const legacy = await AsyncStorage.getItem(key);
+          if (legacy) {
+            v = legacy;
+            await secureSet(key, legacy);
+            await AsyncStorage.removeItem(key).catch(() => {});
+          }
+        }
         if (cancelled) return;
         const n = v ? parseInt(v, 10) : 0;
         const clamped = Number.isFinite(n) ? Math.max(0, Math.min(MAX_ML, n)) : 0;
         setTotalMl(clamped);
         prevMlRef.current = clamped;
-      })
-      .catch(() => { /* non-critical */ });
+      } catch {
+        /* non-critical */
+      }
+    })();
     return () => { cancelled = true; };
   }, [userId, todayKey]));
 
@@ -129,7 +145,8 @@ export function WaterIntakeBar() {
   }, [totalMl, reduceMotion, pulse]);
 
   const persist = (n: number) => {
-    AsyncStorage.setItem(storageKey(userId, todayKey), String(n)).catch(() => {});
+    // SECURITY (H3): writes go to SecureStore now.
+    secureSet(storageKey(userId, todayKey), String(n)).catch(() => {});
   };
 
   const setTotal = (n: number, haptic: Haptics.ImpactFeedbackStyle) => {

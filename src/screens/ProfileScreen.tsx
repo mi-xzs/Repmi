@@ -16,7 +16,8 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { loadAllSessions as sbLoadAllSessions } from '../services/sessionService';
-import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
+import { logError } from '../services/logger';
+import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
 import { useWorkouts } from '../services/WorkoutContext';
@@ -28,11 +29,13 @@ import {
   fetchFollowCounts,
   fetchFollowers,
   fetchFollowing,
-  fetchFollowingSet,
+  fetchFollowEdges,
+  fetchPendingRequestCount,
   followUser,
   unfollowUser,
   uploadProfileImage,
   ProfileSearchResult,
+  FollowEdgeStatus,
 } from '../services/profileService';
 import { WorkoutSession } from './WorkoutScreen';
 import { fmtDuration, muscleForExercise } from '../utils/analyticsHelpers';
@@ -277,7 +280,7 @@ function WorkoutCalendar({ sessions }: { sessions: WorkoutSession[] }) {
 
 const ProfileScreen: React.FC = () => {
   const { workouts } = useWorkouts();
-  const { levelInfo, levelTitle, totalXP } = useXP();
+  const { levelInfo, levelTitle } = useXP();
   const { equippedSeasonTitle } = useSettings();
   const { accent } = useAccent();
   const displayTitle = equippedSeasonTitle ?? levelTitle.title;
@@ -296,6 +299,8 @@ const ProfileScreen: React.FC = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingCover,  setUploadingCover]  = useState(false);
   const [volumeModalOpen, setVolumeModalOpen] = useState(false);
+  // Incoming follow requests (private accounts) — drives the inbox badge.
+  const [pendingRequests, setPendingRequests] = useState(0);
 
   const pickImage = useCallback(async (
     bucket: 'avatars' | 'covers',
@@ -313,8 +318,15 @@ const ProfileScreen: React.FC = () => {
     if (result.canceled || !result.assets[0] || !session?.user.id) return;
     setUploading(true);
     try {
-      const url = await uploadProfileImage(session.user.id, bucket, result.assets[0].uri);
-      if (url) await updateProfile({ [profileKey]: url });
+      // H6 — uploadProfileImage now returns { url, path }. We stamp both
+      // on the profile: the signed URL for immediate render, and the
+      // raw path so future loads can mint a fresh signed URL when the
+      // 1-hour TTL elapses (handled in ProfileContext on next fetch).
+      const out = await uploadProfileImage(session.user.id, bucket, result.assets[0].uri);
+      if (out) {
+        const pathKey = profileKey === 'avatar_url' ? 'avatar_path' : 'cover_path';
+        await updateProfile({ [profileKey]: out.url, [pathKey]: out.path } as any);
+      }
     } finally {
       setUploading(false);
     }
@@ -340,7 +352,7 @@ const ProfileScreen: React.FC = () => {
       }
       setSessionsByWorkout(grouped);
     } catch (e) {
-      console.error('ProfileScreen: failed to load sessions', e);
+      logError('profile.sessions.load.failed', { name: (e as Error)?.name });
     }
   }, [session?.user.id]);
 
@@ -352,6 +364,11 @@ const ProfileScreen: React.FC = () => {
           setFollowers(counts.followers);
           setFollowing(counts.following);
         })
+        .catch(() => {});
+      // Refresh on focus so the badge updates after the user returns from
+      // the requests inbox (where they may have cleared some).
+      fetchPendingRequestCount()
+        .then(setPendingRequests)
         .catch(() => {});
     }
   }, [loadSessions, session?.user.id]));
@@ -492,6 +509,24 @@ const ProfileScreen: React.FC = () => {
             activeOpacity={0.8}
           >
             <Feather name="settings" size={18} color={colors.button1} />
+          </TouchableOpacity>
+
+          {/* Follow-requests inbox — shows a count badge when there are
+              pending requests. Always tappable so users can review past
+              requests even at zero. */}
+          <TouchableOpacity
+            style={styles.requestsBtn}
+            onPress={() => navigation.navigate('FollowRequests')}
+            activeOpacity={0.8}
+          >
+            <Feather name="user-plus" size={18} color={colors.button1} />
+            {pendingRequests > 0 && (
+              <View style={[styles.requestsBadge, { backgroundColor: accent }]}>
+                <Text style={styles.requestsBadgeText}>
+                  {pendingRequests > 99 ? '99+' : pendingRequests}
+                </Text>
+              </View>
+            )}
           </TouchableOpacity>
 
           {/* Name + badges */}
@@ -716,7 +751,8 @@ function FollowListModal({
   const visible = mode !== null;
   const [users, setUsers] = useState<ProfileSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
+  // Per-user edge status toward the viewer: 'accepted' | 'pending' | absent.
+  const [followEdges, setFollowEdges] = useState<Map<string, FollowEdgeStatus>>(new Map());
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const navigation = useNavigation<any>();
 
@@ -732,52 +768,62 @@ function FollowListModal({
           : await fetchFollowing(ownerId);
       if (cancelled) return;
       setUsers(list);
-      // Resolve which of these the viewer already follows so each row
-      // can show the right button state.
+      // Resolve the viewer's edge toward each user so every row can show
+      // the right button state (Follow / Requested / Following).
       if (viewerId && list.length > 0) {
-        const set = await fetchFollowingSet(viewerId, list.map(u => u.id));
-        if (!cancelled) setFollowingIds(set);
+        const edges = await fetchFollowEdges(viewerId, list.map(u => u.id));
+        if (!cancelled) setFollowEdges(edges);
       } else {
-        setFollowingIds(new Set());
+        setFollowEdges(new Map());
       }
       if (!cancelled) setLoading(false);
     })();
     return () => { cancelled = true; };
   }, [visible, mode, ownerId, viewerId]);
 
+  const setEdge = (id: string, status: FollowEdgeStatus | null) =>
+    setFollowEdges(prev => {
+      const next = new Map(prev);
+      if (status === null) next.delete(id);
+      else next.set(id, status);
+      return next;
+    });
+
   const handleToggle = useCallback(
     async (target: ProfileSearchResult) => {
       if (!viewerId || target.id === viewerId) return;
-      const isFollowing = followingIds.has(target.id);
+      const prevStatus = followEdges.get(target.id) ?? null;
+      const wasEngaged = prevStatus !== null; // following or requested
       setPendingIds(prev => new Set(prev).add(target.id));
-      // Optimistic flip — revert on error.
-      setFollowingIds(prev => {
-        const next = new Set(prev);
-        if (isFollowing) next.delete(target.id);
-        else next.add(target.id);
-        return next;
-      });
+
+      if (wasEngaged) {
+        // Unfollow / cancel request.
+        setEdge(target.id, null);
+        try {
+          await unfollowUser(viewerId, target.id);
+          onCountsChanged();
+        } catch (e) {
+          logError('profile.follow.toggle.failed', { name: (e as Error)?.name });
+          setEdge(target.id, prevStatus); // revert
+        } finally {
+          setPendingIds(prev => { const n = new Set(prev); n.delete(target.id); return n; });
+        }
+        return;
+      }
+
+      // New follow/request — server decides accepted vs pending.
       try {
-        if (isFollowing) await unfollowUser(viewerId, target.id);
-        else await followUser(viewerId, target.id);
-        onCountsChanged();
+        const result = await followUser(viewerId, target.id);
+        setEdge(target.id, result);
+        if (result === 'accepted') onCountsChanged();
       } catch (e) {
-        console.error('[FollowListModal] toggle failed', e);
-        setFollowingIds(prev => {
-          const next = new Set(prev);
-          if (isFollowing) next.add(target.id);
-          else next.delete(target.id);
-          return next;
-        });
+        logError('profile.follow.toggle.failed', { name: (e as Error)?.name });
+        setEdge(target.id, null);
       } finally {
-        setPendingIds(prev => {
-          const next = new Set(prev);
-          next.delete(target.id);
-          return next;
-        });
+        setPendingIds(prev => { const n = new Set(prev); n.delete(target.id); return n; });
       }
     },
-    [viewerId, followingIds, onCountsChanged],
+    [viewerId, followEdges, onCountsChanged],
   );
 
   const title = mode === 'followers' ? 'Followers' : 'Following';
@@ -817,7 +863,12 @@ function FollowListModal({
             >
               {users.map(u => {
                 const isSelf = u.id === viewerId;
-                const isFollowing = followingIds.has(u.id);
+                const edge = followEdges.get(u.id) ?? null;
+                const engaged = edge !== null; // following or requested
+                const followLabel =
+                  edge === 'accepted' ? 'Following'
+                  : edge === 'pending' ? 'Requested'
+                  : 'Follow';
                 const pending = pendingIds.has(u.id);
                 return (
                   <Pressable
@@ -858,7 +909,7 @@ function FollowListModal({
                         activeOpacity={0.7}
                         style={[
                           followListStyles.followBtn,
-                          isFollowing
+                          engaged
                             ? followListStyles.followBtnActive
                             : { borderColor: accent, backgroundColor: accent + '14' },
                           pending && { opacity: 0.5 },
@@ -867,10 +918,10 @@ function FollowListModal({
                         <Text
                           style={[
                             followListStyles.followBtnText,
-                            { color: isFollowing ? 'rgba(255,255,255,0.7)' : accent },
+                            { color: engaged ? 'rgba(255,255,255,0.7)' : accent },
                           ]}
                         >
-                          {isFollowing ? 'Following' : 'Follow'}
+                          {followLabel}
                         </Text>
                       </TouchableOpacity>
                     )}
@@ -1043,6 +1094,29 @@ const styles = StyleSheet.create({
     top: 8,
     right: 0,
     padding: 6,
+  },
+  // Follow-requests inbox button — sits just left of the settings gear.
+  requestsBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 38,
+    padding: 6,
+  },
+  requestsBadge: {
+    position: 'absolute',
+    top: -2,
+    right: -2,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    paddingHorizontal: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  requestsBadgeText: {
+    color: colors.background,
+    fontSize: 10,
+    fontWeight: '800',
   },
   // avatar center sits exactly on the cover's bottom edge
   avatarAnchor: {

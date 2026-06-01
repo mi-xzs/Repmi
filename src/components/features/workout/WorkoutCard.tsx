@@ -7,6 +7,7 @@ import { WorkoutData } from '../../../types/exercise';
 import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../../../services/AuthContext';
 import { loadDurationsForWorkout } from '../../../services/sessionService';
+import { logError } from '../../../services/logger';
 
 type Props = {
   workout: WorkoutData;
@@ -37,7 +38,7 @@ export default function WorkoutCard({ workout, onPress, workoutIndex, refreshKey
         setLastDuration(last);
         setAvgDuration(avg);
       } catch (e) {
-        console.error('WorkoutCard: failed to load durations from Supabase', e);
+        logError('workoutCard.durations.load.failed', { name: (e as Error)?.name });
       }
     };
 

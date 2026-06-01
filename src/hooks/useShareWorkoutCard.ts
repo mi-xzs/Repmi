@@ -3,6 +3,7 @@ import { Alert, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
 import { SHARE_CARD_WIDTH, SHARE_CARD_HEIGHT } from '../components/features/workout/ShareCard';
+import { logError } from '../services/logger';
 
 const TARGET_WIDTH = 1080;
 const TARGET_HEIGHT = TARGET_WIDTH * (SHARE_CARD_HEIGHT / SHARE_CARD_WIDTH);
@@ -33,8 +34,8 @@ export function useShareWorkoutCard(cardRef: RefObject<View | null>) {
         dialogTitle: 'Share workout',
       });
     } catch (e: any) {
-      console.error('useShareWorkoutCard: capture/share failed', e);
-      Alert.alert('Could not share', e?.message ?? 'Please try again.');
+      logError('share.workoutCard.failed', { name: (e as Error)?.name });
+      Alert.alert('Could not share', 'Please try again.');
     } finally {
       setLoading(false);
     }

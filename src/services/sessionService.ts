@@ -2,6 +2,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import { WorkoutSession } from '../screens/WorkoutScreen';
 import { WorkoutData } from '../types/exercise';
+import { secureGet, secureSet, secureRemove } from './secureUserCache';
+import { logError, logCacheCorruption } from './logger';
+import {
+  PendingSessionsCacheSchema,
+  WorkoutSessionSchema,
+  DeletedWorkoutIdsSchema,
+  safeJsonParse,
+} from './cacheSchemas';
+import { WorkoutSessionPayloadSchema } from './payloadSchemas';
+import { z } from 'zod';
 
 export interface RPEEntry {
   workoutId: string;
@@ -18,12 +28,28 @@ export async function saveSession(
   workoutId: string,
   session: WorkoutSession,
 ): Promise<void> {
+  // SECURITY (H3) — strict payload validation. `workout_sessions.exercises`
+  // is JSONB with no column-level constraints; without this gate a
+  // tampered client could insert sessions with absurd weights/reps/duration
+  // that flow into PR / volume / leaderboard derivations. The schema
+  // caps string lengths, array sizes, numeric ranges, and rejects unknown
+  // keys.
+  //
+  // NOTE: This is the FIRST line of defence. A proper server-side check
+  // (pg_jsonschema constraint or SECURITY DEFINER RPC) is still the
+  // long-term fix — TypeScript is not a security boundary.
+  const validated = WorkoutSessionPayloadSchema.safeParse(session);
+  if (!validated.success) {
+    logError('session.save.invalidPayload', { workoutId });
+    throw new Error('Workout session contains invalid data and was not saved.');
+  }
+
   const { error } = await supabase.from('workout_sessions').insert({
     user_id: userId,
     workout_id: workoutId,
-    date: session.date,
-    duration: session.duration,
-    exercises: session.exercises,
+    date: validated.data.date,
+    duration: validated.data.duration,
+    exercises: validated.data.exercises,
   });
   if (error) throw error;
 }
@@ -119,7 +145,13 @@ export async function migrateFromAsyncStorage(
 
   const activeIds = workouts.map(w => w.id).filter((id): id is string => !!id);
   const deletedRaw = await AsyncStorage.getItem('deletedWorkoutIds');
-  const deletedIds: string[] = deletedRaw ? JSON.parse(deletedRaw) : [];
+  // M6 — schema-validate; treat a corrupt blob as an empty list.
+  const deletedParsed = deletedRaw ? DeletedWorkoutIdsSchema.safeParse(safeJsonParse(deletedRaw)) : null;
+  const deletedIds: string[] = deletedParsed?.success ? deletedParsed.data : [];
+  if (deletedRaw && deletedParsed && !deletedParsed.success) {
+    logCacheCorruption('deletedWorkoutIds');
+    await AsyncStorage.removeItem('deletedWorkoutIds').catch(() => {});
+  }
   const allIds = [...new Set([...activeIds, ...deletedIds])];
 
   const sessionInserts: object[] = [];
@@ -128,25 +160,40 @@ export async function migrateFromAsyncStorage(
   for (const id of allIds) {
     const rawSessions = await AsyncStorage.getItem(`sessions_${id}`);
     if (rawSessions) {
-      try {
-        const sessions: WorkoutSession[] = JSON.parse(rawSessions);
-        for (const s of sessions) {
+      // M6 — Zod-validate. On miss, drop the legacy key and skip.
+      const parsed = z.array(WorkoutSessionSchema).safeParse(safeJsonParse(rawSessions));
+      if (parsed.success) {
+        for (const s of parsed.data as WorkoutSession[]) {
+          // H3 — same strict-payload gate as `saveSession`. Skip rows
+          // that don't pass; the legacy cache is best-effort migrated.
+          const strict = WorkoutSessionPayloadSchema.safeParse(s);
+          if (!strict.success) {
+            logCacheCorruption(`sessions_${id}`, { reason: 'strictSchemaMiss' });
+            continue;
+          }
           sessionInserts.push({
             user_id: userId,
             workout_id: id,
-            date: s.date,
-            duration: s.duration,
-            exercises: s.exercises,
+            date: strict.data.date,
+            duration: strict.data.duration,
+            exercises: strict.data.exercises,
           });
         }
-      } catch {}
+      } else {
+        logCacheCorruption(`sessions_${id}`);
+      }
     }
 
     const rawRPE = await AsyncStorage.getItem(`rpe_${id}`);
     if (rawRPE) {
-      try {
-        const entries: RPEEntry[] = JSON.parse(rawRPE);
-        for (const entry of entries) {
+      const rpeSchema = z.array(z.object({
+        workoutId: z.string().optional(),
+        rating: z.number(),
+        recordedAt: z.string(),
+      }).loose());
+      const parsed = rpeSchema.safeParse(safeJsonParse(rawRPE));
+      if (parsed.success) {
+        for (const entry of parsed.data) {
           rpeInserts.push({
             user_id: userId,
             workout_id: id,
@@ -154,7 +201,9 @@ export async function migrateFromAsyncStorage(
             recorded_at: entry.recordedAt,
           });
         }
-      } catch {}
+      } else {
+        logCacheCorruption(`rpe_${id}`);
+      }
     }
   }
 
@@ -182,8 +231,14 @@ export async function migrateFromAsyncStorage(
 // ─── Offline-tolerant retry queue for live session saves ─────────────────────
 //
 // When `saveSession` fails (network blip, brief outage, etc.) we stash the
-// session in AsyncStorage so it isn't lost. The queue is drained on app
+// session in SecureStore so it isn't lost. The queue is drained on app
 // launch (XPContext) and after each successful save (WorkoutScreen).
+//
+// SECURITY (H3): The pending queue contains raw workout data (exercise
+// breakdowns, durations, dates) — same sensitivity as the sessions on
+// the server side. Previously kept in AsyncStorage (plain JSON on disk);
+// now in SecureStore via `secureUserCache`. The legacy AsyncStorage key
+// is still drained on first run for back-compat.
 
 const PENDING_KEY = 'pending_sessions_v1';
 
@@ -192,32 +247,73 @@ interface PendingSession {
   session: WorkoutSession;
 }
 
+async function readPendingQueue(): Promise<PendingSession[]> {
+  // Prefer the SecureStore value; fall back to the legacy AsyncStorage
+  // entry on the first launch of an upgraded build (which we then move
+  // across so subsequent reads hit the secure path only).
+  //
+  // SECURITY (M6): The cache is locally-writeable so we Zod-validate
+  // every blob before letting it back into the queue. A schema miss
+  // drops the cache rather than throwing — a tampered or corrupted
+  // pending-queue must not brick the app.
+  try {
+    const secure = await secureGet(PENDING_KEY);
+    if (secure) {
+      const parsed = PendingSessionsCacheSchema.safeParse(safeJsonParse(secure));
+      if (parsed.success) {
+        return parsed.data as PendingSession[];
+      }
+      logCacheCorruption(PENDING_KEY, { source: 'secureStore' });
+      await secureRemove(PENDING_KEY);
+    }
+  } catch (e) {
+    logError('session.queue.corrupt', { source: 'secureStore', name: (e as Error)?.name });
+  }
+  try {
+    const legacy = await AsyncStorage.getItem(PENDING_KEY);
+    if (legacy) {
+      const parsed = PendingSessionsCacheSchema.safeParse(safeJsonParse(legacy));
+      if (!parsed.success) {
+        logCacheCorruption(PENDING_KEY, { source: 'asyncStorageLegacy' });
+        await AsyncStorage.removeItem(PENDING_KEY);
+        return [];
+      }
+      const items = parsed.data as PendingSession[];
+      // Migrate to SecureStore and remove the plaintext copy.
+      if (items.length > 0) {
+        await secureSet(PENDING_KEY, JSON.stringify(items));
+      }
+      await AsyncStorage.removeItem(PENDING_KEY);
+      return items;
+    }
+  } catch (e) {
+    logError('session.queue.corrupt', { source: 'asyncStorageLegacy', name: (e as Error)?.name });
+  }
+  return [];
+}
+
+async function writePendingQueue(queue: PendingSession[]): Promise<void> {
+  if (queue.length === 0) {
+    await secureRemove(PENDING_KEY);
+    // Defensive — drop any legacy copy too.
+    await AsyncStorage.removeItem(PENDING_KEY).catch(() => {});
+    return;
+  }
+  await secureSet(PENDING_KEY, JSON.stringify(queue));
+  await AsyncStorage.removeItem(PENDING_KEY).catch(() => {});
+}
+
 export async function queuePendingSession(
   workoutId: string,
   session: WorkoutSession,
 ): Promise<void> {
-  let queue: PendingSession[] = [];
-  try {
-    const raw = await AsyncStorage.getItem(PENDING_KEY);
-    if (raw) queue = JSON.parse(raw);
-  } catch (e) {
-    console.error('queuePendingSession: corrupt queue, resetting', e);
-    queue = [];
-  }
+  const queue = await readPendingQueue();
   queue.push({ workoutId, session });
-  await AsyncStorage.setItem(PENDING_KEY, JSON.stringify(queue));
+  await writePendingQueue(queue);
 }
 
 export async function flushPendingSessions(userId: string): Promise<void> {
-  let queue: PendingSession[] = [];
-  try {
-    const raw = await AsyncStorage.getItem(PENDING_KEY);
-    if (raw) queue = JSON.parse(raw);
-  } catch (e) {
-    console.error('flushPendingSessions: corrupt queue, clearing', e);
-    await AsyncStorage.removeItem(PENDING_KEY);
-    return;
-  }
+  const queue = await readPendingQueue();
   if (queue.length === 0) return;
 
   const remaining: PendingSession[] = [];
@@ -225,14 +321,9 @@ export async function flushPendingSessions(userId: string): Promise<void> {
     try {
       await saveSession(userId, item.workoutId, item.session);
     } catch (e) {
-      console.error('flushPendingSessions: re-push failed, keeping for later', e);
+      logError('session.queue.flush.retry', { name: (e as Error)?.name });
       remaining.push(item);
     }
   }
-
-  if (remaining.length === 0) {
-    await AsyncStorage.removeItem(PENDING_KEY);
-  } else {
-    await AsyncStorage.setItem(PENDING_KEY, JSON.stringify(remaining));
-  }
+  await writePendingQueue(remaining);
 }

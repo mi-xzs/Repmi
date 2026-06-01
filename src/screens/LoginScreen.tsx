@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Text,
   TextInput,
@@ -6,7 +6,6 @@ import {
   StyleSheet,
   ActivityIndicator,
   ScrollView,
-  Keyboard,
 } from 'react-native';
 import { useAuth } from '../services/AuthContext';
 import { colors } from '../theme/colors';
@@ -20,15 +19,10 @@ export default function LoginScreen({ navigation }: any) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const autoLoginAttempted = useRef(false);
-
-  useEffect(() => {
-    if (email && password && !loading && !autoLoginAttempted.current) {
-      autoLoginAttempted.current = true;
-      Keyboard.dismiss();
-      handleLogin();
-    }
-  }, [email, password]);
+  // M6 — login is explicit-tap only. The previous auto-submit useEffect
+  // (fired when password-manager autofill populated both fields) was
+  // removed: it caused surprise logins on autofill and made failed-attempt
+  // throttling harder to reason about. The user must press "Log In".
 
   async function handleLogin() {
     if (!email || !password) {
@@ -76,6 +70,15 @@ export default function LoginScreen({ navigation }: any) {
           ? <ActivityIndicator color={colors.background} />
           : <Text style={styles.buttonText}>Log In</Text>
         }
+      </TouchableOpacity>
+
+      {/* H2 — Forgot password? Routes to PasswordResetScreen which calls
+          supabase.auth.resetPasswordForEmail with a `repmi://auth/reset`
+          redirect, then on tap returns the user to PasswordResetConfirmScreen. */}
+      <TouchableOpacity onPress={() => navigation.navigate('PasswordReset')}>
+        <Text style={[styles.link, { marginBottom: 12 }]}>
+          <Text style={[styles.linkAccent, { color: accent }]}>Forgot password?</Text>
+        </Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>

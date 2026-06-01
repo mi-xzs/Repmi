@@ -35,6 +35,7 @@ import { useCoins } from '../services/CoinContext';
 import { computeSessionXP, getStreakMultiplier, getLevelFromXP, getLevelTitle, XPLogEntry } from '../services/xpService';
 import { computeSessionCoins } from '../services/coinService';
 import { findPRDeltas, PRDelta } from '../utils/prDetection';
+import { logError } from '../services/logger';
 
 type WorkoutScreenRouteProp = RouteProp<HomeStackParamList, 'WorkoutScreen'>;
 type WorkoutScreenNavProp = NativeStackNavigationProp<HomeStackParamList, 'WorkoutScreen'>;
@@ -204,7 +205,7 @@ export default function WorkoutScreen() {
         setAvgDuration(null);
       }
     } catch (e) {
-      console.error('WorkoutScreen: failed to load durations', e);
+      logError('workout.durations.load.failed', { name: (e as Error)?.name });
     }
   }, [userId, workoutId]);
 
@@ -219,7 +220,7 @@ export default function WorkoutScreen() {
       setPrevSetsMap(map);
       setPrevSessionDate(last.date);
     } catch (e) {
-      console.error('WorkoutScreen: failed to load previous sets', e);
+      logError('workout.prevSets.load.failed', { name: (e as Error)?.name });
     }
   }, [userId, workoutId]);
 
@@ -370,7 +371,7 @@ export default function WorkoutScreen() {
         const prior = await sbLoadAllSessions(userId);
         setLastPRDeltas(findPRDeltas(session, prior));
       } catch (e) {
-        console.error('WorkoutScreen: PR detection failed', e);
+        logError('workout.prDetect.failed', { name: (e as Error)?.name });
         setLastPRDeltas(new Map());
       }
     } else {
@@ -382,10 +383,10 @@ export default function WorkoutScreen() {
         await saveSession(userId, workoutId, session);
         // Opportunistic drain of any sessions that previously failed to push.
         flushPendingSessions(userId).catch(e =>
-          console.error('WorkoutScreen: pending flush failed', e),
+          logError('workout.pendingFlush.failed', { name: (e as Error)?.name }),
         );
       } catch (e) {
-        console.error('WorkoutScreen: saveSession failed, queuing for retry', e);
+        logError('workout.saveSession.failed', { name: (e as Error)?.name });
         await queuePendingSession(workoutId, session);
       }
     }
@@ -462,7 +463,7 @@ export default function WorkoutScreen() {
           check.setDate(check.getDate() - 1);
         }
       } catch (e) {
-        console.error('WorkoutScreen: failed to compute streak', e);
+        logError('workout.streak.compute.failed', { name: (e as Error)?.name });
       }
     }
 
@@ -497,7 +498,7 @@ export default function WorkoutScreen() {
         const entries = await sbLoadRPEEntries(userId, workoutId);
         setRpeSummary(getRPESummaryFromEntries(entries));
       } catch (e) {
-        console.error('WorkoutScreen: failed to save RPE entry', e);
+        logError('workout.rpe.save.failed', { name: (e as Error)?.name });
       }
     }
     setShowRPE(false);

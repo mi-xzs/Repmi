@@ -6,6 +6,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
+import { useProfile } from './ProfileContext';
 import {
   UserSettings,
   DEFAULT_SETTINGS,
@@ -15,6 +16,7 @@ import {
   upsertSettings,
   migrateSettingsFromAsyncStorage,
 } from './settingsService';
+import { logError } from './logger';
 
 // ── Theme accent palette ─────────────────────────────────────────────────────
 //
@@ -90,6 +92,7 @@ const SettingsContext = createContext<SettingsContextValue | null>(null);
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const { session: authSession, isLoading: authLoading } = useAuth();
   const userId = authSession?.user.id;
+  const { profile, updateProfile } = useProfile();
 
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -113,13 +116,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         const merged = await migrateSettingsFromAsyncStorage(userId);
         if (!cancelled) setSettings(merged);
       } catch (e) {
-        console.error('SettingsContext: load failed, falling back to defaults', e);
+        logError('settings.load.failed', { name: (e as Error)?.name });
         // Try a plain fetch as a fallback in case migration errored.
         try {
           const remote = await fetchSettings(userId);
           if (!cancelled) setSettings(remote);
         } catch (e2) {
-          console.error('SettingsContext: fallback fetch also failed', e2);
+          logError('settings.load.fallback.failed', { name: (e2 as Error)?.name });
         }
       } finally {
         if (!cancelled) setIsLoaded(true);
@@ -133,7 +136,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const setWeightUnit = useCallback((v: WeightUnit) => {
     setSettings(prev => {
       const next = { ...prev, weightUnit: v };
-      if (userId) upsertSettings(userId, next).catch(e => console.error(e));
+      if (userId) upsertSettings(userId, next).catch(e => logError('settings.upsert.failed', { name: (e as Error)?.name }));
       return next;
     });
   }, [userId]);
@@ -141,7 +144,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const setHeightUnit = useCallback((v: HeightUnit) => {
     setSettings(prev => {
       const next = { ...prev, heightUnit: v };
-      if (userId) upsertSettings(userId, next).catch(e => console.error(e));
+      if (userId) upsertSettings(userId, next).catch(e => logError('settings.upsert.failed', { name: (e as Error)?.name }));
       return next;
     });
   }, [userId]);
@@ -149,7 +152,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const equipSeasonTitle = useCallback((v: string | null) => {
     setSettings(prev => {
       const next = { ...prev, equippedSeasonTitle: v };
-      if (userId) upsertSettings(userId, next).catch(e => console.error(e));
+      if (userId) upsertSettings(userId, next).catch(e => logError('settings.upsert.failed', { name: (e as Error)?.name }));
       return next;
     });
   }, [userId]);
@@ -160,23 +163,25 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
       if (current.has(workoutId)) current.delete(workoutId);
       else current.add(workoutId);
       const next = { ...prev, favoriteWorkoutIds: Array.from(current) };
-      if (userId) upsertSettings(userId, next).catch(e => console.error(e));
+      if (userId) upsertSettings(userId, next).catch(e => logError('settings.upsert.failed', { name: (e as Error)?.name }));
       return next;
     });
   }, [userId]);
 
+  // C1 — write to profiles.is_public_profile (the column RLS reads).
+  // The legacy user_settings.extra.publicProfile field is intentionally
+  // not touched any more; it was a no-op the whole time it shipped.
   const setPublicProfile = useCallback((v: boolean) => {
-    setSettings(prev => {
-      const next = { ...prev, extra: { ...prev.extra, publicProfile: v } };
-      if (userId) upsertSettings(userId, next).catch(e => console.error(e));
-      return next;
-    });
-  }, [userId]);
+    if (!userId) return;
+    updateProfile({ is_public_profile: v }).catch(e =>
+      logError('settings.publicProfile.upsert.failed', { name: (e as Error)?.name }),
+    );
+  }, [userId, updateProfile]);
 
   const setOpenFollows = useCallback((v: boolean) => {
     setSettings(prev => {
       const next = { ...prev, extra: { ...prev.extra, openFollows: v } };
-      if (userId) upsertSettings(userId, next).catch(e => console.error(e));
+      if (userId) upsertSettings(userId, next).catch(e => logError('settings.upsert.failed', { name: (e as Error)?.name }));
       return next;
     });
   }, [userId]);
@@ -184,7 +189,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   const setWaterTrackerEnabled = useCallback((v: boolean) => {
     setSettings(prev => {
       const next = { ...prev, extra: { ...prev.extra, waterTrackerEnabled: v } };
-      if (userId) upsertSettings(userId, next).catch(e => console.error(e));
+      if (userId) upsertSettings(userId, next).catch(e => logError('settings.upsert.failed', { name: (e as Error)?.name }));
       return next;
     });
   }, [userId]);
@@ -204,7 +209,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
           ownedThemes: [...prevOwned, themeId],
         },
       };
-      if (userId) upsertSettings(userId, next).catch(e => console.error(e));
+      if (userId) upsertSettings(userId, next).catch(e => logError('settings.upsert.failed', { name: (e as Error)?.name }));
       return next;
     });
   }, [userId]);
@@ -215,7 +220,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         ...prev,
         extra: { ...prev.extra, equippedThemeId: themeId },
       };
-      if (userId) upsertSettings(userId, next).catch(e => console.error(e));
+      if (userId) upsertSettings(userId, next).catch(e => logError('settings.upsert.failed', { name: (e as Error)?.name }));
       return next;
     });
   }, [userId]);
@@ -226,7 +231,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         ...prev,
         extra: { ...prev.extra, spentCoins: 0 },
       };
-      if (userId) upsertSettings(userId, next).catch(e => console.error(e));
+      if (userId) upsertSettings(userId, next).catch(e => logError('settings.upsert.failed', { name: (e as Error)?.name }));
       return next;
     });
   }, [userId]);
@@ -241,7 +246,11 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     [favoriteSet],
   );
 
-  const publicProfile = (settings.extra?.publicProfile as boolean | undefined) ?? true;
+  // C1 — read from profiles.is_public_profile (server-side flag RLS
+  // gates on). While the profile is still loading we default to FALSE
+  // (privacy-preferring) so the toggle never briefly appears "on" for a
+  // private user.
+  const publicProfile = profile?.is_public_profile ?? false;
   const openFollows   = (settings.extra?.openFollows   as boolean | undefined) ?? true;
   const waterTrackerEnabled = (settings.extra?.waterTrackerEnabled as boolean | undefined) ?? true;
 

@@ -8,15 +8,13 @@ import Svg, {
   Line,
   Rect,
   Text as SvgText,
-  Defs,
-  LinearGradient,
-  Stop,
 } from "react-native-svg";
 import { colors } from "../../theme/colors";
 import { useAccent } from "../../services/SettingsContext";
 import { WorkoutSession } from "../../screens/WorkoutScreen";
 import { useAuth } from "../../services/AuthContext";
 import { loadRPEEntries as sbLoadRPEEntries } from "../../services/sessionService";
+import { logError } from "../../services/logger";
 
 interface RPEData {
   date: string;
@@ -71,7 +69,7 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
         }));
         setRpeData(data);
       } catch (error) {
-        console.error("Error loading RPE data:", error);
+        logError('rpe.progression.load.failed', { name: (error as Error)?.name });
       } finally {
         setLoading(false);
       }

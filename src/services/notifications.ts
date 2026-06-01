@@ -12,19 +12,26 @@
 
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
+import { logWarn } from './logger';
 
 // ── Foreground behavior ─────────────────────────────────────────────────────
 // While the rest modal is on screen we don't want a duplicate banner — the
 // modal already tells the user the timer ended.  We DO want the sound, since
 // a phone-down user wants to hear it.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowBanner: false,
-    shouldShowList: false,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+//
+// Guarded off web: expo-notifications has no full browser implementation, and
+// the web demo has no local-notification surface. Native builds register the
+// handler as before.
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowBanner: false,
+      shouldShowList: false,
+      shouldPlaySound: true,
+      shouldSetBadge: false,
+    }),
+  });
+}
 
 // ── Android channel ─────────────────────────────────────────────────────────
 // Android requires every notification to belong to a channel.  Importance
@@ -43,7 +50,7 @@ export async function ensureRestTimerChannel(): Promise<void> {
   } catch (e) {
     // Channel setup failing is non-fatal — the foreground timer still works,
     // we just won't be able to alert the user when backgrounded.
-    console.warn('notifications: failed to set up rest-timer channel', e);
+    logWarn('notifications.channel.setup.failed', { name: (e as Error)?.name });
   }
 }
 
@@ -63,12 +70,11 @@ export async function ensureNotificationPermission(): Promise<boolean> {
         allowAlert: true,
         allowBadge: false,
         allowSound: true,
-        allowAnnouncements: false,
       },
     });
     return req.granted;
   } catch (e) {
-    console.warn('notifications: permission check failed', e);
+    logWarn('notifications.permission.check.failed', { name: (e as Error)?.name });
     return false;
   }
 }

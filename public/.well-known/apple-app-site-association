@@ -1,0 +1,17 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["TEAMID_PLACEHOLDER.com.mixzs.repmi"],
+        "components": [
+          { "/": "/w/*",  "comment": "Shared workout deep-links" },
+          { "/": "/u/*",  "comment": "Public profile deep-links" },
+          { "/": "/auth/reset", "comment": "Password-reset confirmation" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TEAMID_PLACEHOLDER.com.mixzs.repmi"]
+  }
+}

@@ -12,6 +12,13 @@ import { colors } from '../theme/colors';
 import { Skeleton, useStableLoading } from '../components/ui/Skeleton';
 import type { RootStackParamList } from './types';
 
+// H2 — MFA-required gate. When the user is signed in at AAL1 with a
+// verified TOTP factor, we render ONLY the MFA challenge stack — no
+// access to TabNavigator until the challenge is satisfied.
+import MFAChallengeScreen from '../screens/MFAChallengeScreen';
+import MFAEnrollScreen from '../screens/MFAEnrollScreen';
+import HealthDataConsentScreen from '../screens/HealthDataConsentScreen';
+
 const Root = createNativeStackNavigator<RootStackParamList>();
 
 function BootSkeleton() {
@@ -36,13 +43,6 @@ function BootSkeleton() {
     </View>
   );
 }
-
-// H2 — MFA-required gate. When the user is signed in at AAL1 with a
-// verified TOTP factor, we render ONLY the MFA challenge stack — no
-// access to TabNavigator until the challenge is satisfied.
-import MFAChallengeScreen from '../screens/MFAChallengeScreen';
-import MFAEnrollScreen from '../screens/MFAEnrollScreen';
-import HealthDataConsentScreen from '../screens/HealthDataConsentScreen';
 
 export default function RootNavigator() {
   const { session, isLoading: authLoading, mfaRequired } = useAuth();

@@ -28,117 +28,290 @@ export const PHASE_CATEGORIES: PhaseCategory[] = [
     label: 'Cardio',
     defaultMode: 'timed',
     items: [
-      'Treadmill Walk', 'Treadmill Incline Walk', 'Treadmill Light Jog',
-      'Stationary Bike', 'Rowing Machine', 'Elliptical',
-      'Stair Climber', 'Ski Erg', 'Jump Rope',
-      'Jumping Jacks', 'Step Jacks', 'High Knees', 'Butt Kicks',
-      'March in Place', 'Mountain Climbers', 'Squat Jumps',
-      'Lateral Jumps', 'Ankle Bounces', 'Jog in Place',
+      // Treadmill / walking / jogging
+      'Treadmill Walk', 'Brisk Walk', 'Treadmill Incline Walk',
+      'Treadmill Light Jog', 'Light Jog', 'Jog in Place', 'March in Place',
+      // Bikes
+      'Stationary Bike', 'Recumbent Bike Easy', 'Air Bike Easy', 'Assault Bike Warm-Up',
+      // Rowers / ergs / climbers
+      'Rowing Machine', 'Light Row', 'Ski Erg', 'Ski Erg Easy',
+      'Elliptical', 'Cross-Trainer Easy', 'Stair Climber', 'VersaClimber Easy',
+      // Jump rope variants
+      'Jump Rope', 'Single-Leg Skip', 'Alternate-Foot Skip', 'Double-Unders (Easy)',
+      // Bodyweight cardio primers
+      'Jumping Jacks', 'Step Jacks', 'High Knees', 'Butt Kicks', 'Mountain Climbers',
+      'Boxer Shuffle', 'Shadow Boxing (Light)',
+      // Lateral / hop primers
+      'Carioca (Warm-Up Pace)', 'Side Shuffle (Easy)', 'Skater Hops (Low)',
+      'Pogo Hops (Easy)', 'Line Hops', 'Lateral Step-Outs', 'Toe Taps (Low Box)',
     ],
   },
   {
     label: 'Dynamic',
     defaultMode: 'reps',
     items: [
-      'Leg Swings (Front-Back)', 'Leg Swings (Side-Side)',
+      // Leg / hip swings
+      'Leg Swings (Front-Back)', 'Leg Swings (Side-Side)', 'Pendulum Leg Swing',
+      // Arms / shoulders
       'Arm Circles (Forward)', 'Arm Circles (Backward)', 'Arm Crossovers',
-      'Hip Circles', 'Torso Twists', 'Neck Rolls', 'Ankle Circles',
-      'Walking Knee Hugs', 'Walking Quad Stretch', 'Walking Lunge',
-      'Reverse Lunge with Rotation', 'Lateral Lunge', 'Curtsy Lunge',
-      'Straight-Leg March', 'Inverted Hamstring Stretch',
-      'Inchworm', 'World\'s Greatest Stretch', 'Spiderman Lunge',
-      'Prisoner Squat', 'Windmills',
+      // Trunk / hips
+      'Hip Circles', 'Torso Twists', 'Ankle Circles', 'Windmills',
+      // Walking knee / quad / hamstring drills
+      'Walking Knee Hugs', 'Walking Knee Pulls', 'Cradle Walk',
+      'Walking Quad Stretch', 'High Knee Walk', 'Straight-Leg March', 'A-March',
+      'Walking Hamstring Sweep', 'Inverted Hamstring Stretch',
+      'Walking RDL (Single-Leg Reach)',
+      // Lunge family
+      'Walking Lunge', 'Reverse Lunge with Rotation', 'Lateral Lunge',
+      'Lateral Lunge with Reach', 'Drop Lunge', 'Curtsy Lunge (Bodyweight)',
+      // World's-greatest + spiderman family
+      'World\'s Greatest Stretch', 'Spiderman Lunge', 'Walking Spiderman',
+      'Spiderman with T-Spine Rotation',
+      // Mid-body kicks / walks
+      'Frankenstein Walk', 'Toy Soldier Walk', 'Tin Soldier Kicks',
+      // Misc dynamic primers
+      'Knee-to-Wall Stretch', 'Iron Cross Stretch', 'Scorpions',
+      'Side-to-Side Squat', 'Prisoner Squat', 'Power Position Wall Drill',
     ],
   },
   {
     label: 'Static',
     defaultMode: 'timed',
     items: [
-      'Standing Quad Stretch', 'Standing Forward Fold', 'Seated Hamstring Stretch',
-      'Half Splits', 'Wall Calf Stretch', 'Seated Calf Stretch',
-      'Butterfly Stretch', 'Figure Four Stretch', 'Standing IT Band Stretch',
+      // Quads
+      'Standing Quad Stretch', 'Quad Stretch on Stomach',
+      // Forward folds
+      'Standing Forward Fold', 'Standing Half Forward Fold',
+      // Hamstrings
+      'Standing Hamstring Stretch', 'Seated Hamstring Stretch',
+      'Lying Hamstring Stretch', 'Banded Hamstring Floss',
+      // Hip openers
+      'Half Splits', 'Saddle Stretch', 'Shoelace Stretch',
+      'Butterfly Stretch', 'Figure Four Stretch',
+      'Standing Glute Stretch', 'Lying Glute Stretch', 'Pretzel Stretch',
+      'Standing IT Band Stretch',
+      // Hip flexors
       'Kneeling Hip Flexor Stretch', 'Runner\'s Lunge', 'Frog Stretch',
-      'Crossbody Shoulder Stretch', 'Overhead Triceps Stretch', 'Chest Opener Stretch',
-      'Extended Puppy Pose', 'Seated Neck Release', 'Lying Pectoral Stretch',
-      'Knee-to-Chest Stretch', 'Reclined Spinal Twist', 'Seated Spinal Twist',
-      'Supine Spinal Twist', 'Kneeling Side Bend', 'Legs-Up-the-Wall',
+      // Calves
+      'Wall Calf Stretch', 'Standing Calf Stretch', 'Seated Calf Stretch',
+      'Soleus Stretch',
+      // Chest / pecs
+      'Doorway Pec Stretch', 'Standing Wall Pec Stretch',
+      'Chest Opener Stretch', 'Lying Pectoral Stretch',
+      // Shoulders / lats
+      'Crossbody Shoulder Stretch', 'Standing Cross-Body Lat Stretch',
+      'Wall Lat Stretch',
+      // Triceps / forearms
+      'Overhead Triceps Stretch', 'Forearm Flexor Stretch', 'Forearm Extensor Stretch',
+      // Neck / upper body
+      'Seated Neck Release', 'Extended Puppy Pose',
+      // Spinal twists / back
+      'Knee-to-Chest Stretch', 'Reclined Spinal Twist',
+      'Seated Spinal Twist', 'Supine Spinal Twist',
+      // Side body
+      'Kneeling Side Bend', 'Standing Side Bend',
+      // Recovery
+      'Legs-Up-the-Wall',
     ],
   },
   {
     label: 'Mobility',
     defaultMode: 'timed',
     items: [
-      'Neck CARs', 'Shoulder CARs', 'Wrist CARs', 'Hip CARs',
-      'Ankle CARs', 'Thoracic CARs',
-      '90/90 Hip Stretch', '90/90 Hip Switches', 'Couch Stretch',
-      'Hip Flexor Lunge', 'Cossack Squat', 'Deep Squat Hold',
+      // CARs (Controlled Articular Rotations)
+      'Neck CARs', 'Neck Rolls', 'Shoulder CARs', 'Standing Hip CARs',
+      'Hip CARs', 'Knee CARs', 'Ankle CARs',
+      'Wrist CARs', 'Elbow CARs', 'Spine CARs', 'Thoracic CARs',
+      // Hip mobility
+      '90/90 Hip Stretch', '90/90 Hip Switches', 'T-Spine 90/90 Rotation',
+      'Couch Stretch', 'Hip Flexor Lunge', 'Half-Kneeling Hip Flexor with Side Bend',
+      // Squat / Cossack work
+      'Cossack Squat Hold', 'Cossack Reach', 'Deep Squat Hold',
+      // Adductors / hip openers
+      'Frog Rockback', 'Pancake Pose Hold', 'Adductor Rockback', 'Adductor Pulse',
+      // T-spine
       'Thread the Needle', 'Open Book', 'Quadruped Thoracic Rotation',
-      'Thoracic Extension', 'Wall Slides', 'Back-to-Wall Shoulder Flexion',
+      'Thoracic Extension', 'Side-Lying Windmill', 'Bretzel Stretch',
+      // Spine extension
+      'Sphinx Press-Up', 'Cobra Reach', 'Prone Press-Up',
+      // Hip + spine combo
+      'Lizard with Twist', 'Crab Reach', 'Shin Box to Pigeon',
+      // Shoulder
+      'Wall Slides', 'Single-Arm Wall Slides', 'Back-to-Wall Shoulder Flexion',
       'Scapular Circles', 'Band Overhead Reach',
-      'Rocking Ankle Mobilization', 'Heel Walks', 'Toe Walks',
-      'Half-Kneeling Ankle Rockback', 'Seated Side Stretch',
+      // Banded distractions
+      'Banded Hip Internal Rotation', 'Banded Hip Distraction',
+      'Banded Shoulder Distraction', 'Banded Pec Distraction',
+      // Ankle
+      'Rocking Ankle Mobilization', 'Half-Kneeling Ankle Rockback',
+      'Heel Walks', 'Toe Walks',
+      // Side body
+      'Seated Side Stretch',
     ],
   },
   {
     label: 'Foam Roll',
     defaultMode: 'timed',
     items: [
-      'Foam Roll Quads', 'Foam Roll IT Band', 'Foam Roll Hamstrings',
-      'Foam Roll Glutes', 'Foam Roll Calves', 'Foam Roll Hip Flexors',
-      'Foam Roll Upper Back', 'Foam Roll Lats', 'Foam Roll Mid-Back',
-      'Foam Roll Adductors', 'Foam Roll Peroneals', 'Foam Roll Chest',
-      'Lacrosse Ball Feet', 'Lacrosse Ball Glutes', 'Lacrosse Ball Upper Traps',
+      // Lower body
+      'Foam Roll Quads', 'Foam Roll Hamstrings', 'Foam Roll IT Band', 'Foam Roll TFL',
+      'Foam Roll Glutes', 'Foam Roll Glute Medius',
+      'Foam Roll Adductors', 'Foam Roll Hip Flexors',
+      // Calves / shins
+      'Foam Roll Calves', 'Foam Roll Soleus', 'Foam Roll Shins', 'Foam Roll Peroneals',
+      // Back
+      'Foam Roll Upper Back', 'Foam Roll Mid-Back', 'Foam Roll Erectors',
+      'Foam Roll Thoracic Extension',
+      // Lats / chest / arms
+      'Foam Roll Lats', 'Foam Roll Lats Side-Lying',
+      'Foam Roll Chest', 'Foam Roll Pec', 'Foam Roll Forearms',
+      // Lacrosse ball
+      'Lacrosse Ball Feet', 'Lacrosse Ball Glutes', 'Lacrosse Ball Calves',
+      'Lacrosse Ball Upper Traps', 'Lacrosse Ball Suboccipitals',
+      'Lacrosse Ball Pec', 'Lacrosse Ball Forearm', 'Lacrosse Ball Rotator Cuff',
+      // Other tools
+      'Peanut Ball Thoracic',
+      'Massage Gun Quads', 'Massage Gun Hamstrings', 'Massage Gun Calves',
+      'Trigger Point Glutes',
     ],
   },
   {
     label: 'Activation',
     defaultMode: 'reps',
     items: [
-      'Glute Bridge', 'Single-Leg Glute Bridge', 'Clamshell',
-      'Fire Hydrant', 'Donkey Kick', 'Lateral Band Walk',
-      'Monster Walk', 'Banded Squat Walk', 'Hip Thrust Bodyweight',
-      'Band External Rotation', 'Band Face Pulls', 'Band Pull Aparts',
-      'Band No-Money Exercise', 'Prone Y-T-W Raises', 'Side-Lying External Rotation',
-      'Dead Bug', 'Bird Dog', 'Pallof Press',
-      'Side Plank', 'Bear Plank Hold', 'Copenhagen Plank',
-      'Hollow Body Hold', 'Plank Shoulder Taps',
-      'Nordic Hamstring Curl', 'Terminal Knee Extension', 'Single-Leg Balance Hold',
+      // Glute activation
+      'Glute Bridge', 'Single-Leg Glute Bridge', 'B-Stance Glute Bridge',
+      'Glute Bridge Hold (Isometric)',
+      'Hip Thrust Bodyweight', 'Hip Thrust March', 'Single-Leg Hip Bridge with Pulse',
+      'Frog Pump (Bodyweight)',
+      'Clamshell', 'Fire Hydrant', 'Donkey Kick', 'Quadruped Hip Extension',
+      'Lateral Band Walk', 'Monster Walk', 'Banded Squat Walk', 'Crossover Step-Up',
+      '90-90 Glute Hold', 'Hip Airplane', 'Bowler Squat',
+      // Balance
+      'Single-Leg Balance Hold', 'Single-Leg Stance Eyes Closed',
+      // Rotator cuff / scap
+      'Band External Rotation', 'Side-Lying External Rotation', 'Sleeper Stretch',
+      'Band Face Pulls', 'Band Pull Aparts', 'Band No-Money Exercise',
+      'Prone Y-T-W Raises', 'Prone Cobra Hold',
+      'Scap Push-Ups', 'Scap Pull-Ups',
+      'Wall Angels', 'Banded Wall Slides', 'Light Cuban Press',
+      'Cross-Body Reach', 'Standing Banded Row',
+      // Core / anti-rotation
+      'Dead Bug', 'Banded Dead Bug', 'Bird Dog', 'McGill Curl-Up',
+      'Pallof Press', 'Half-Kneeling Pallof Press', 'Tall-Kneeling Pallof Press',
+      'Banded Anti-Rotation Press', 'Cable Lift', 'Cable Chop',
+      // Plank family
+      'Side Plank', 'Side Plank Reach Through', 'Bear Plank Hold', 'Copenhagen Plank',
+      'Hollow Body Hold', 'Plank Shoulder Taps', 'Toe Touch Plank',
+      'Knee-to-Elbow Plank', 'Renegade Plank', 'Stir-the-Pot Plank',
+      'Reverse Plank', 'Reverse Plank with Leg Lift',
+      // Carry / iso
+      'Suitcase Hold',
+      // Knee / quad
+      'Nordic Hamstring Curl', 'Terminal Knee Extension',
+      'Spanish Squat', 'Cyclist Squat (Bodyweight)',
+      'Step-Up with Knee Drive',
+      // Foot / ankle
+      'Short Foot Drill', 'Toe Yoga', 'Big Toe Lifts',
+      'Banded Ankle Eversion', 'Banded Ankle Inversion',
     ],
   },
   {
     label: 'Movement',
     defaultMode: 'reps',
     items: [
-      'Bear Crawl', 'Bear Crawl Backward', 'Leopard Crawl',
-      'Crab Walk', 'Lizard Crawl', 'Duck Walk',
-      'Inchworm', 'Hand Walkout', 'Squat to Stand',
-      'Hip Hinge Walkout', 'T-Rotation', 'Shin Box Rotation', 'Shin Box Get-Up',
-      'Power Skips', 'Bounders', 'Broad Jump',
-      'Tuck Jump', 'Lunge Jump', 'Rotational Jump',
+      // Crawls
+      'Bear Crawl', 'Bear Crawl Backward', 'Lateral Bear Crawl', 'Spiderman Crawl',
+      'Leopard Crawl', 'Crab Walk', 'Lizard Crawl', 'Duck Walk',
+      // Walkouts
+      'Inchworm', 'Hand Walkout', 'Squat to Stand', 'Hip Hinge Walkout',
+      // Rotational get-ups
+      'T-Rotation', 'Shin Box Rotation', 'Shin Box Get-Up', 'Hip Switch Get-Up',
+      // Tumbling / gymnastic
+      'Forward Roll', 'Backward Roll', 'Cartwheel',
+      // Lunge prep
+      'Three-Way Lunge', 'Lunge Jump', 'Single-Leg RDL (Bodyweight)',
+      // Skipping / bounding
+      'Power Skips', 'Pogo Skips', 'Bounders', 'Quick Feet',
+      // Jumps (plyo prep)
+      'Broad Jump', 'Tuck Jump', 'Squat Jumps', 'Lateral Jumps', 'Ankle Bounces',
+      'Lateral Plyo Step', 'Skater Hops', 'Hop-to-Box (Low)',
+      'Single-Leg Hop in Place', 'Rotational Jump',
+      // Lateral footwork
+      'Lateral Shuffle', 'Crossover Step', 'Drop Step',
     ],
   },
   {
     label: 'Sports',
     defaultMode: 'timed',
     items: [
-      'A-Skip', 'B-Skip', 'High Knee March', 'Butt Kick Run',
-      'Carioca', 'Backpedal', 'Side Shuffle', 'Lateral Shuffle to Sprint',
-      'Acceleration Sprints', 'Strides', 'Forward-Backward Hops',
-      'T-Drill', 'Box Drill', 'Cone Weave', 'Zig-Zag Run', '5-10-5 Pro Agility',
-      'Shadowboxing', 'Jump Rope Footwork',
-      'Swim Arm Swings', 'Climbing Finger Rolls',
+      // Sprint mechanics
+      'A-Skip', 'B-Skip', 'Ankling', 'Stride Frequency Drill',
+      'High Knee March', 'Butt Kick Run',
+      'Wall Drill (A)', 'Wall Drill (B)',
+      'Falling Start', '3-Point Start', 'Get-Up Sprint',
+      'Acceleration Sprints', 'Strides', 'Sprint Build-Up', 'Tempo Run',
+      // Lateral / change-of-direction
+      'Carioca', 'Crossover Run', 'Backpedal', 'Drop-Step Sprint',
+      'Side Shuffle', 'Lateral Shuffle to Sprint', 'Forward-Backward Hops',
+      // Plyo / jump primers
+      'Pogo to Sprint', 'Approach Run-Up', 'Bound to Stick', 'Skater Reach',
+      'Straight-Leg Bounds',
+      // Agility cones / shuttle
+      'T-Drill', 'Box Drill', 'Cone Weave', 'Zig-Zag Run',
+      '5-10-5 Pro Agility', '5-Cone Drill', 'L-Drill', 'W-Drill',
+      // Agility ladder
+      'Dot Drill', 'Quick Feet Ladder', 'In-and-Out Ladder', 'Icky Shuffle',
+      'Two-Foot Run Ladder', 'Single-Leg Ladder Hop',
+      // Combat sports
+      'Shadowboxing', 'Shadow Kicking', 'Stance Switches',
+      'Hip Escapes', 'Bridge & Roll',
+      // Rope
+      'Jump Rope Footwork',
+      // Basketball
+      'Defensive Slide', 'Form Shooting', 'Layup Lines', 'Box-Out Drill',
+      // Soccer
+      'Toe Taps (Soccer)', 'Cone Dribble', 'Soccer Juggling', 'Inside-Outside Touches',
+      // Racquet sports
+      'Split-Step', 'Open-Stance Forehand Shadow', 'Volley Shadow',
+      // Baseball / softball
+      'Throwing Progression', 'Long Toss', 'Tee Swings', 'Dry Swings', 'Plyo Ball Throws',
+      // Climbing
+      'Hangboard Light Edges', 'Campus Board Easy', 'Open-Hand Hold',
+      'Climbing Finger Rolls',
+      // Swimming
+      'Swim Arm Swings', 'Streamline Drill', 'Easy Kick Set', 'Pull Buoy Easy',
+      // Golf
+      'Trunk Rotation with Club', 'Hip Hinge with Club', 'Shoulder Pass-Throughs with Club',
     ],
   },
   {
     label: 'Stretching',
     defaultMode: 'timed',
     items: [
-      'Cat-Cow', 'Downward-Facing Dog', 'Child\'s Pose',
-      'Low Lunge', 'High Lunge', 'Warrior I', 'Warrior II',
-      'Pyramid Pose', 'Cobra Pose', 'Upward-Facing Dog',
-      'Sun Salutation A', 'Thread the Needle',
-      'Pigeon Pose', 'Reclined Pigeon', 'Lizard Pose',
+      // Flows / cat-cow
+      'Cat-Cow', 'Sun Salutation A',
+      // Downward dog family
+      'Downward-Facing Dog', 'Child\'s Pose',
+      // Lunges
+      'Low Lunge', 'High Lunge', 'Lizard Pose',
+      // Warriors / standing
+      'Warrior I', 'Warrior II', 'Triangle Pose', 'Half-Moon Pose', 'Eagle Pose',
+      // Forward fold family
+      'Pyramid Pose', 'Wide-Legged Forward Fold', 'Garland Pose',
+      // Backbends
+      'Cobra Pose', 'Upward-Facing Dog', 'Sphinx Pose', 'Camel Pose',
+      'Bridge Pose', 'Wheel Pose', 'Bow Pose', 'Locust Pose',
+      // Inversions
+      'Plough Pose', 'Shoulder Stand', 'Headstand', 'Crow Pose',
+      // Pigeon family
+      'Pigeon Pose', 'Reclined Pigeon', 'Half-Pigeon',
+      // Seated postures
+      'Hero Pose', 'Cow Face Pose', 'Mermaid Stretch',
+      'Half-Lord-of-the-Fishes', 'Toe Sit',
+      // Hip opener / restorative
       'Happy Baby Pose', 'Bound Angle Pose',
+      // Seated finishers
       'Seated Forward Fold', 'Supine Twist', 'Savasana',
     ],
   },
@@ -146,10 +319,21 @@ export const PHASE_CATEGORIES: PhaseCategory[] = [
     label: 'Cooldown',
     defaultMode: 'timed',
     items: [
-      'Easy Walk', 'Easy Bike', 'Easy Row', 'Easy Elliptical', 'Easy Swim',
-      'Brisk Walking', 'Easy Jog to Walk', 'March in Place (Slow)',
-      'Arm Circles (Slow)', 'Slow Torso Twists', 'Slow Hip Circles',
-      'Scorpion Stretch', 'Neck Stretch (Slow)',
+      // Easy machine cooldowns
+      'Easy Walk', 'Cooldown Treadmill Walk', 'Decline Treadmill Walk',
+      'Easy Jog to Walk', 'Walking Recovery Lap',
+      'Easy Bike', 'Cooldown Bike Spin',
+      'Easy Row', 'Cooldown Row',
+      'Easy Elliptical', 'Cooldown Ski Erg', 'Easy Swim',
+      // Slow articulation
+      'March in Place (Slow)', 'Arm Circles (Slow)',
+      'Slow Torso Twists', 'Slow Hip Circles', 'Neck Stretch (Slow)',
+      // Recovery holds
+      'Standing Forward Fold (Hold)',
+      'Supine Knee Hugs', 'Constructive Rest Position',
+      // Breathwork (parasympathetic down-regulation)
+      'Supine Recovery Breathing', 'Diaphragmatic Breathing', 'Box Breathing',
+      '4-7-8 Breathing', 'Nasal Breathing Walk', 'Crocodile Breathing',
     ],
   },
 ];

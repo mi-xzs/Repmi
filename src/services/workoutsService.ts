@@ -7,6 +7,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import { WorkoutData } from '../types/exercise';
+import { logError } from './logger';
 
 interface WorkoutRow {
   id: string;
@@ -78,7 +79,7 @@ export async function migrateWorkoutsFromAsyncStorage(userId: string): Promise<v
   try {
     local = JSON.parse(raw);
   } catch (e) {
-    console.error('workoutsService: corrupt local workouts, skipping migration', e);
+    logError('workouts.migrate.corrupt', { name: (e as Error)?.name });
     await AsyncStorage.setItem(MIGRATION_KEY, 'true');
     return;
   }
@@ -100,7 +101,7 @@ export async function migrateWorkoutsFromAsyncStorage(userId: string): Promise<v
     })),
   );
   if (error) {
-    console.error('workoutsService: migration upsert failed', error);
+    logError('workouts.migrate.upsert.failed', { supabaseCode: (error as { code?: string }).code });
     return; // do NOT set the flag — retry on next launch
   }
 

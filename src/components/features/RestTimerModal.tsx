@@ -36,6 +36,7 @@ import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { colors } from '../../theme/colors';
 import { useAccent } from '../../services/SettingsContext';
 import { ensureNotificationPermission } from '../../services/notifications';
+import { logWarn } from '../../services/logger';
 
 interface RestTimerModalProps {
   visible: boolean;
@@ -92,7 +93,7 @@ export default function RestTimerModal({
     try {
       await Notifications.cancelScheduledNotificationAsync(id);
     } catch (e) {
-      console.warn('RestTimer: failed to cancel notification', e);
+      logWarn('restTimer.notif.cancel.failed', { name: (e as Error)?.name });
     }
   }, []);
 
@@ -120,7 +121,7 @@ export default function RestTimerModal({
           },
         });
       } catch (e) {
-        console.warn('RestTimer: failed to schedule notification', e);
+        logWarn('restTimer.notif.schedule.failed', { name: (e as Error)?.name });
         notifIdRef.current = null;
       }
     },

@@ -1,0 +1,158 @@
+-- =============================================================================
+-- A4 / H2 + H3 follow-up — Server-side JSONB guards
+-- =============================================================================
+--
+-- The client validates these blobs with Zod (src/services/payloadSchemas.ts),
+-- but a tampered client bypasses that. These constraints are the server-side
+-- backstop. We ship the CHEAP guards (size + numeric range) here; the full
+-- shape validation via pg_jsonschema is included below, commented out, since
+-- it requires enabling an extension from the dashboard first.
+--
+-- NOTE ON APPLYING: `ADD CONSTRAINT ... CHECK` validates ALL existing rows
+-- immediately and fails if any row violates. If you have legacy rows outside
+-- these bounds, either clean them first or add the constraint as `NOT VALID`
+-- (skips the existing-row scan) and `VALIDATE CONSTRAINT` later once data is
+-- clean. The `drop constraint if exists` lines keep this migration re-runnable.
+
+-- ── shared_workouts.workout_data — payload size ceiling (16 KiB) ──────────────
+-- Mirrors the intent of WorkoutDataPayloadSchema's bounded arrays/strings:
+-- a well-formed share is well under 16 KiB; anything larger is pathological.
+alter table public.shared_workouts
+  drop constraint if exists shared_workouts_workout_data_size;
+alter table public.shared_workouts
+  add constraint shared_workouts_workout_data_size
+  check (octet_length(workout_data::text) < 16384);
+
+-- ── workout_sessions.duration — sane bound (0 .. 6h) ─────────────────────────
+-- Matches payloadSchemas.ts WorkoutSessionPayloadSchema.duration
+-- (finite, min 0, max 21_600s). 0 is allowed for legacy rows stamped before
+-- the timer fix shipped.
+alter table public.workout_sessions
+  drop constraint if exists workout_sessions_duration_cap;
+alter table public.workout_sessions
+  add constraint workout_sessions_duration_cap
+  check (duration between 0 and 21600);
+
+-- =============================================================================
+-- OPTIONAL — full shape validation via pg_jsonschema
+-- =============================================================================
+-- Enable the extension first: Dashboard → Database → Extensions → pg_jsonschema
+-- (or `create extension if not exists pg_jsonschema;` if your role allows it).
+-- Then uncomment the constraints below. The JSON Schemas are faithful
+-- translations of payloadSchemas.ts — KEEP THEM IN SYNC if that file changes.
+-- (Postgres jsonb already rejects NaN/Infinity, so the Zod `finite` guard is
+-- covered implicitly; JSON Schema has no equivalent keyword.)
+--
+-- create extension if not exists pg_jsonschema;
+--
+-- -- workout_sessions.exercises  (WorkoutSessionPayloadSchema minus date/duration,
+-- -- which are their own columns; this validates the exercises array only)
+-- alter table public.workout_sessions
+--   drop constraint if exists workout_sessions_exercises_shape;
+-- alter table public.workout_sessions
+--   add constraint workout_sessions_exercises_shape
+--   check (jsonb_matches_schema(
+--     '{
+--       "type": "array",
+--       "maxItems": 100,
+--       "items": {
+--         "type": "object",
+--         "additionalProperties": false,
+--         "required": ["name", "sets"],
+--         "properties": {
+--           "name": { "type": "string", "maxLength": 80 },
+--           "sets": {
+--             "type": "array",
+--             "maxItems": 200,
+--             "items": {
+--               "type": "object",
+--               "additionalProperties": false,
+--               "required": ["label"],
+--               "properties": {
+--                 "label":   { "type": "string", "maxLength": 32 },
+--                 "kg":      { "type": "number", "minimum": 0, "maximum": 2000 },
+--                 "reps":    { "type": "number", "minimum": 0, "maximum": 10000 },
+--                 "minutes": { "type": "number", "minimum": 0, "maximum": 600 },
+--                 "seconds": { "type": "number", "minimum": 0, "maximum": 3600 },
+--                 "meters":  { "type": "number", "minimum": 0, "maximum": 1000000 }
+--               }
+--             }
+--           }
+--         }
+--       }
+--     }',
+--     exercises
+--   ));
+--
+-- -- shared_workouts.workout_data  (WorkoutDataPayloadSchema)
+-- alter table public.shared_workouts
+--   drop constraint if exists shared_workouts_workout_data_shape;
+-- alter table public.shared_workouts
+--   add constraint shared_workouts_workout_data_shape
+--   check (jsonb_matches_schema(
+--     '{
+--       "type": "object",
+--       "additionalProperties": false,
+--       "required": ["id", "workoutName", "showWarmUp", "showCooldown", "sections"],
+--       "properties": {
+--         "id":           { "type": "string", "maxLength": 100 },
+--         "workoutName":  { "type": "string", "maxLength": 80 },
+--         "showWarmUp":   { "type": "boolean" },
+--         "showCooldown": { "type": "boolean" },
+--         "imported":     { "type": "boolean" },
+--         "editedAt":     { "type": "string", "maxLength": 40 },
+--         "sections": {
+--           "type": "array", "maxItems": 50,
+--           "items": {
+--             "type": "object",
+--             "additionalProperties": false,
+--             "required": ["id", "exerciseName", "rows"],
+--             "properties": {
+--               "id":           { "type": "string", "maxLength": 100 },
+--               "exerciseName": { "type": "string", "maxLength": 80 },
+--               "restTimer":    { "type": "number", "minimum": 0, "maximum": 7200 },
+--               "exerciseMode": { "type": "string", "enum": ["weight","bodyweight","timed","distance"] },
+--               "linkedToNext": { "type": "boolean" },
+--               "rows": {
+--                 "type": "array", "maxItems": 100,
+--                 "items": {
+--                   "type": "object",
+--                   "additionalProperties": false,
+--                   "required": ["sets", "kg", "reps", "done"],
+--                   "properties": {
+--                     "sets":    { "type": "number", "minimum": 0, "maximum": 1000 },
+--                     "kg":      { "type": "number", "minimum": 0, "maximum": 2000 },
+--                     "reps":    { "type": "number", "minimum": 0, "maximum": 10000 },
+--                     "done":    { "type": "boolean" },
+--                     "minutes": { "type": "number", "minimum": 0, "maximum": 600 },
+--                     "seconds": { "type": "number", "minimum": 0, "maximum": 3600 },
+--                     "meters":  { "type": "number", "minimum": 0, "maximum": 1000000 }
+--                   }
+--                 }
+--               }
+--             }
+--           }
+--         },
+--         "warmUp":   { "type": "array", "maxItems": 30, "items": { "$ref": "#/$defs/phaseRow" } },
+--         "cooldown": { "type": "array", "maxItems": 30, "items": { "$ref": "#/$defs/phaseRow" } }
+--       },
+--       "$defs": {
+--         "phaseRow": {
+--           "type": "object",
+--           "additionalProperties": false,
+--           "required": ["name", "minutes", "seconds", "reps", "done"],
+--           "properties": {
+--             "name":            { "type": "string", "maxLength": 80 },
+--             "minutes":         { "type": "number", "minimum": 0, "maximum": 600 },
+--             "seconds":         { "type": "number", "minimum": 0, "maximum": 3600 },
+--             "reps":            { "type": "number", "minimum": 0, "maximum": 10000 },
+--             "done":            { "type": "boolean" },
+--             "mode":            { "type": "string", "enum": ["timed","reps","distance"] },
+--             "meters":          { "type": "number", "minimum": 0, "maximum": 1000000 },
+--             "sectionCategory": { "type": "string", "maxLength": 40 }
+--           }
+--         }
+--       }
+--     }',
+--     workout_data
+--   ));

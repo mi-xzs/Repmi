@@ -9,9 +9,17 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { useAuth } from '../services/AuthContext';
 import { colors } from '../theme/colors';
 import { useAccent } from '../services/SettingsContext';
+import {
+  validatePassword,
+  checkPasswordBreached,
+  PASSWORD_RULE_LABELS,
+  PasswordRules,
+} from '../services/passwordPolicy';
+import { logError } from '../services/logger';
 
 export default function SignUpScreen({ navigation }: any) {
   const { signUp } = useAuth();
@@ -22,8 +30,22 @@ export default function SignUpScreen({ navigation }: any) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  // SECURITY / COMPLIANCE: minimum age gate. The app collects body
+  // metrics (weight, height, training data) which most jurisdictions
+  // treat as health-adjacent personal data, so we require an attested
+  // age of 16+ before signup is enabled. The submit button stays
+  // disabled until the checkbox is checked; we re-validate in the
+  // handler as a defence-in-depth measure.
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
+
+  // H1: live per-rule validation so the checklist updates as the user types.
+  const { rules: passwordRules, isValid: passwordValid } = validatePassword(password);
 
   async function handleSignUp() {
+    if (!ageConfirmed) {
+      setError('You must confirm you are at least 16 years old to create an account.');
+      return;
+    }
     if (!email || !password || !confirm) {
       setError('Please fill in all fields.');
       return;
@@ -32,12 +54,27 @@ export default function SignUpScreen({ navigation }: any) {
       setError('Passwords do not match.');
       return;
     }
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (!passwordValid) {
+      // The live checklist is the primary affordance; this is a
+      // defence-in-depth guard for the submit handler.
+      setError('Password does not meet the requirements below.');
       return;
     }
     setError('');
     setLoading(true);
+
+    // A7 / M5 — block known-breached passwords. Fails open (proceeds) if
+    // HIBP is unreachable so an outage can't stop all signups.
+    const breach = await checkPasswordBreached(password);
+    if (breach.status === 'breached') {
+      setLoading(false);
+      setError('This password has appeared in a known data breach. Please choose a different one.');
+      return;
+    }
+    if (breach.status === 'unavailable') {
+      logError('passwordPolicy.breachCheck.unavailable', { screen: 'signup' });
+    }
+
     const err = await signUp(email.trim(), password);
     setLoading(false);
     if (err) {
@@ -61,6 +98,8 @@ export default function SignUpScreen({ navigation }: any) {
     );
   }
 
+  const submitDisabled = loading || !ageConfirmed || !passwordValid;
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -68,6 +107,29 @@ export default function SignUpScreen({ navigation }: any) {
     >
       <Text style={[styles.title, { color: accent }]}>Create account</Text>
       <Text style={styles.subtitle}>Start tracking your gains</Text>
+
+      {/* Age gate — must be acknowledged BEFORE the email/password fields
+          per spec, so users see the requirement up front rather than
+          discovering it after typing credentials. */}
+      <TouchableOpacity
+        style={styles.checkboxRow}
+        activeOpacity={0.7}
+        onPress={() => setAgeConfirmed(v => !v)}
+        accessibilityRole="checkbox"
+        accessibilityState={{ checked: ageConfirmed }}
+      >
+        <View
+          style={[
+            styles.checkbox,
+            ageConfirmed && { backgroundColor: accent, borderColor: accent },
+          ]}
+        >
+          {ageConfirmed ? (
+            <Feather name="check" size={14} color={colors.background} />
+          ) : null}
+        </View>
+        <Text style={styles.checkboxLabel}>I am at least 16 years old</Text>
+      </TouchableOpacity>
 
       <TextInput
         style={styles.input}
@@ -86,6 +148,11 @@ export default function SignUpScreen({ navigation }: any) {
         onChangeText={setPassword}
         secureTextEntry
       />
+      {/* H1: live password-rule checklist. Renders once the user starts
+          typing so it doesn't clutter the empty state. */}
+      {password.length > 0 ? (
+        <PasswordChecklist rules={passwordRules} accent={accent} />
+      ) : null}
       <TextInput
         style={styles.input}
         placeholder="Confirm password"
@@ -97,7 +164,15 @@ export default function SignUpScreen({ navigation }: any) {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <TouchableOpacity style={[styles.button, { backgroundColor: accent }]} onPress={handleSignUp} disabled={loading}>
+      <TouchableOpacity
+        style={[
+          styles.button,
+          { backgroundColor: accent },
+          submitDisabled && styles.buttonDisabled,
+        ]}
+        onPress={handleSignUp}
+        disabled={submitDisabled}
+      >
         {loading
           ? <ActivityIndicator color={colors.background} />
           : <Text style={styles.buttonText}>Sign Up</Text>
@@ -108,6 +183,48 @@ export default function SignUpScreen({ navigation }: any) {
         <Text style={styles.link}>Already have an account? <Text style={[styles.linkAccent, { color: accent }]}>Log in</Text></Text>
       </TouchableOpacity>
     </KeyboardAvoidingView>
+  );
+}
+
+// H1 — per-rule checklist. Each row is a check/x glyph + label; passes are
+// rendered in the accent colour, fails in muted grey. Live updates as the
+// user types via the parent's validatePassword() output.
+function PasswordChecklist({
+  rules,
+  accent,
+}: {
+  rules: PasswordRules;
+  accent: string;
+}) {
+  const keys: (keyof PasswordRules)[] = [
+    'minLength',
+    'hasUppercase',
+    'hasDigit',
+    'hasSymbol',
+  ];
+  return (
+    <View style={styles.checklist}>
+      {keys.map(k => {
+        const ok = rules[k];
+        return (
+          <View key={k} style={styles.checklistRow}>
+            <Feather
+              name={ok ? 'check' : 'x'}
+              size={12}
+              color={ok ? accent : colors.button2}
+            />
+            <Text
+              style={[
+                styles.checklistText,
+                { color: ok ? accent : colors.button1 },
+              ]}
+            >
+              {PASSWORD_RULE_LABELS[k]}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
   );
 }
 
@@ -149,6 +266,9 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 20,
   },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
   buttonText: {
     color: colors.background,
     fontWeight: '700',
@@ -161,5 +281,41 @@ const styles = StyleSheet.create({
   },
   linkAccent: {
     fontWeight: '600',
+  },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: colors.button1,
+    backgroundColor: colors.container,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  checkboxLabel: {
+    color: '#fff',
+    fontSize: 14,
+    flexShrink: 1,
+  },
+  checklist: {
+    marginTop: -4,
+    marginBottom: 12,
+    paddingHorizontal: 4,
+    gap: 4,
+  },
+  checklistRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  checklistText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
 });

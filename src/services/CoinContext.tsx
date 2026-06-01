@@ -22,6 +22,7 @@ import { loadAllSessions as sbLoadAllSessions } from './sessionService';
 import { WorkoutSession } from '../screens/WorkoutScreen';
 import { deriveCoinTotal, CoinTotals } from './coinService';
 import { getLongestStreak } from '../utils/analyticsHelpers';
+import { logError } from './logger';
 
 const EMPTY_TOTALS: CoinTotals = {
   seed: 0,
@@ -60,7 +61,7 @@ export function CoinProvider({ children }: { children: ReactNode }) {
       const fresh = await sbLoadAllSessions(userId);
       setSessions(fresh);
     } catch (e) {
-      console.error('CoinContext: refresh failed', e);
+      logError('coin.refresh.failed', { name: (e as Error)?.name });
     }
   }, [userId]);
 

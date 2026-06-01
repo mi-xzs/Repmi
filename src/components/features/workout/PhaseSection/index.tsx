@@ -708,7 +708,7 @@ function InfoPopup({ visible, onClose }: { visible: boolean; onClose: () => void
 
 // Long-press popup for selecting a row's mode. Three large pills — discoverable
 // and accessible, unlike a 28-pixel cycle button.
-const MODE_OPTIONS: Array<{ mode: PhaseRowMode; label: string }> = [
+const MODE_OPTIONS: { mode: PhaseRowMode; label: string }[] = [
   { mode: 'timed', label: 'Time' },
   { mode: 'reps', label: 'Reps' },
   { mode: 'distance', label: 'Distance' },

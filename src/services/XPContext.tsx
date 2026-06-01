@@ -27,6 +27,7 @@ import {
   computeSessionXP,
 } from './xpService';
 import { dayKey, getCurrentStreak, getLongestStreak } from '../utils/analyticsHelpers';
+import { logError } from './logger';
 
 // ─── Achievement Types ───────────────────────────────────────────────────────
 
@@ -292,10 +293,10 @@ export function XPProvider({ children }: { children: ReactNode }) {
         totalSets,
         prCount,
       }).catch(e =>
-        console.error('XPContext: profile stats cache write failed', e),
+        logError('xp.statsCache.write.failed', { name: (e as Error)?.name }),
       );
     } catch (e) {
-      console.error('XPContext: refresh failed', e);
+      logError('xp.refresh.failed', { name: (e as Error)?.name });
     }
   }, [userId]);
 
@@ -320,10 +321,10 @@ export function XPProvider({ children }: { children: ReactNode }) {
       try {
         if (userId) {
           await migrateFromAsyncStorage(userId, workouts).catch(e =>
-            console.error('XPContext: session migration failed', e),
+            logError('xp.sessionMigrate.failed', { name: (e as Error)?.name }),
           );
           await flushPendingSessions(userId).catch(e =>
-            console.error('XPContext: pending session flush failed', e),
+            logError('xp.pendingFlush.failed', { name: (e as Error)?.name }),
           );
           if (cancelled) return;
           await refresh();
@@ -332,7 +333,7 @@ export function XPProvider({ children }: { children: ReactNode }) {
           setAchievementXP(0);
         }
       } catch (e) {
-        console.error('XPContext: init failed', e);
+        logError('xp.init.failed', { name: (e as Error)?.name });
       } finally {
         if (!cancelled) setIsLoaded(true);
       }

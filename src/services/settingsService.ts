@@ -6,6 +6,8 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
+import { logError, logCacheCorruption } from './logger';
+import { FavoritesArraySchema, safeJsonParse } from './cacheSchemas';
 
 export type WeightUnit = 'kg' | 'lbs';
 export type HeightUnit = 'cm' | 'ft';
@@ -79,32 +81,34 @@ export async function migrateSettingsFromAsyncStorage(userId: string): Promise<U
   if (done) return remote;
 
   // Collect any local prefs that aren't already represented server-side.
+  // C1 — `priv_publicProfile` is intentionally NOT drained any more.
+  // It used to be written into `extra.publicProfile`, which had no
+  // server-side effect (the column the RLS reads is
+  // `profiles.is_public_profile`). The legacy key is wiped by
+  // `clearLocalUserData` on sign-out.
   const [
     [, weightUnitRaw],
     [, heightUnitRaw],
     [, equippedTitle],
     [, favoritesRaw],
-    [, publicProfile],
     [, openFollows],
   ] = await AsyncStorage.multiGet([
     'pref_weightUnit',
     'pref_heightUnit',
     'equipped_season_title',
     'favoriteWorkouts',
-    'priv_publicProfile',
     'priv_openFollows',
   ]);
 
   let favorites: string[] = remote.favoriteWorkoutIds;
   if (favoritesRaw) {
-    try {
-      const parsed = JSON.parse(favoritesRaw);
-      if (Array.isArray(parsed)) {
-        // Union with remote — remote takes precedence on duplicates.
-        favorites = Array.from(new Set([...remote.favoriteWorkoutIds, ...parsed]));
-      }
-    } catch (e) {
-      console.error('settingsService: corrupt favorites in AsyncStorage', e);
+    // M6 — schema-validate the legacy favorites blob before merging.
+    const parsed = FavoritesArraySchema.safeParse(safeJsonParse(favoritesRaw));
+    if (parsed.success) {
+      // Union with remote — remote takes precedence on duplicates.
+      favorites = Array.from(new Set([...remote.favoriteWorkoutIds, ...parsed.data]));
+    } else {
+      logCacheCorruption('favoriteWorkouts');
     }
   }
 
@@ -125,7 +129,6 @@ export async function migrateSettingsFromAsyncStorage(userId: string): Promise<U
     favoriteWorkoutIds: favorites,
     extra: {
       ...remote.extra,
-      ...(publicProfile !== null ? { publicProfile: publicProfile === 'true' } : {}),
       ...(openFollows !== null   ? { openFollows:   openFollows   === 'true' } : {}),
     },
   };
@@ -134,7 +137,7 @@ export async function migrateSettingsFromAsyncStorage(userId: string): Promise<U
     await upsertSettings(userId, merged);
     await AsyncStorage.setItem(MIGRATION_KEY, 'true');
   } catch (e) {
-    console.error('settingsService: migration upsert failed', e);
+    logError('settings.migrate.upsert.failed', { name: (e as Error)?.name });
     // Leave the flag unset so we retry next launch. Return merged so the
     // current session uses the local values anyway.
   }

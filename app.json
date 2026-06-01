@@ -3,6 +3,7 @@
     "name": "Repmi",
     "slug": "repmi",
     "version": "1.0.0",
+    "scheme": "repmi",
     "orientation": "portrait",
     "icon": "./src/assets/icon.png",
     "userInterfaceStyle": "light",
@@ -10,32 +11,98 @@
     "splash": {
       "image": "./src/assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#000000"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.mixzs.repmi",
+      "associatedDomains": [
+        "applinks:repmi.co.uk"
+      ],
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": false,
+          "NSAllowsArbitraryLoadsForMedia": false,
+          "NSAllowsArbitraryLoadsInWebContent": false,
+          "NSAllowsLocalNetworking": false,
+          "NSExceptionDomains": {
+            "supabase.co": {
+              "NSIncludesSubdomains": true,
+              "NSExceptionMinimumTLSVersion": "TLSv1.2",
+              "NSExceptionRequiresForwardSecrecy": true,
+              "NSExceptionAllowsInsecureHTTPLoads": false,
+              "NSRequiresCertificateTransparency": false
+            }
+          },
+          "NSPinnedDomains": {
+            "supabase.co": {
+              "NSIncludesSubdomains": true,
+              "NSPinnedCAIdentities": [
+                {
+                  "SPKI-SHA256-BASE64": "PLACEHOLDER_LEAF_SHA256_BASE64_44_CHARS_AAAA=="
+                },
+                {
+                  "SPKI-SHA256-BASE64": "PLACEHOLDER_INTERMEDIATE_SHA256_BASE64_44_CC=="
+                }
+              ]
+            }
+          }
+        }
+      }
     },
     "android": {
       "package": "com.mixzs.repmi",
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "allowBackup": false,
+      "permissions": [
+        "INTERNET",
+        "VIBRATE",
+        "READ_MEDIA_IMAGES"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "https",
+              "host": "repmi.co.uk"
+            }
+          ],
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
+        }
+      ]
     },
     "web": {
       "favicon": "./src/assets/favicon.png"
     },
     "plugins": [
       "@react-native-community/datetimepicker",
-      "expo-notifications"
+      "expo-notifications",
+      "expo-secure-store",
+      [
+        "freerasp-react-native",
+        {
+          "android": {
+            "minSdkVersion": 24
+          }
+        }
+      ],
+      "@sentry/react-native"
     ],
+    "owner": "mixzs",
     "extra": {
       "eas": {
-        "projectId": "681281cd-66a7-4f49-ba84-ddc86213e334"
+        "projectId": "63ae0743-c1c5-4c82-9995-942fc1bfeb8f"
       }
-    },
-    "owner": "mixzs"
+    }
   }
 }

@@ -40,6 +40,12 @@ yarn-error.*
 # docs (local-only — not pushed)
 docs/
 
+# local scratch / one-off files (kept local, never published)
+temp_prompt.txt
+make_qm_pdf.py
+build.log
+gradle.log
+
 # Claude Code memory
 .claude/
 

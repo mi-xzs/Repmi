@@ -3,8 +3,11 @@ import {
   Alert,
   Animated,
   Dimensions,
+  KeyboardAvoidingView,
   Linking,
+  Modal,
   PanResponder,
+  Platform,
   ScrollView,
   StyleSheet,
   Switch,
@@ -13,6 +16,43 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useFocusEffect , useNavigation } from '@react-navigation/native';
+import {
+  preventScreenCaptureAsync,
+  allowScreenCaptureAsync,
+} from 'expo-screen-capture';
+import { supabase } from '../services/supabase';
+import {
+  isBiometricAvailable,
+  isBiometricEnabled,
+  setBiometricEnabled,
+  authenticateBiometric,
+} from '../services/biometricService';
+import {
+  fetchBlockedUsers,
+  unblockUser,
+  BlockedUser,
+} from '../services/moderationService';
+import { mapAuthError, mapGenericError } from '../services/errorMessages';
+import { logError } from '../services/logger';
+import {
+  daysUntilUsernameChangeAllowed,
+  usernameChangeAvailableOn,
+  logAuditEvent,
+} from '../services/profileService';
+import {
+  isCrashReportingEnabled,
+  enableCrashReporting,
+  disableCrashReporting,
+} from '../services/observability';
+import { Feather } from '@expo/vector-icons';
+
+import { colors } from '../theme/colors';
+import { useAuth } from '../services/AuthContext';
+import { useProfile } from '../services/ProfileContext';
+import { useSettings, useAccent } from '../services/SettingsContext';
+import { deleteAccount, requireReAuth } from '../services/accountService';
+import { TrainingGoal } from '../types/user';
 
 const SCREEN_W = Dimensions.get('window').width;
 const TAB_COUNT = 5;
@@ -21,13 +61,6 @@ const SEGMENT_W = (SCREEN_W - 32) / TAB_COUNT; // 16px padding each side
 // nav grammar reads as one family across the app.
 const SWIPE_VELOCITY_THRESHOLD = 0.3;
 const SWIPE_DISTANCE_THRESHOLD = SCREEN_W * 0.35;
-import { Feather } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
-import { colors } from '../theme/colors';
-import { useAuth } from '../services/AuthContext';
-import { useProfile } from '../services/ProfileContext';
-import { useSettings, useAccent } from '../services/SettingsContext';
-import { TrainingGoal } from '../types/user';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -90,16 +123,133 @@ function Row({
 function AccountTab() {
   const { session, signOut } = useAuth();
   const { profile, updateProfile } = useProfile();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { accent } = useAccent();
+
+  // H9 — prevent screenshots while the Settings screen is mounted
+  // (bodyweight + height + email are all rendered here).
+  useFocusEffect(useCallback(() => {
+    preventScreenCaptureAsync().catch(() => {});
+    return () => { allowScreenCaptureAsync().catch(() => {}); };
+  }, []));
 
   const [editingUsername, setEditingUsername] = useState(false);
   const [usernameInput,   setUsernameInput]   = useState(profile?.username ?? '');
+  const [isDeleting,      setIsDeleting]      = useState(false);
+
+  // H2 — Security state.
+  const [bioAvailable, setBioAvailable] = useState(false);
+  const [bioEnabled,   setBioEnabled]   = useState(false);
+  const [mfaEnrolled,  setMfaEnrolled]  = useState<string | null>(null); // factor id if enrolled
+  const [blocked, setBlocked] = useState<BlockedUser[] | null>(null);
+
+  // A6 / M3 — re-auth modal state for destructive ops
+  // (disable MFA, delete account).
+  const [reAuth, setReAuth] = useState<
+    | { kind: 'disable_mfa'; factorId: string }
+    | { kind: 'delete_account'; userId: string }
+    | null
+  >(null);
+
+  useEffect(() => {
+    isBiometricAvailable().then(setBioAvailable);
+    isBiometricEnabled().then(setBioEnabled);
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.mfa.listFactors().then(({ data }) => {
+      if (cancelled) return;
+      const totp = (data?.totp ?? []).find(f => f.status === 'verified');
+      setMfaEnrolled(totp?.id ?? null);
+    });
+    fetchBlockedUsers().then(rows => {
+      if (!cancelled) setBlocked(rows);
+    });
+    return () => { cancelled = true; };
+  }, []);
+
+  const toggleBiometric = async (next: boolean) => {
+    if (next) {
+      const ok = await authenticateBiometric('Confirm to enable biometric unlock');
+      if (!ok) return;
+      await setBiometricEnabled(true);
+      setBioEnabled(true);
+    } else {
+      await setBiometricEnabled(false);
+      setBioEnabled(false);
+    }
+  };
+
+  // A6 / M3 — Disable 2FA is gated by ReAuthModal (password + biometric).
+  // The actual unenroll runs in performDisableMfa after re-auth succeeds.
+  const disableMfa = () => {
+    if (!mfaEnrolled) return;
+    setReAuth({ kind: 'disable_mfa', factorId: mfaEnrolled });
+  };
+
+  const performDisableMfa = async (factorId: string) => {
+    const { error } = await supabase.auth.mfa.unenroll({ factorId });
+    if (error) {
+      logError('mfa.unenroll.failed', { code: (error as { code?: string }).code });
+      Alert.alert('Failed', mapAuthError(error));
+    } else {
+      setMfaEnrolled(null);
+      // M8 — record the MFA-disable event in the audit log so a
+      // compromised account can prove when the second factor
+      // was removed.
+      logAuditEvent('mfa_unenrolled', null, { factorType: 'totp' });
+    }
+  };
+
+  const handleUnblock = async (id: string) => {
+    try {
+      await unblockUser(id);
+      setBlocked(prev => (prev ?? []).filter(b => b.id !== id));
+    } catch (e) {
+      logError('moderation.unblock.failed', { name: (e as Error)?.name });
+      Alert.alert('Unblock failed', mapGenericError(e));
+    }
+  };
 
   const saveUsername = async () => {
     const trimmed = usernameInput.trim();
     setEditingUsername(false);
-    if (trimmed && trimmed !== profile?.username) await updateProfile({ username: trimmed });
+    if (!trimmed || trimmed === profile?.username) return;
+    // M11 — client-side check against the 30-day window. The server
+    // trigger is the authoritative gate, but checking here avoids a
+    // round-trip + lets us show a friendlier message.
+    const remainingDays = daysUntilUsernameChangeAllowed(
+      (profile as { username_changed_at?: string | null })?.username_changed_at,
+    );
+    if (remainingDays > 0) {
+      const next = usernameChangeAvailableOn(
+        (profile as { username_changed_at?: string | null })?.username_changed_at,
+      );
+      Alert.alert(
+        'Username locked',
+        next
+          ? `You can change your username again on ${next.toLocaleDateString()} (${remainingDays} day${remainingDays === 1 ? '' : 's'} away).`
+          : 'You changed your username recently. Try again later.',
+      );
+      return;
+    }
+    try {
+      await updateProfile({ username: trimmed });
+    } catch (e) {
+      // M11 — server-side rate-limit fires as PostgREST exception
+      // with hint 'username_change_rate_limit'. Surface generic copy.
+      const msg = (e as { message?: string })?.message ?? '';
+      if (/username_change_rate_limit/.test(msg)) {
+        Alert.alert(
+          'Username locked',
+          'You can change your username again 30 days after the last change.',
+        );
+      } else {
+        logError('profile.username.update.failed', { name: (e as Error)?.name });
+        Alert.alert('Could not save', mapGenericError(e));
+      }
+    }
   };
 
   const handleSignOut = () => {
@@ -109,15 +259,51 @@ function AccountTab() {
     ]);
   };
 
+  // A6 / M3 — Delete account is gated by ReAuthModal (password + biometric).
+  // The actual delete runs in performDeleteAccount after re-auth succeeds.
   const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete account',
-      'This will permanently delete your account and all data. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => {} },
-      ],
-    );
+    if (isDeleting) return;
+    const userId = session?.user?.id;
+    if (!userId) return;
+    setReAuth({ kind: 'delete_account', userId });
+  };
+
+  const performDeleteAccount = async (userId: string) => {
+    setIsDeleting(true);
+    try {
+      await deleteAccount(userId);
+      // signOut inside deleteAccount fires onAuthStateChange in
+      // AuthContext, which unmounts the authed nav stack — no
+      // further navigation needed here.
+    } catch (e) {
+      setIsDeleting(false);
+      logError('account.delete.failed', { name: (e as Error)?.name });
+      Alert.alert(
+        'Delete failed',
+        `${mapGenericError(e)}\n\nPlease try again, or email support if the problem persists.`,
+      );
+    }
+  };
+
+  // A6 / M3 — runs the queued destructive op after the modal verified
+  // the password + biometric. Errors are surfaced inside the modal so
+  // the user can retry without re-opening it.
+  const handleReAuthConfirm = async (password: string) => {
+    const pending = reAuth;
+    if (!pending) return;
+    const email = session?.user?.email;
+    if (!email) throw new Error('no_email');
+    const reason =
+      pending.kind === 'disable_mfa'
+        ? 'Confirm to disable two-factor'
+        : 'Confirm to delete your account';
+    await requireReAuth(email, password, reason);
+    setReAuth(null);
+    if (pending.kind === 'disable_mfa') {
+      await performDisableMfa(pending.factorId);
+    } else {
+      await performDeleteAccount(pending.userId);
+    }
   };
 
   return (
@@ -155,22 +341,204 @@ function AccountTab() {
       </SettingsSection>
 
       <SettingsSection title="Security">
-        <Row icon="lock"     label="Change password" onPress={() => {
-          Alert.alert('Change password', 'A reset link will be sent to your email.', [
-            { text: 'Cancel', style: 'cancel' },
-            { text: 'Send link', onPress: () => {} },
-          ]);
-        }} last />
+        <Row
+          icon="lock"
+          label="Change password"
+          onPress={() => {
+            Alert.alert('Change password', 'A reset link will be sent to your email.', [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Send link',
+                onPress: async () => {
+                  if (!session?.user?.email) return;
+                  const { error } = await supabase.auth.resetPasswordForEmail(
+                    session.user.email,
+                  );
+                  if (error) {
+                    logError('auth.passwordReset.failed', { code: (error as { code?: string }).code });
+                    Alert.alert('Failed', mapAuthError(error));
+                  } else {
+                    // M8 — record password-reset request in the audit log.
+                    logAuditEvent('password_reset_requested', null, {});
+                    Alert.alert('Sent', 'Check your inbox for the reset link.');
+                  }
+                },
+              },
+            ]);
+          }}
+        />
+        {/* H2 — Two-factor authentication. */}
+        <Row
+          icon="shield"
+          label={mfaEnrolled ? 'Two-factor: enabled' : 'Enable two-factor (TOTP)'}
+          onPress={() => mfaEnrolled ? disableMfa() : navigation.navigate('MFAEnroll')}
+        />
+        {/* H2 — Biometric unlock. */}
+        <Row
+          icon="unlock"
+          label={bioAvailable ? 'Unlock with biometrics' : 'Biometrics unavailable'}
+          last
+          right={bioAvailable ? (
+            <Switch
+              value={bioEnabled}
+              onValueChange={toggleBiometric}
+              trackColor={{ false: colors.button3, true: accent + '99' }}
+              thumbColor={bioEnabled ? accent : colors.button1}
+            />
+          ) : <Text style={s.rowValue}>n/a</Text>}
+        />
       </SettingsSection>
+
+      {/* H12 — Blocked users management. Hidden when the list is empty so
+          the user doesn't see an empty "Blocked users" card unnecessarily. */}
+      {blocked && blocked.length > 0 ? (
+        <SettingsSection title="Blocked users">
+          {blocked.map((b, i) => (
+            <View key={b.id} style={[s.row, i === blocked.length - 1 && s.rowLast]}>
+              <View style={s.rowIcon}>
+                <Feather name="user-x" size={15} color={colors.button1} />
+              </View>
+              <Text style={s.rowLabel} numberOfLines={1}>
+                {b.username ?? 'Unknown user'}
+              </Text>
+              <TouchableOpacity onPress={() => handleUnblock(b.id)} style={s.unblockBtn}>
+                <Text style={s.unblockBtnText}>Unblock</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </SettingsSection>
+      ) : null}
 
       <SettingsSection title="Session">
         <Row icon="log-out" label="Sign out" onPress={handleSignOut} last />
       </SettingsSection>
 
       <SettingsSection title="Danger zone">
-        <Row icon="trash-2" label="Delete account" onPress={handleDeleteAccount} danger last />
+        <Row
+          icon="trash-2"
+          label={isDeleting ? 'Deleting…' : 'Delete account'}
+          onPress={isDeleting ? undefined : handleDeleteAccount}
+          danger
+          last
+        />
       </SettingsSection>
+
+      {/* A6 / M3 — re-auth gate for disable-MFA + delete-account. */}
+      <ReAuthModal
+        visible={reAuth !== null}
+        kind={reAuth?.kind ?? 'disable_mfa'}
+        onCancel={() => setReAuth(null)}
+        onConfirm={handleReAuthConfirm}
+      />
     </ScrollView>
+  );
+}
+
+// A6 / M3 — modal that collects the password and routes through
+// requireReAuth() before any destructive op runs. Decoupled from the
+// caller so the screen just opens it and reacts to the resolved
+// promise; modal owns the password input, the spinner, and the
+// error-string mapping.
+function ReAuthModal({
+  visible,
+  kind,
+  onCancel,
+  onConfirm,
+}: {
+  visible: boolean;
+  kind: 'disable_mfa' | 'delete_account';
+  onCancel: () => void;
+  onConfirm: (password: string) => Promise<void>;
+}) {
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!visible) {
+      setPassword('');
+      setBusy(false);
+      setErr(null);
+    }
+  }, [visible]);
+
+  const title = kind === 'disable_mfa' ? 'Disable two-factor' : 'Delete account';
+  const message =
+    kind === 'disable_mfa'
+      ? 'Enter your password to confirm. This removes the extra layer of protection on your account.'
+      : 'This will permanently delete your account and all data. Enter your password to confirm.';
+  const confirmLabel = kind === 'disable_mfa' ? 'Disable' : 'Delete';
+
+  const submit = async () => {
+    if (!password || busy) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      await onConfirm(password);
+    } catch (e) {
+      const msg = (e as Error).message;
+      if (msg === 'cancelled') {
+        // Biometric cancel — silent, leave the modal open so the user
+        // can retry or hit Cancel themselves.
+      } else if (msg === 'password_mismatch') {
+        setErr('Incorrect password.');
+      } else {
+        setErr('Could not verify. Try again.');
+      }
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={s.modalOverlay}
+      >
+        <View style={s.modalCard}>
+          <Text style={s.modalTitle}>{title}</Text>
+          <Text style={s.modalMessage}>{message}</Text>
+          <TextInput
+            style={s.modalInput}
+            placeholder="Password"
+            placeholderTextColor={colors.button1}
+            secureTextEntry
+            autoCapitalize="none"
+            autoCorrect={false}
+            textContentType="password"
+            value={password}
+            onChangeText={setPassword}
+            editable={!busy}
+            onSubmitEditing={submit}
+            returnKeyType="done"
+          />
+          {err ? <Text style={s.modalError}>{err}</Text> : null}
+          <View style={s.modalButtons}>
+            <TouchableOpacity
+              onPress={onCancel}
+              disabled={busy}
+              style={[s.modalBtn, s.modalBtnCancel]}
+            >
+              <Text style={s.modalBtnTextCancel}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={submit}
+              disabled={busy || password.length === 0}
+              style={[
+                s.modalBtn,
+                s.modalBtnConfirm,
+                (busy || password.length === 0) && s.modalBtnDisabled,
+              ]}
+            >
+              <Text style={s.modalBtnTextConfirm}>
+                {busy ? 'Verifying…' : confirmLabel}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 }
 
@@ -178,6 +546,20 @@ function PreferencesTab() {
   const { profile, updateProfile } = useProfile();
   const { weightUnit, heightUnit, setWeightUnit, setHeightUnit } = useSettings();
   const { accent, accentDim, accentSubtle } = useAccent();
+  const { session } = useAuth();
+  const navigation = useNavigation<any>();
+
+  // H4 — gate the first save of body metrics on GDPR Art. 9 consent.
+  // We lazily import to avoid pulling consent code into screens that
+  // don't need it. The check runs server-side too.
+  const requireBodyMetricsConsent = useCallback(async (): Promise<boolean> => {
+    const uid = session?.user?.id;
+    if (!uid) return false;
+    const { hasConsent } = await import('../services/consentService');
+    if (await hasConsent(uid, 'body_metrics')) return true;
+    navigation.navigate('HealthDataConsent');
+    return false;
+  }, [session?.user?.id, navigation]);
 
   const [weeklyTarget, setWeeklyTarget] = useState(profile?.weekly_target ?? 3);
   const [goal, setGoal] = useState<TrainingGoal | null>(profile?.goal ?? null);
@@ -233,6 +615,9 @@ function PreferencesTab() {
     setEditingWeight(false);
     const val = parseFloat(weightInput);
     if (!isNaN(val) && val > 0) {
+      // H4 — gate save on consent.
+      const ok = await requireBodyMetricsConsent();
+      if (!ok) return;
       const kg = weightUnit === 'lbs' ? val / 2.20462 : val;
       await updateProfile({ weight_kg: Math.round(kg * 10) / 10 });
     }
@@ -251,6 +636,9 @@ function PreferencesTab() {
     setEditingHeight(false);
     const val = parseFloat(heightInput);
     if (!isNaN(val) && val > 0) {
+      // H4 — gate save on consent.
+      const ok = await requireBodyMetricsConsent();
+      if (!ok) return;
       const cm = heightUnit === 'ft' ? val * 2.54 : val;
       await updateProfile({ height_cm: Math.round(cm) });
     }
@@ -459,6 +847,19 @@ function PrivacyTab() {
   const { publicProfile, openFollows, setPublicProfile, setOpenFollows } = useSettings();
   const { accent, accentDim } = useAccent();
 
+  // M1 — Crash-reporting opt-in. The toggle is loaded from SecureStore
+  // on mount and persists each flip via the observability module
+  // (which also closes / reinitialises the Sentry client).
+  const [crashReportingOn, setCrashReportingOn] = useState(false);
+  useEffect(() => {
+    isCrashReportingEnabled().then(setCrashReportingOn);
+  }, []);
+  const toggleCrashReporting = async (next: boolean) => {
+    setCrashReportingOn(next);
+    if (next) await enableCrashReporting();
+    else      await disableCrashReporting();
+  };
+
   return (
     <ScrollView contentContainerStyle={s.tabContent} showsVerticalScrollIndicator={false}>
       <SettingsSection title="Profile">
@@ -489,6 +890,23 @@ function PrivacyTab() {
         />
       </SettingsSection>
 
+      {/* M1 — Crash reporting opt-in (GDPR Art. 6(1)(a)). Default OFF. */}
+      <SettingsSection title="Crash reporting">
+        <Row
+          icon="alert-triangle"
+          label="Help improve Repmi by sending crash reports"
+          last
+          right={
+            <Switch
+              value={crashReportingOn}
+              onValueChange={toggleCrashReporting}
+              trackColor={{ false: colors.button3, true: accentDim }}
+              thumbColor={crashReportingOn ? accent : colors.button1}
+            />
+          }
+        />
+      </SettingsSection>
+
       <SettingsSection title="Data">
         <Row icon="download" label="Export my data"  onPress={() => Alert.alert('Coming soon', 'Data export will be available in a future update.')} />
         <Row icon="eye-off"  label="Hide from search" last right={<Text style={s.rowValue}>Coming soon</Text>} />
@@ -503,12 +921,23 @@ function AboutTab() {
       <SettingsSection title="App">
         <Row icon="info"        label="Version"         value="1.0.0" />
         <Row icon="star"        label="Rate the app"    onPress={() => {}} />
-        <Row icon="message-square" label="Send feedback" onPress={() => Linking.openURL('mailto:support@gymtracker.app')} last />
+        <Row icon="message-square" label="Send feedback" onPress={() => Linking.openURL('mailto:support@repmi.co.uk')} last />
       </SettingsSection>
 
       <SettingsSection title="Legal">
-        <Row icon="file-text"   label="Terms of service" onPress={() => {}} />
-        <Row icon="shield"      label="Privacy policy"   onPress={() => {}} last />
+        {/* TODO: update URL once legal docs are hosted */}
+        <Row
+          icon="file-text"
+          label="Terms of service"
+          onPress={() => Linking.openURL('https://repmi.co.uk/terms')}
+        />
+        {/* TODO: update URL once legal docs are hosted */}
+        <Row
+          icon="shield"
+          label="Privacy policy"
+          onPress={() => Linking.openURL('https://repmi.co.uk/privacy')}
+          last
+        />
       </SettingsSection>
     </ScrollView>
   );
@@ -868,6 +1297,19 @@ const s = StyleSheet.create({
   },
   chipLabelActive: {},
 
+  // H12 — Unblock button
+  unblockBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: colors.button3,
+  },
+  unblockBtnText: {
+    color: colors.highlight,
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
   // Goal rows
   goalRow: {
     flexDirection: 'row',
@@ -879,4 +1321,74 @@ const s = StyleSheet.create({
     borderBottomColor: colors.button3,
   },
   goalRowActive: {},
+
+  // A6 / M3 — Re-auth modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 360,
+    backgroundColor: colors.container,
+    borderRadius: 14,
+    padding: 18,
+    gap: 12,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.highlight,
+  },
+  modalMessage: {
+    fontSize: 13,
+    color: colors.button1,
+    lineHeight: 18,
+  },
+  modalInput: {
+    backgroundColor: colors.button3,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: colors.highlight,
+  },
+  modalError: {
+    fontSize: 12,
+    color: '#FF6B6B',
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 11,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalBtnCancel: {
+    backgroundColor: colors.button3,
+  },
+  modalBtnConfirm: {
+    backgroundColor: '#FF6B6B',
+  },
+  modalBtnDisabled: {
+    opacity: 0.5,
+  },
+  modalBtnTextCancel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.highlight,
+  },
+  modalBtnTextConfirm: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
 });

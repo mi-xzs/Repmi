@@ -15,16 +15,24 @@
 
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  Alert,
   View,
   Text,
   Image,
   ScrollView,
   StyleSheet,
+  TextInput,
   TouchableOpacity,
   ActivityIndicator,
   Pressable,
   Modal,
 } from 'react-native';
+import {
+  blockUser,
+  reportUser,
+  ReportReason,
+  REPORT_REASONS,
+} from '../services/moderationService';
 import { Feather } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
@@ -34,15 +42,17 @@ import {
   fetchProfile,
   fetchProfileStats,
   fetchFollowCounts,
-  fetchFollowingSet,
+  fetchFollowEdges,
   followUser,
   unfollowUser,
   ProfileStats,
+  FollowEdgeStatus,
 } from '../services/profileService';
 import { UserProfile } from '../types/user';
 import { getLevelFromXP, getLevelTitle } from '../services/xpService';
 import { fmtDuration } from '../utils/analyticsHelpers';
 import RadarChart from '../components/analytics/RadarChart';
+import { logError } from '../services/logger';
 
 const GOAL_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
   strength:    { label: 'Strength',    icon: 'trending-up', color: '#6D6D6D', bg: 'rgba(109,109,109,0.12)' },
@@ -130,10 +140,17 @@ export default function UserProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<ProfileStats | null>(null);
   const [counts, setCounts] = useState<{ followers: number; following: number }>({ followers: 0, following: 0 });
-  const [isFollowing, setIsFollowing] = useState(false);
+  // 'none' = not following, 'pending' = request sent, 'accepted' = following.
+  const [followState, setFollowState] = useState<'none' | FollowEdgeStatus>('none');
   const [pending, setPending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [volumeModalOpen, setVolumeModalOpen] = useState(false);
+  // H12 — kebab menu + report modal state.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportReason, setReportReason] = useState<ReportReason | null>(null);
+  const [reportDetails, setReportDetails] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const load = useCallback(async () => {
     if (!targetId) return;
@@ -147,31 +164,101 @@ export default function UserProfileScreen() {
     setStats(s);
     setCounts(c);
     if (viewerId && !isSelf) {
-      const set = await fetchFollowingSet(viewerId, [targetId]);
-      setIsFollowing(set.has(targetId));
+      const edges = await fetchFollowEdges(viewerId, [targetId]);
+      setFollowState(edges.get(targetId) ?? 'none');
     }
     setLoading(false);
   }, [targetId, viewerId, isSelf]);
 
   useEffect(() => { load(); }, [load]);
 
+  // H12 — Block & Report.
+  const handleBlock = useCallback(() => {
+    setMenuOpen(false);
+    Alert.alert(
+      `Block ${profile?.username ?? 'this user'}?`,
+      `They won't be able to see your profile, follow you, or appear in your search results. You'll also unfollow each other.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Block',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await blockUser(targetId);
+              navigation.goBack();
+            } catch (e) {
+              Alert.alert('Block failed', e instanceof Error ? e.message : 'Unknown error');
+            }
+          },
+        },
+      ],
+    );
+  }, [profile, targetId, navigation]);
+
+  const openReport = useCallback(() => {
+    setMenuOpen(false);
+    setReportOpen(true);
+  }, []);
+
+  const submitReport = useCallback(async () => {
+    if (!reportReason) {
+      Alert.alert('Pick a reason', 'Tell us what the problem is so we can review it.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await reportUser(targetId, reportReason, reportDetails);
+      setReportOpen(false);
+      setReportReason(null);
+      setReportDetails('');
+      Alert.alert('Thanks for reporting', 'We review reports within 24 hours.');
+    } catch (e) {
+      Alert.alert('Report failed', e instanceof Error ? e.message : 'Unknown error');
+    } finally {
+      setSubmitting(false);
+    }
+  }, [reportReason, targetId, reportDetails]);
+
   const handleToggle = useCallback(async () => {
     if (!viewerId || isSelf) return;
     setPending(true);
-    const wasFollowing = isFollowing;
-    setIsFollowing(!wasFollowing);
-    setCounts(c => ({ ...c, followers: c.followers + (wasFollowing ? -1 : 1) }));
+    const prevState = followState;
+    // already engaged (following OR requested) → tapping clears it
+    const wasEngaged = prevState !== 'none';
+
+    if (wasEngaged) {
+      // Unfollow or cancel-request: only decrement the follower count if we
+      // were actually an accepted follower (a pending request never counted).
+      const wasAccepted = prevState === 'accepted';
+      setFollowState('none');
+      if (wasAccepted) setCounts(c => ({ ...c, followers: c.followers - 1 }));
+      try {
+        await unfollowUser(viewerId, targetId);
+      } catch (e) {
+        logError('userProfile.follow.toggle.failed', { name: (e as Error)?.name });
+        setFollowState(prevState);
+        if (wasAccepted) setCounts(c => ({ ...c, followers: c.followers + 1 }));
+      } finally {
+        setPending(false);
+      }
+      return;
+    }
+
+    // New follow/request — the server decides accepted vs pending based on the
+    // target's privacy. We can't predict it, so we don't optimistically bump
+    // the count; we apply the real result when it returns.
     try {
-      if (wasFollowing) await unfollowUser(viewerId, targetId);
-      else await followUser(viewerId, targetId);
+      const result = await followUser(viewerId, targetId);
+      setFollowState(result);
+      if (result === 'accepted') setCounts(c => ({ ...c, followers: c.followers + 1 }));
     } catch (e) {
-      console.error('[UserProfileScreen] toggle failed', e);
-      setIsFollowing(wasFollowing);
-      setCounts(c => ({ ...c, followers: c.followers + (wasFollowing ? 1 : -1) }));
+      logError('userProfile.follow.toggle.failed', { name: (e as Error)?.name });
+      setFollowState('none');
     } finally {
       setPending(false);
     }
-  }, [viewerId, isSelf, isFollowing, targetId]);
+  }, [viewerId, isSelf, followState, targetId]);
 
   if (loading) {
     return (
@@ -216,6 +303,18 @@ export default function UserProfileScreen() {
           >
             <Feather name="chevron-left" size={20} color="#fff" />
           </TouchableOpacity>
+
+          {/* H12 — kebab menu (hidden when viewing self). */}
+          {!isSelf && (
+            <TouchableOpacity
+              onPress={() => setMenuOpen(true)}
+              hitSlop={10}
+              style={styles.kebabBtn}
+              activeOpacity={0.7}
+            >
+              <Feather name="more-vertical" size={20} color="#fff" />
+            </TouchableOpacity>
+          )}
 
           {/* Avatar straddling the cover's bottom edge — same positioning */}
           <View style={styles.avatarAnchor}>
@@ -272,34 +371,45 @@ export default function UserProfileScreen() {
 
             {/* Follow / Unfollow — sits where "Member since" sits on the
                 owner's view. Hidden when viewing self. */}
-            {!isSelf && (
-              <Pressable
-                onPress={handleToggle}
-                disabled={pending}
-                style={({ pressed }) => [
-                  styles.followBtn,
-                  isFollowing
-                    ? styles.followBtnActive
-                    : { backgroundColor: accent, borderColor: accent },
-                  pressed && { opacity: 0.85 },
-                  pending && { opacity: 0.5 },
-                ]}
-              >
-                <Feather
-                  name={isFollowing ? 'check' : 'plus'}
-                  size={14}
-                  color={isFollowing ? 'rgba(255,255,255,0.85)' : '#000'}
-                />
-                <Text
-                  style={[
-                    styles.followBtnText,
-                    { color: isFollowing ? 'rgba(255,255,255,0.85)' : '#000' },
+            {!isSelf && (() => {
+              const engaged = followState !== 'none'; // following or requested
+              const label =
+                followState === 'accepted' ? 'FOLLOWING'
+                : followState === 'pending' ? 'REQUESTED'
+                : 'FOLLOW';
+              const icon =
+                followState === 'accepted' ? 'check'
+                : followState === 'pending' ? 'clock'
+                : 'plus';
+              return (
+                <Pressable
+                  onPress={handleToggle}
+                  disabled={pending}
+                  style={({ pressed }) => [
+                    styles.followBtn,
+                    engaged
+                      ? styles.followBtnActive
+                      : { backgroundColor: accent, borderColor: accent },
+                    pressed && { opacity: 0.85 },
+                    pending && { opacity: 0.5 },
                   ]}
                 >
-                  {isFollowing ? 'FOLLOWING' : 'FOLLOW'}
-                </Text>
-              </Pressable>
-            )}
+                  <Feather
+                    name={icon as any}
+                    size={14}
+                    color={engaged ? 'rgba(255,255,255,0.85)' : '#000'}
+                  />
+                  <Text
+                    style={[
+                      styles.followBtnText,
+                      { color: engaged ? 'rgba(255,255,255,0.85)' : '#000' },
+                    ]}
+                  >
+                    {label}
+                  </Text>
+                </Pressable>
+              );
+            })()}
           </View>
 
           {/* ── Key stats ── identical to ProfileScreen Lifetime Stats */}
@@ -374,6 +484,89 @@ export default function UserProfileScreen() {
               {Math.round(stats?.totalVolumeKg ?? 0).toLocaleString()} KG
             </Text>
             <Text style={styles.modalSub}>{formatTonnes(stats?.totalVolumeKg ?? 0)}</Text>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* H12 — Block / Report kebab menu. */}
+      <Modal
+        visible={menuOpen}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setMenuOpen(false)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setMenuOpen(false)}>
+          <Pressable style={styles.menuCard} onPress={() => {}}>
+            <TouchableOpacity style={styles.menuItem} onPress={openReport}>
+              <Feather name="flag" size={16} color={colors.highlight} />
+              <Text style={styles.menuItemText}>Report user</Text>
+            </TouchableOpacity>
+            <View style={styles.menuDivider} />
+            <TouchableOpacity style={styles.menuItem} onPress={handleBlock}>
+              <Feather name="user-x" size={16} color="#FF6B6B" />
+              <Text style={[styles.menuItemText, { color: '#FF6B6B' }]}>Block user</Text>
+            </TouchableOpacity>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* H12 — Report flow. */}
+      <Modal
+        visible={reportOpen}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setReportOpen(false)}
+      >
+        <Pressable style={styles.modalBackdrop} onPress={() => setReportOpen(false)}>
+          <Pressable style={styles.reportCard} onPress={() => {}}>
+            <Text style={styles.reportTitle}>Report user</Text>
+            <Text style={styles.reportSub}>
+              Help us understand the problem. We review reports within 24 hours.
+            </Text>
+            {REPORT_REASONS.map(r => (
+              <TouchableOpacity
+                key={r.key}
+                style={[
+                  styles.reasonRow,
+                  reportReason === r.key && { backgroundColor: 'rgba(255,255,255,0.06)' },
+                ]}
+                onPress={() => setReportReason(r.key)}
+              >
+                <View
+                  style={[
+                    styles.radio,
+                    reportReason === r.key && { borderColor: accent, backgroundColor: accent },
+                  ]}
+                />
+                <Text style={styles.reasonText}>{r.label}</Text>
+              </TouchableOpacity>
+            ))}
+            <TextInput
+              style={styles.reportInput}
+              placeholder="Optional details (max 500 chars)"
+              placeholderTextColor={colors.button2}
+              value={reportDetails}
+              onChangeText={t => setReportDetails(t.slice(0, 500))}
+              multiline
+            />
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TouchableOpacity
+                style={[styles.reportCancel]}
+                onPress={() => setReportOpen(false)}
+              >
+                <Text style={styles.reportCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.reportSubmit, { backgroundColor: accent }, submitting && { opacity: 0.5 }]}
+                onPress={submitReport}
+                disabled={submitting}
+              >
+                {submitting
+                  ? <ActivityIndicator color={colors.background} />
+                  : <Text style={styles.reportSubmitText}>Submit</Text>
+                }
+              </TouchableOpacity>
+            </View>
           </Pressable>
         </Pressable>
       </Modal>
@@ -638,5 +831,113 @@ const styles = StyleSheet.create({
   modalSub: {
     fontSize: 13,
     color: colors.button1,
+  },
+
+  // H12 — kebab button + Block/Report UI.
+  kebabBtn: {
+    position: 'absolute',
+    top: 48,
+    right: 12,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuCard: {
+    backgroundColor: colors.container,
+    borderRadius: 14,
+    paddingVertical: 4,
+    width: 240,
+    borderWidth: 1,
+    borderColor: colors.button3,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  menuItemText: {
+    color: colors.highlight,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: colors.button3,
+  },
+  reportCard: {
+    backgroundColor: colors.container,
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    maxWidth: 420,
+    borderWidth: 1,
+    borderColor: colors.button3,
+    gap: 8,
+  },
+  reportTitle: {
+    color: colors.highlight,
+    fontSize: 18,
+    fontWeight: '700',
+  },
+  reportSub: {
+    color: colors.button1,
+    fontSize: 13,
+    marginBottom: 8,
+  },
+  reasonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 4,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  radio: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: colors.button1,
+  },
+  reasonText: {
+    color: colors.highlight,
+    fontSize: 14,
+  },
+  reportInput: {
+    backgroundColor: colors.background,
+    borderRadius: 10,
+    color: colors.highlight,
+    padding: 10,
+    minHeight: 60,
+    fontSize: 13,
+    marginTop: 8,
+  },
+  reportCancel: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    marginTop: 12,
+  },
+  reportCancelText: {
+    color: colors.highlight,
+    fontWeight: '600',
+  },
+  reportSubmit: {
+    flex: 1.4,
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  reportSubmitText: {
+    color: colors.background,
+    fontWeight: '700',
   },
 });

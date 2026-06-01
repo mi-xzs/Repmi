@@ -39,8 +39,16 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   async function updateProfile(data: Partial<UserProfile>) {
     if (!session || !profile) return;
     const updated = { ...profile, ...data };
-    await upsertProfile(session.user.id, updated);
+    // Optimistic — flip local state first so toggles feel instant.
+    // Roll back on network failure so the UI doesn't lie.
+    const previous = profile;
     setProfile(updated);
+    try {
+      await upsertProfile(session.user.id, updated);
+    } catch (e) {
+      setProfile(previous);
+      throw e;
+    }
   }
 
   return (
