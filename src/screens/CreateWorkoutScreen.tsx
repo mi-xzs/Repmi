@@ -7,6 +7,7 @@ import {
   ScrollView,
   Keyboard,
   UIManager,
+  Platform,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
@@ -209,7 +210,10 @@ export default function CreateWorkoutScreen() {
             )}
           </View>
 
-          <Pressable onPress={() => Keyboard.dismiss()}>
+          {/* On web there's no soft keyboard to dismiss, and this wrapper's
+              onPress fires when clicking inputs inside it — Keyboard.dismiss()
+              then blurs the input, making it impossible to type. No-op on web. */}
+          <Pressable onPress={Platform.OS === 'web' ? undefined : () => Keyboard.dismiss()}>
             <View style={styles.inlineButtons}>
               {!showWarmUp && <AddWarmUpButton onPress={() => setCategoryModalPhase('warmup')} />}
               {!showCooldown && <CooldownButton onPress={() => setCategoryModalPhase('cooldown')} />}
