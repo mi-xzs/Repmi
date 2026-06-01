@@ -19,11 +19,18 @@ export const BREAKPOINTS = {
   desktop: 1024,
 } as const;
 
-// Max content column width on wide screens so reading-length lines and
-// cards don't stretch edge-to-edge on a 1440px+ monitor.
-export const CONTENT_MAX_WIDTH = 1024;
 // Width of the desktop side rail.
 export const SIDE_RAIL_WIDTH = 232;
+
+// Usable content width. The web layout is full-width: content fills the area
+// beside the side rail. On wide web that's the viewport minus the rail; on
+// mobile/native (no rail) it's the full viewport. Pagers/charts that size off
+// the window width should use this so they fill the area without overflowing
+// past the rail.
+export function getContentWidth(windowWidth: number): number {
+  const wideWeb = Platform.OS === 'web' && windowWidth >= BREAKPOINTS.tablet;
+  return wideWeb ? Math.max(0, windowWidth - SIDE_RAIL_WIDTH) : windowWidth;
+}
 
 export type Breakpoint = 'mobile' | 'tablet' | 'desktop';
 
@@ -36,7 +43,7 @@ export interface Responsive {
   isDesktop: boolean;
   /** true on tablet+ — i.e. anything wider than a phone */
   isWide: boolean;
-  /** clamp content to this width on wide screens; full width on mobile */
+  /** content is full-width now, so this is always undefined (no cap) */
   contentMaxWidth: number | undefined;
 }
 
@@ -63,6 +70,6 @@ export function useResponsive(): Responsive {
     isTablet,
     isDesktop,
     isWide: !isMobile,
-    contentMaxWidth: isMobile ? undefined : CONTENT_MAX_WIDTH,
+    contentMaxWidth: undefined,
   };
 }

@@ -20,7 +20,7 @@ import { logError } from '../services/logger';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
-import { useResponsive, CONTENT_MAX_WIDTH } from '../hooks/useResponsive';
+import { useResponsive, getContentWidth } from '../hooks/useResponsive';
 import { useWorkouts } from '../services/WorkoutContext';
 import { useXP } from '../services/XPContext';
 import { useProfile } from '../services/ProfileContext';
@@ -143,7 +143,7 @@ function WorkoutCalendar({ sessions }: { sessions: WorkoutSession[] }) {
   const { width: screenWidth } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
   // Cap to the content column on wide web so the calendar fits the column.
-  const visibleWidth = Math.min(screenWidth, CONTENT_MAX_WIDTH) - (16 * 2 + 14 * 2);
+  const visibleWidth = getContentWidth(screenWidth) - (16 * 2 + 14 * 2);
 
   const workoutDates = useMemo(() => {
     const set = new Set<string>();

@@ -55,7 +55,7 @@ import * as Haptics from 'expo-haptics';
 import { useFocusEffect, useNavigation, useRoute, type RouteProp } from '@react-navigation/native';
 import type { RootTabParamList } from '../navigation/types';
 import { colors } from '../theme/colors';
-import { useResponsive, CONTENT_MAX_WIDTH } from '../hooks/useResponsive';
+import { useResponsive, getContentWidth } from '../hooks/useResponsive';
 import { useAuth } from '../services/AuthContext';
 import { loadAllSessions as sbLoadAllSessions } from '../services/sessionService';
 import { useWorkouts } from '../services/WorkoutContext';
@@ -5420,7 +5420,7 @@ const SEASON_TIERS = [
 const SEASON_END = new Date('2026-08-01');
 // Cap to the content column on wide web so the horizontal tab pager and
 // per-page content fit the same centered max-width as the rest of the app.
-const SCREEN_WIDTH = Math.min(Dimensions.get('window').width, CONTENT_MAX_WIDTH);
+const SCREEN_WIDTH = getContentWidth(Dimensions.get('window').width);
 const TAB_LABELS = ['Achievements', 'Leaderboard', 'Store'] as const;
 const TAB_COUNT = TAB_LABELS.length;
 const SWIPE_VELOCITY_THRESHOLD = 0.3;

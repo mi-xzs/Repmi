@@ -6,7 +6,7 @@ import { Feather } from "@expo/vector-icons";
 import { styles } from "../../screens/Analytics.Styles";
 import { colors } from "../../theme/colors";
 import { useAccent } from "../../services/SettingsContext";
-import { CONTENT_MAX_WIDTH } from "../../hooks/useResponsive";
+import { getContentWidth } from "../../hooks/useResponsive";
 import { WorkoutSession } from "../../screens/WorkoutScreen";
 import { dayKey } from "../../utils/analyticsHelpers";
 
@@ -70,7 +70,7 @@ const StreakCalendar: React.FC<Props> = ({ sessions }) => {
   const { accent } = useAccent();
   // Cap to the content column on wide web so the calendar grid doesn't
   // bleed past the centered column.
-  const screenW  = Math.min(Dimensions.get("window").width, CONTENT_MAX_WIDTH);
+  const screenW  = getContentWidth(Dimensions.get("window").width);
   const cellSize = Math.floor((screenW - 48 - 28 - 6 * 6) / 7);
 
   const [monthOffset, setMonthOffset] = useState(0);

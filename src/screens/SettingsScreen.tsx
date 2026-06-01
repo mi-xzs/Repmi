@@ -48,7 +48,7 @@ import {
 import { Feather } from '@expo/vector-icons';
 
 import { colors } from '../theme/colors';
-import { useResponsive, CONTENT_MAX_WIDTH } from '../hooks/useResponsive';
+import { useResponsive, getContentWidth } from '../hooks/useResponsive';
 import { useAuth } from '../services/AuthContext';
 import { useProfile } from '../services/ProfileContext';
 import { useSettings, useAccent } from '../services/SettingsContext';
@@ -58,7 +58,7 @@ import { TrainingGoal } from '../types/user';
 // On wide web, cap the "screen width" that drives the segmented control
 // and the horizontal tab pager to the shared content column, so the whole
 // screen fits the same centered max-width as the rest of the web app.
-const SCREEN_W = Math.min(Dimensions.get('window').width, CONTENT_MAX_WIDTH);
+const SCREEN_W = getContentWidth(Dimensions.get('window').width);
 const TAB_COUNT = 5;
 const SEGMENT_W = (SCREEN_W - 32) / TAB_COUNT; // 16px padding each side
 // Swipe gesture thresholds — mirrors AchievementsScreen so the tab

@@ -18,7 +18,7 @@ import { useFocusEffect, useRoute, type RouteProp } from "@react-navigation/nati
 import type { RootTabParamList } from "../navigation/types";
 import { useWorkouts } from "../services/WorkoutContext";
 import { colors } from "../theme/colors";
-import { useResponsive, CONTENT_MAX_WIDTH } from "../hooks/useResponsive";
+import { useResponsive, getContentWidth } from "../hooks/useResponsive";
 import { useAccent } from "../services/SettingsContext";
 import { styles } from "./Analytics.Styles";
 import { WorkoutSession } from "./WorkoutScreen";
@@ -49,7 +49,7 @@ const TABS: { id: TabId; label: string }[] = [
 const TAB_COUNT = TABS.length;
 // Cap to the content column on wide web so the charts + horizontal pager
 // fit the same centered max-width column as the rest of the web app.
-const SCREEN_W = Math.min(Dimensions.get("window").width, CONTENT_MAX_WIDTH);
+const SCREEN_W = getContentWidth(Dimensions.get("window").width);
 const SWIPE_VELOCITY_THRESHOLD = 0.3;
 const SWIPE_DISTANCE_THRESHOLD = SCREEN_W * 0.35;
 

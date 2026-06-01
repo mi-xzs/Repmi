@@ -2,7 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Modal, Pressable } from "react-native";
-import { CONTENT_MAX_WIDTH } from "../../hooks/useResponsive";
+import { getContentWidth } from "../../hooks/useResponsive";
 import Svg, {
   Path,
   Circle,
@@ -90,7 +90,7 @@ const ProgressionLineChart: React.FC<Props> = ({
   const [period,   setPeriod]   = useState<Period>("M");
   const [infoOpen, setInfoOpen] = useState(false);
 
-  const screenWidth = Math.min(Dimensions.get("window").width, CONTENT_MAX_WIDTH);
+  const screenWidth = getContentWidth(Dimensions.get("window").width);
   // Chart sits inside scroll (paddingHorizontal: 24) + card (padding: 16) = 80px of horizontal chrome.
   const width = screenWidth - 80;
 

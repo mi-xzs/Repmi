@@ -2,7 +2,7 @@
 
 import React from "react";
 import { Dimensions, Text, View } from "react-native";
-import { CONTENT_MAX_WIDTH } from "../../hooks/useResponsive";
+import { getContentWidth } from "../../hooks/useResponsive";
 import Svg, {
   Circle,
   Line,
@@ -18,7 +18,7 @@ import { RadarPoint } from "../../types/analytics";
 
 // Chart sits inside scroll (24) + card (16) padding = 80px chrome on each side total.
 // Cap at 360 so it doesn't get absurd on tablets.
-const SCREEN_W = Math.min(Dimensions.get("window").width, CONTENT_MAX_WIDTH);
+const SCREEN_W = getContentWidth(Dimensions.get("window").width);
 const SIZE     = Math.min(SCREEN_W - 80, 360);
 // Bleed past radarContainer's 12px padding AND into the screen's 16px gutter
 // (12 + 16 = 28) so the SVG canvas reaches the screen edge on small phones,
