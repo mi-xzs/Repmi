@@ -147,14 +147,20 @@ const PhaseSection = forwardRef<PhaseSectionHandle, Props>(function PhaseSection
       : [getDefaultRowForCategory(undefined)]
   );
 
+  // Latest exercises, assigned during render so it's current when the sync
+  // effect below runs. Also used by setTimeout callbacks that would
+  // otherwise capture a stale closure.
+  const exercisesRef = useRef(exercises);
+  exercisesRef.current = exercises;
+
   useEffect(() => {
+    // Skip our own echo: editing a row calls onChange(next); the parent
+    // stores that same array and passes it back as `value`. Rebuilding rows
+    // here on every keystroke would remount the controlled TextInputs and
+    // drop focus on web.
+    if (value === exercisesRef.current) return;
     if (Array.isArray(value)) setExercises(normalizeRows(value));
   }, [value]);
-
-  // Latest exercises always available to setTimeout callbacks that capture
-  // stale closures.
-  const exercisesRef = useRef(exercises);
-  useEffect(() => { exercisesRef.current = exercises; }, [exercises]);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [repsModalVisible, setRepsModalVisible] = useState(false);

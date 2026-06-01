@@ -146,9 +146,19 @@ const WorkoutSection = forwardRef<WorkoutSectionHandle, Props>(function WorkoutS
     return assignSets(value);
   });
 
+  // Mirror the current rows so the sync effect can recognise our own echo:
+  // when this component edits a row it calls onChange(copy), the parent
+  // stores that same array and passes it straight back as `value`. Without
+  // this guard the effect would rebuild every row (new object identities)
+  // on each keystroke, remounting the controlled TextInputs and dropping
+  // focus on web.
+  const rowsRef = useRef(rows);
+  rowsRef.current = rows;
+
   useEffect(() => {
     if (!Array.isArray(value) || value.length === 0) return;
     if (value.length === 1 && isBlank(value[0])) return;
+    if (value === rowsRef.current) return; // our own echo — don't rebuild
     setRows(assignSets(value));
   }, [value]);
 
