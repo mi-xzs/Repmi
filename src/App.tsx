@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, AppStateStatus, View, Modal, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
+import { NavigationContainer, LinkingOptions, DarkTheme, Theme } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
+import { colors } from './theme/colors';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './services/AuthContext';
 import { ProfileProvider } from './services/ProfileContext';
@@ -102,6 +103,19 @@ const LINKING: LinkingOptions<any> = {
         },
       },
     },
+  },
+};
+
+// Dark navigation theme so the scene background behind centered web
+// layouts is the app's dark background, not React Navigation's default
+// white. Without this, screens that center their content in a max-width
+// column (web) show white gutters on either side.
+const NAV_THEME: Theme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: colors.background,
+    card: colors.background,
   },
 };
 
@@ -207,7 +221,7 @@ function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer linking={LINKING}>
+      <NavigationContainer theme={NAV_THEME} linking={LINKING}>
         <ThreatGate>
           <AuthProvider>
             <BiometricGate>
