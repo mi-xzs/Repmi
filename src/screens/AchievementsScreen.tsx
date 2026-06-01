@@ -54,6 +54,7 @@ import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
+import { useResponsive, CONTENT_MAX_WIDTH } from '../hooks/useResponsive';
 import { useAuth } from '../services/AuthContext';
 import { loadAllSessions as sbLoadAllSessions } from '../services/sessionService';
 import { useWorkouts } from '../services/WorkoutContext';
@@ -5416,7 +5417,9 @@ const SEASON_TIERS = [
 ];
 
 const SEASON_END = new Date('2026-08-01');
-const SCREEN_WIDTH = Dimensions.get('window').width;
+// Cap to the content column on wide web so the horizontal tab pager and
+// per-page content fit the same centered max-width as the rest of the app.
+const SCREEN_WIDTH = Math.min(Dimensions.get('window').width, CONTENT_MAX_WIDTH);
 const TAB_LABELS = ['Achievements', 'Leaderboard', 'Store'] as const;
 const TAB_COUNT = TAB_LABELS.length;
 const SWIPE_VELOCITY_THRESHOLD = 0.3;
@@ -6727,6 +6730,10 @@ function AchievementsSkeleton() {
 // ─── Screen ────────────────────────────────────────────────
 
 const AchievementsScreen: React.FC = () => {
+  const { contentMaxWidth } = useResponsive();
+  const rootWideStyle = contentMaxWidth
+    ? { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' as const }
+    : null;
   const { workouts, isLoading: workoutsLoading } = useWorkouts();
   const { session: authSession } = useAuth();
   const [allSessions, setAllSessions] = useState<WorkoutSession[]>([]);
@@ -7366,7 +7373,7 @@ const AchievementsScreen: React.FC = () => {
   if (useStableLoading(isInitialLoad)) return <AchievementsSkeleton />;
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={[{ flex: 1, backgroundColor: colors.background }, rootWideStyle]}>
       {/* ── Header ─────────────────────────────────────────── */}
       <View style={achStyles.header}>
         {/* ── Tab bar + dots ─────────────────────────────────── */}

@@ -17,6 +17,7 @@ import { loadAllSessions as sbLoadAllSessions, loadSessionsForWorkout, loadDurat
 import { useFocusEffect } from "@react-navigation/native";
 import { useWorkouts } from "../services/WorkoutContext";
 import { colors } from "../theme/colors";
+import { useResponsive, CONTENT_MAX_WIDTH } from "../hooks/useResponsive";
 import { useAccent } from "../services/SettingsContext";
 import { styles } from "./Analytics.Styles";
 import { WorkoutSession } from "./WorkoutScreen";
@@ -45,7 +46,9 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "overall", label: "Overall" },
 ];
 const TAB_COUNT = TABS.length;
-const { width: SCREEN_W } = Dimensions.get("window");
+// Cap to the content column on wide web so the charts + horizontal pager
+// fit the same centered max-width column as the rest of the web app.
+const SCREEN_W = Math.min(Dimensions.get("window").width, CONTENT_MAX_WIDTH);
 const SWIPE_VELOCITY_THRESHOLD = 0.3;
 const SWIPE_DISTANCE_THRESHOLD = SCREEN_W * 0.35;
 
@@ -114,6 +117,10 @@ function computeSectionStats(sessions: WorkoutSession[], sectionName: string) {
 // ─── component ────────────────────────────────────────────────────────────────
 
 const AnalyticsScreen: React.FC = () => {
+  const { contentMaxWidth } = useResponsive();
+  const rootWideStyle = contentMaxWidth
+    ? { maxWidth: contentMaxWidth, alignSelf: "center" as const, width: "100%" as const }
+    : null;
   const { workouts, isLoading } = useWorkouts();
   const { session: authSession } = useAuth();
   const { accent } = useAccent();
@@ -295,7 +302,7 @@ const AnalyticsScreen: React.FC = () => {
   // ── render ───────────────────────────────────────────────────────────────────
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, rootWideStyle]}>
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <View style={styles.header}>

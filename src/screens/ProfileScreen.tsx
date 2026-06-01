@@ -20,6 +20,7 @@ import { logError } from '../services/logger';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { colors } from '../theme/colors';
+import { useResponsive, CONTENT_MAX_WIDTH } from '../hooks/useResponsive';
 import { useWorkouts } from '../services/WorkoutContext';
 import { useXP } from '../services/XPContext';
 import { useProfile } from '../services/ProfileContext';
@@ -141,7 +142,8 @@ function WorkoutCalendar({ sessions }: { sessions: WorkoutSession[] }) {
   const { accent } = useAccent();
   const { width: screenWidth } = useWindowDimensions();
   const scrollRef = useRef<ScrollView>(null);
-  const visibleWidth = screenWidth - (16 * 2 + 14 * 2);
+  // Cap to the content column on wide web so the calendar fits the column.
+  const visibleWidth = Math.min(screenWidth, CONTENT_MAX_WIDTH) - (16 * 2 + 14 * 2);
 
   const workoutDates = useMemo(() => {
     const set = new Set<string>();
@@ -279,6 +281,10 @@ function WorkoutCalendar({ sessions }: { sessions: WorkoutSession[] }) {
 // ─── component ────────────────────────────────────────────────────────────────
 
 const ProfileScreen: React.FC = () => {
+  const { contentMaxWidth } = useResponsive();
+  const rootWideStyle = contentMaxWidth
+    ? { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' as const }
+    : null;
   const { workouts } = useWorkouts();
   const { levelInfo, levelTitle } = useXP();
   const { equippedSeasonTitle } = useSettings();
@@ -465,7 +471,7 @@ const ProfileScreen: React.FC = () => {
   // ─── render ────────────────────────────────────────────────────────────────
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, rootWideStyle]}>
       <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* ── Cover + Avatar ── avatar straddles the cover's bottom edge ── */}

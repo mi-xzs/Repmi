@@ -48,13 +48,17 @@ import {
 import { Feather } from '@expo/vector-icons';
 
 import { colors } from '../theme/colors';
+import { useResponsive, CONTENT_MAX_WIDTH } from '../hooks/useResponsive';
 import { useAuth } from '../services/AuthContext';
 import { useProfile } from '../services/ProfileContext';
 import { useSettings, useAccent } from '../services/SettingsContext';
 import { deleteAccount, requireReAuth } from '../services/accountService';
 import { TrainingGoal } from '../types/user';
 
-const SCREEN_W = Dimensions.get('window').width;
+// On wide web, cap the "screen width" that drives the segmented control
+// and the horizontal tab pager to the shared content column, so the whole
+// screen fits the same centered max-width as the rest of the web app.
+const SCREEN_W = Math.min(Dimensions.get('window').width, CONTENT_MAX_WIDTH);
 const TAB_COUNT = 5;
 const SEGMENT_W = (SCREEN_W - 32) / TAB_COUNT; // 16px padding each side
 // Swipe gesture thresholds — mirrors AchievementsScreen so the tab
@@ -967,6 +971,10 @@ function UnitToggle({ options, value, onChange }: { options: string[]; value: st
 export default function SettingsScreen() {
   const navigation = useNavigation();
   const [activeTab, setActiveTab] = useState<TabId>('account');
+  const { contentMaxWidth } = useResponsive();
+  const rootWideStyle = contentMaxWidth
+    ? { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' as const }
+    : null;
   const pillX = useRef(new Animated.Value(0)).current;
   // Horizontal pager state — translateX drives the full-width row of
   // tab panes; tabIndexRef gives the gesture handler stable access to
@@ -1037,7 +1045,7 @@ export default function SettingsScreen() {
   ).current;
 
   return (
-    <View style={s.screen}>
+    <View style={[s.screen, rootWideStyle]}>
       {/* Header */}
       <View style={s.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={s.backBtn} activeOpacity={0.7}>
