@@ -88,22 +88,27 @@ export default function SideRail({
       <View style={railStyles.items}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
-          const onPress = () => {
-            const event = navigation.emit({
-              type: "tabPress",
-              target: route.key,
-              canPreventDefault: true,
-            });
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name);
-            }
-          };
           // Sub-tabs (hoisted into the rail) — shown indented under the
           // active main tab. The current sub-tab is read from the route's
           // `tab` param so the highlight stays in sync with the screen.
           const subTabs = SUB_TABS[route.name as keyof RootTabParamList];
           const activeSub =
             (route.params as { tab?: number } | undefined)?.tab ?? 0;
+          const onPress = () => {
+            const event = navigation.emit({
+              type: "tabPress",
+              target: route.key,
+              canPreventDefault: true,
+            });
+            if (event.defaultPrevented) return;
+            if (subTabs) {
+              // Clicking a section header always lands on its first
+              // sub-tab (e.g. Analytics → Workout, Awards → Achievements).
+              navigation.navigate(route.name, { tab: 0 });
+            } else if (!isFocused) {
+              navigation.navigate(route.name);
+            }
+          };
           return (
             <View key={route.key}>
               <SideRailItem
