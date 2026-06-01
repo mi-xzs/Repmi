@@ -21,7 +21,7 @@ export const BREAKPOINTS = {
 
 // Max content column width on wide screens so reading-length lines and
 // cards don't stretch edge-to-edge on a 1440px+ monitor.
-export const CONTENT_MAX_WIDTH = 720;
+export const CONTENT_MAX_WIDTH = 880;
 // Width of the desktop side rail.
 export const SIDE_RAIL_WIDTH = 232;
 
