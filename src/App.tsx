@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, AppStateStatus, View, Modal, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { AppState, AppStateStatus, View, Modal, StyleSheet, Text, TouchableOpacity, Platform } from 'react-native';
 import { NavigationContainer, LinkingOptions, DarkTheme, Theme } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
 import { colors } from './theme/colors';
@@ -217,6 +217,16 @@ function App() {
   useEffect(() => {
     ensureRestTimerChannel();
     initSentryIfEnabled();
+    // Hide scrollbars on web — scrolling still works via wheel / trackpad /
+    // drag, it's just the visible bar that's removed for an app-like look.
+    if (Platform.OS === 'web' && typeof document !== 'undefined' && !document.getElementById('hide-scrollbars')) {
+      const style = document.createElement('style');
+      style.id = 'hide-scrollbars';
+      style.textContent =
+        '::-webkit-scrollbar{width:0!important;height:0!important;display:none!important}' +
+        '*{scrollbar-width:none!important;-ms-overflow-style:none!important}';
+      document.head.appendChild(style);
+    }
   }, []);
 
   return (
