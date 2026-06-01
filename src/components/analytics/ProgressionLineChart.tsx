@@ -90,9 +90,12 @@ const ProgressionLineChart: React.FC<Props> = ({
   const [period,   setPeriod]   = useState<Period>("M");
   const [infoOpen, setInfoOpen] = useState(false);
 
+  // Size to the actual container width (measured) so the chart fits whatever
+  // cell it sits in — full-width on mobile, a grid cell on wide web. Falls
+  // back to the window-derived width for the first render before layout.
+  const [boxW, setBoxW] = useState(0);
   const screenWidth = getContentWidth(Dimensions.get("window").width);
-  // Chart sits inside scroll (paddingHorizontal: 24) + card (padding: 16) = 80px of horizontal chrome.
-  const width = screenWidth - 80;
+  const width = boxW > 0 ? boxW : screenWidth - 80;
 
   const filteredData = useMemo(() => filterByPeriod(data, period), [data, period]);
 
@@ -191,7 +194,10 @@ const ProgressionLineChart: React.FC<Props> = ({
       : ["current best", "gain", "all-time PR"];
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      onLayout={(e) => setBoxW(e.nativeEvent.layout.width)}
+    >
       {/* Header */}
       <View style={styles.header}>
         <View>

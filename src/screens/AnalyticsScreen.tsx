@@ -386,7 +386,7 @@ const AnalyticsScreen: React.FC = () => {
                 {showTabSkeleton ? (
                   <AnalyticsTabSkeleton />
                 ) : (
-                  <ResponsiveGrid minColWidth={380}>
+                  <ResponsiveGrid itemWidth={400}>
                     <View style={{ gap: 10 }}>
                       <View style={[styles.cardRow, { marginBottom: 0 }]}>
                         <StatCard

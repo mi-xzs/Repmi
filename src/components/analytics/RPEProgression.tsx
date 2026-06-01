@@ -79,9 +79,11 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
     loadRPEData();
   }, [userId, workoutId]);
 
+  // Size to the actual container width (measured) so the chart fits whatever
+  // cell it sits in. Falls back to the window-derived width before layout.
+  const [boxW, setBoxW] = useState(0);
   const screenWidth = getContentWidth(Dimensions.get("window").width);
-  // Chart sits inside scroll (paddingHorizontal: 24) + card (padding: 16) = 80px of horizontal chrome.
-  const WIDTH = screenWidth - 80;
+  const WIDTH = boxW > 0 ? boxW : screenWidth - 80;
   const HEIGHT = 220;
 
   const PAD_LEFT = 32;
@@ -143,7 +145,10 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
   const yAxisValues = [2, 4, 6, 8, 10];
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      onLayout={(e) => setBoxW(e.nativeEvent.layout.width)}
+    >
 
       <Svg width={WIDTH} height={HEIGHT}>
         {/* Zone bands */}
