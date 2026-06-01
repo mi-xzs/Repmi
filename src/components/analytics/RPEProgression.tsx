@@ -1,21 +1,15 @@
 // src/components/analytics/RPEProgression.tsx
 
-import React, { useMemo, useEffect, useState } from "react";
-import { View, Text, StyleSheet, Dimensions } from "react-native";
-import { getContentWidth } from "../../hooks/useResponsive";
-import Svg, {
-  Path,
-  Circle,
-  Line,
-  Rect,
-  Text as SvgText,
-} from "react-native-svg";
-import { colors } from "../../theme/colors";
-import { useAccent } from "../../services/SettingsContext";
-import { WorkoutSession } from "../../screens/WorkoutScreen";
-import { useAuth } from "../../services/AuthContext";
-import { loadRPEEntries as sbLoadRPEEntries } from "../../services/sessionService";
-import { logError } from "../../services/logger";
+import React, { useMemo, useEffect, useState } from 'react';
+import { View, Text, StyleSheet, Dimensions, Platform } from 'react-native';
+import { getContentWidth } from '../../hooks/useResponsive';
+import Svg, { Path, Circle, Line, Rect, Text as SvgText } from 'react-native-svg';
+import { colors } from '../../theme/colors';
+import { useAccent } from '../../services/SettingsContext';
+import { WorkoutSession } from '../../screens/WorkoutScreen';
+import { useAuth } from '../../services/AuthContext';
+import { loadRPEEntries as sbLoadRPEEntries } from '../../services/sessionService';
+import { logError } from '../../services/logger';
 
 interface RPEData {
   date: string;
@@ -31,17 +25,17 @@ interface Props {
 // Zones + per-rpe color are derived from the active accent at render time
 // so equipping a cosmetic theme (Crimson / Pink) re-tints the bands.
 const makeZones = (accent: string) => [
-  { min: 1, max: 4,  color: accent,         label: "Easy",     fill: accent + "28" },
-  { min: 4, max: 6,  color: accent + "BB",  label: "Moderate", fill: accent + "1C" },
-  { min: 6, max: 8,  color: accent + "88",  label: "Hard",     fill: accent + "12" },
-  { min: 8, max: 10, color: accent + "55",  label: "Max",      fill: accent + "08" },
+  { min: 1, max: 4, color: accent, label: 'Easy', fill: accent + '28' },
+  { min: 4, max: 6, color: accent + 'BB', label: 'Moderate', fill: accent + '1C' },
+  { min: 6, max: 8, color: accent + '88', label: 'Hard', fill: accent + '12' },
+  { min: 8, max: 10, color: accent + '55', label: 'Max', fill: accent + '08' },
 ];
 
 const getRPEColor = (rpe: number, accent: string): string => {
   if (rpe <= 4) return accent;
-  if (rpe <= 6) return accent + "BB";
-  if (rpe <= 8) return accent + "88";
-  return accent + "55";
+  if (rpe <= 6) return accent + 'BB';
+  if (rpe <= 8) return accent + '88';
+  return accent + '55';
 };
 
 const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
@@ -61,10 +55,10 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
       }
       try {
         const entries = await sbLoadRPEEntries(userId, workoutId);
-        const data: RPEData[] = entries.map(entry => ({
-          date: new Date(entry.recordedAt).toLocaleDateString("en-GB", {
-            day: "numeric",
-            month: "short",
+        const data: RPEData[] = entries.map((entry) => ({
+          date: new Date(entry.recordedAt).toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
           }),
           rpe: entry.rating,
         }));
@@ -81,10 +75,13 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
 
   // Size to the actual container width (measured) so the chart fits whatever
   // cell it sits in. Falls back to the window-derived width before layout.
+  const isWeb = Platform.OS === 'web';
   const [boxW, setBoxW] = useState(0);
-  const screenWidth = getContentWidth(Dimensions.get("window").width);
+  const [availH, setAvailH] = useState(0);
+  const screenWidth = getContentWidth(Dimensions.get('window').width);
   const WIDTH = boxW > 0 ? boxW : screenWidth - 80;
-  const HEIGHT = 220;
+  // On web, fill the available height of the cell (measured); otherwise fixed.
+  const HEIGHT = isWeb ? Math.max(availH, 220) : 220;
 
   const PAD_LEFT = 32;
   const PAD_RIGHT = 16;
@@ -100,9 +97,7 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
     PAD_TOP + chartH - ((rpe - RPE_MIN) / (RPE_MAX - RPE_MIN)) * chartH;
 
   const xScale = (i: number, total: number) =>
-    total === 1
-      ? PAD_LEFT + chartW / 2
-      : PAD_LEFT + (i / (total - 1)) * chartW;
+    total === 1 ? PAD_LEFT + chartW / 2 : PAD_LEFT + (i / (total - 1)) * chartW;
 
   const chartData = useMemo(() => {
     if (rpeData.length === 0) return null;
@@ -114,15 +109,13 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
       date: entry.date,
     }));
 
-    const linePath = points
-      .map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`)
-      .join(" ");
+    const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
 
     const avg = rpeData.reduce((s, d) => s + d.rpe, 0) / rpeData.length;
     const latest = rpeData[rpeData.length - 1].rpe;
     const first = rpeData[0].rpe;
-    const trend = latest > first ? "↑ Harder" : latest < first ? "↓ Easier" : "→ Stable";
-    const trendColor = latest > first ? "#e05555" : latest < first ? "#55c47a" : colors.highlight;
+    const trend = latest > first ? '↑ Harder' : latest < first ? '↓ Easier' : '→ Stable';
+    const trendColor = latest > first ? '#e05555' : latest < first ? '#55c47a' : colors.highlight;
 
     return { points, linePath, avg, latest, trend, trendColor };
   }, [rpeData]);
@@ -132,9 +125,7 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
       <View style={styles.container}>
         <Text style={styles.title}>RPE Over Time</Text>
         <View style={styles.emptyState}>
-          <Text style={styles.emptyText}>
-            {loading ? "Loading..." : "No RPE data yet"}
-          </Text>
+          <Text style={styles.emptyText}>{loading ? 'Loading...' : 'No RPE data yet'}</Text>
         </View>
       </View>
     );
@@ -146,123 +137,127 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
 
   return (
     <View
-      style={styles.container}
+      style={[styles.container, isWeb && { flex: 1 }]}
       onLayout={(e) => setBoxW(e.nativeEvent.layout.width)}
     >
-
-      <Svg width={WIDTH} height={HEIGHT}>
-        {/* Zone bands */}
-        {ZONES.map((zone) => {
-          const y1 = yScale(zone.max);
-          const y2 = yScale(zone.min);
-          return (
-            <Rect
-              key={zone.label}
-              x={PAD_LEFT}
-              y={y1}
-              width={chartW}
-              height={y2 - y1}
-              fill={zone.fill}
-            />
-          );
-        })}
-
-        {/* Y-axis grid lines + labels */}
-        {yAxisValues.map((v) => {
-          const y = yScale(v);
-          return (
-            <React.Fragment key={`y-${v}`}>
-              <Line
-                x1={PAD_LEFT}
-                y1={y}
-                x2={PAD_LEFT + chartW}
-                y2={y}
-                stroke="#2a2a2a"
-                strokeWidth={0.75}
+      <View
+        style={isWeb ? { flex: 1 } : undefined}
+        onLayout={(e) => setAvailH(e.nativeEvent.layout.height)}
+      >
+        <Svg width={WIDTH} height={HEIGHT}>
+          {/* Zone bands */}
+          {ZONES.map((zone) => {
+            const y1 = yScale(zone.max);
+            const y2 = yScale(zone.min);
+            return (
+              <Rect
+                key={zone.label}
+                x={PAD_LEFT}
+                y={y1}
+                width={chartW}
+                height={y2 - y1}
+                fill={zone.fill}
               />
-              <SvgText
-                x={PAD_LEFT - 6}
-                y={y + 4}
-                fontSize={9}
-                fill={colors.titleText}
-                textAnchor="end"
-              >
-                {v}
-              </SvgText>
-            </React.Fragment>
-          );
-        })}
+            );
+          })}
 
-        {/* X baseline */}
-        <Line
-          x1={PAD_LEFT}
-          y1={PAD_TOP + chartH}
-          x2={PAD_LEFT + chartW}
-          y2={PAD_TOP + chartH}
-          stroke={colors.button2}
-          strokeWidth={0.75}
-        />
+          {/* Y-axis grid lines + labels */}
+          {yAxisValues.map((v) => {
+            const y = yScale(v);
+            return (
+              <React.Fragment key={`y-${v}`}>
+                <Line
+                  x1={PAD_LEFT}
+                  y1={y}
+                  x2={PAD_LEFT + chartW}
+                  y2={y}
+                  stroke="#2a2a2a"
+                  strokeWidth={0.75}
+                />
+                <SvgText
+                  x={PAD_LEFT - 6}
+                  y={y + 4}
+                  fontSize={9}
+                  fill={colors.titleText}
+                  textAnchor="end"
+                >
+                  {v}
+                </SvgText>
+              </React.Fragment>
+            );
+          })}
 
-        {/* X-axis labels: first + last */}
-        <SvgText
-          x={PAD_LEFT}
-          y={HEIGHT - 6}
-          fontSize={9}
-          fill={colors.titleText}
-          textAnchor="start"
-        >
-          {String(rpeData[0].date).toUpperCase()}
-        </SvgText>
-        <SvgText
-          x={PAD_LEFT + chartW}
-          y={HEIGHT - 6}
-          fontSize={9}
-          fill={colors.titleText}
-          textAnchor="end"
-        >
-          {String(rpeData[rpeData.length - 1].date).toUpperCase()}
-        </SvgText>
-
-        {/* Connecting line */}
-        {points.length > 1 && (
-          <Path
-            d={linePath}
-            fill="none"
-            stroke={colors.highlight}
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            opacity={0.4}
+          {/* X baseline */}
+          <Line
+            x1={PAD_LEFT}
+            y1={PAD_TOP + chartH}
+            x2={PAD_LEFT + chartW}
+            y2={PAD_TOP + chartH}
+            stroke={colors.button2}
+            strokeWidth={0.75}
           />
-        )}
 
-        {/* Data point dots */}
-        {points.map((p, i) => {
-          const isLast = i === points.length - 1;
-          return (
-            <Circle
-              key={`dot-${i}`}
-              cx={p.x}
-              cy={p.y}
-              r={isLast ? 6 : 4}
-              fill={getRPEColor(p.rpe, accent)}
-              opacity={isLast ? 1 : 0.7}
+          {/* X-axis labels: first + last */}
+          <SvgText
+            x={PAD_LEFT}
+            y={HEIGHT - 6}
+            fontSize={9}
+            fill={colors.titleText}
+            textAnchor="start"
+          >
+            {String(rpeData[0].date).toUpperCase()}
+          </SvgText>
+          <SvgText
+            x={PAD_LEFT + chartW}
+            y={HEIGHT - 6}
+            fontSize={9}
+            fill={colors.titleText}
+            textAnchor="end"
+          >
+            {String(rpeData[rpeData.length - 1].date).toUpperCase()}
+          </SvgText>
+
+          {/* Connecting line */}
+          {points.length > 1 && (
+            <Path
+              d={linePath}
+              fill="none"
+              stroke={colors.highlight}
+              strokeWidth={1.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={0.4}
             />
-          );
-        })}
+          )}
 
-        {/* Latest RPE label */}
-        <SvgText
-          x={lastPoint.x}
-          y={lastPoint.y - 11}
-          fontSize={12}
-          fontWeight="600"
-          fill={getRPEColor(lastPoint.rpe, accent)}
-          textAnchor="middle"
-        >
-          {lastPoint.rpe}
-        </SvgText>
-      </Svg>
+          {/* Data point dots */}
+          {points.map((p, i) => {
+            const isLast = i === points.length - 1;
+            return (
+              <Circle
+                key={`dot-${i}`}
+                cx={p.x}
+                cy={p.y}
+                r={isLast ? 6 : 4}
+                fill={getRPEColor(p.rpe, accent)}
+                opacity={isLast ? 1 : 0.7}
+              />
+            );
+          })}
+
+          {/* Latest RPE label */}
+          <SvgText
+            x={lastPoint.x}
+            y={lastPoint.y - 11}
+            fontSize={12}
+            fontWeight="600"
+            fill={getRPEColor(lastPoint.rpe, accent)}
+            textAnchor="middle"
+          >
+            {lastPoint.rpe}
+          </SvgText>
+        </Svg>
+      </View>
 
       {/* Zone legend */}
       <View style={styles.zoneLegend}>
@@ -282,9 +277,7 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
         </View>
         <View style={styles.statDivider} />
         <View style={styles.statItem}>
-          <Text style={[styles.statValue, { color: getRPEColor(latest, accent) }]}>
-            {latest}
-          </Text>
+          <Text style={[styles.statValue, { color: getRPEColor(latest, accent) }]}>{latest}</Text>
           <Text style={styles.statLabel}>latest</Text>
         </View>
         <View style={styles.statDivider} />
@@ -304,28 +297,28 @@ const styles = StyleSheet.create({
     paddingTop: 14,
     paddingBottom: 14,
     marginVertical: 12,
-    overflow: "hidden",
-    alignSelf: "stretch",
+    overflow: 'hidden',
+    alignSelf: 'stretch',
   },
   title: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: '700',
     color: colors.highlight,
     paddingHorizontal: 16,
     paddingBottom: 8,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   zoneLegend: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
     paddingHorizontal: 16,
     paddingTop: 10,
   },
   zonePill: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 5,
   },
   zoneDot: {
@@ -336,13 +329,13 @@ const styles = StyleSheet.create({
   zoneLabel: {
     fontSize: 11,
     color: colors.titleText,
-    fontWeight: "700",
-    textTransform: "uppercase",
+    fontWeight: '700',
+    textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   statsRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 12,
     marginHorizontal: 16,
     paddingTop: 12,
@@ -351,21 +344,21 @@ const styles = StyleSheet.create({
   },
   statItem: {
     flex: 1,
-    alignItems: "center",
+    alignItems: 'center',
     gap: 2,
   },
   statValue: {
     fontSize: 14,
-    fontWeight: "700",
+    fontWeight: '700',
     color: colors.highlight,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
   statLabel: {
     fontSize: 10,
     color: colors.titleText,
-    fontWeight: "700",
-    textTransform: "uppercase",
+    fontWeight: '700',
+    textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
   statDivider: {
@@ -375,15 +368,15 @@ const styles = StyleSheet.create({
   },
   emptyState: {
     height: 160,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: 16,
   },
   emptyText: {
     fontSize: 14,
     color: colors.titleText,
-    fontWeight: "700",
-    textTransform: "uppercase",
+    fontWeight: '700',
+    textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
 });
