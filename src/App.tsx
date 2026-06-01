@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, AppStateStatus, View, Modal, StyleSheet, Text, TouchableOpacity, Platform } from 'react-native';
+import { AppState, AppStateStatus, View, Platform } from 'react-native';
 import { NavigationContainer, LinkingOptions, DarkTheme, Theme } from '@react-navigation/native';
 import * as Linking from 'expo-linking';
 import { colors } from './theme/colors';
@@ -20,8 +20,6 @@ import {
 import {
   initSentryIfEnabled,
   wrapApp,
-  getCrashReportingConsentDecision,
-  setCrashReportingConsentDecision,
 } from './services/observability';
 
 /**
@@ -119,95 +117,6 @@ const NAV_THEME: Theme = {
   },
 };
 
-// M1 — One-time crash-reporting consent modal. Shown the first time a
-// signed-in user reaches the app shell after Sentry is wired up. Stores
-// the choice in SecureStore so it's never asked again unless the user
-// re-enables prompting (we don't currently expose that surface — they
-// can toggle in Settings → Privacy).
-function CrashReportingConsentGate({ children }: { children: React.ReactNode }) {
-  const { session } = useAuth();
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    if (!session) return;
-    let cancelled = false;
-    (async () => {
-      const decision = await getCrashReportingConsentDecision();
-      if (!cancelled && decision === null) setVisible(true);
-    })();
-    return () => { cancelled = true; };
-  }, [session]);
-
-  const choose = useCallback(async (decision: 'yes' | 'not_now' | 'never') => {
-    setVisible(false);
-    await setCrashReportingConsentDecision(decision);
-  }, []);
-
-  return (
-    <>
-      {children}
-      <Modal
-        animationType="fade"
-        transparent
-        visible={visible}
-        onRequestClose={() => choose('not_now')}
-      >
-        <View style={consentStyles.backdrop}>
-          <View style={consentStyles.card}>
-            <Text style={consentStyles.title}>Help improve Repmi?</Text>
-            <Text style={consentStyles.body}>
-              Send anonymised crash reports so we can find and fix bugs.
-              We never include your email, workouts, or any personal data.
-              You can change this any time in Settings → Privacy.
-            </Text>
-            <TouchableOpacity style={consentStyles.primaryBtn} onPress={() => choose('yes')}>
-              <Text style={consentStyles.primaryText}>Yes, send crash reports</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={consentStyles.secondaryBtn} onPress={() => choose('not_now')}>
-              <Text style={consentStyles.secondaryText}>Not now</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={consentStyles.secondaryBtn} onPress={() => choose('never')}>
-              <Text style={consentStyles.secondaryText}>Never</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </>
-  );
-}
-
-const consentStyles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  card: {
-    width: '100%',
-    maxWidth: 420,
-    backgroundColor: '#171717',
-    borderRadius: 16,
-    padding: 24,
-    gap: 12,
-  },
-  title: { color: '#fff', fontSize: 18, fontWeight: '700' },
-  body: { color: '#bbb', fontSize: 14, lineHeight: 20, marginBottom: 8 },
-  primaryBtn: {
-    backgroundColor: '#00FA9A',
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  primaryText: { color: '#000', fontWeight: '700' },
-  secondaryBtn: {
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  secondaryText: { color: '#888' },
-});
-
 function App() {
   // One-time setup of the Android notification channel used by the rest
   // timer.  Cheap, idempotent, no-op on iOS.
@@ -235,19 +144,17 @@ function App() {
         <ThreatGate>
           <AuthProvider>
             <BiometricGate>
-              <CrashReportingConsentGate>
-                <ProfileProvider>
-                  <SettingsProvider>
-                    <WorkoutProvider>
-                      <XPProvider>
-                        <CoinProvider>
-                          <RootNavigator />
-                        </CoinProvider>
-                      </XPProvider>
-                    </WorkoutProvider>
-                  </SettingsProvider>
-                </ProfileProvider>
-              </CrashReportingConsentGate>
+              <ProfileProvider>
+                <SettingsProvider>
+                  <WorkoutProvider>
+                    <XPProvider>
+                      <CoinProvider>
+                        <RootNavigator />
+                      </CoinProvider>
+                    </XPProvider>
+                  </WorkoutProvider>
+                </SettingsProvider>
+              </ProfileProvider>
             </BiometricGate>
           </AuthProvider>
         </ThreatGate>
