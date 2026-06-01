@@ -7383,7 +7383,7 @@ const AchievementsScreen: React.FC = () => {
   if (useStableLoading(isInitialLoad)) return <AchievementsSkeleton />;
 
   return (
-    <View style={[{ flex: 1, backgroundColor: colors.background }, rootWideStyle]}>
+    <View style={[{ flex: 1, minHeight: 0, backgroundColor: colors.background }, rootWideStyle]}>
       {/* ── Header ─────────────────────────────────────────── */}
       {/* On wide web the sub-tabs live in the side rail, so the in-screen
           pill bar is hidden. */}
@@ -7403,18 +7403,19 @@ const AchievementsScreen: React.FC = () => {
 
       {/* ── Pager ──────────────────────────────────────────── */}
       {/* Swipe is disabled on wide web — the rail drives the sub-tab. */}
-      <View style={{ flex: 1, overflow: 'hidden' }} {...(isWide ? {} : panResponder.panHandlers)}>
+      <View style={{ flex: 1, minHeight: 0, overflow: 'hidden' }} {...(isWide ? {} : panResponder.panHandlers)}>
         <Animated.View
           style={{
             flexDirection: 'row',
             width: SCREEN_WIDTH * TAB_COUNT,
             flexGrow: 1,
+            minHeight: 0,
             alignSelf: 'stretch',
             transform: [{ translateX }],
           }}
         >
           {/* Page 0 — Achievements */}
-          <View style={{ width: SCREEN_WIDTH, flex: 1 }}>
+          <View style={{ width: SCREEN_WIDTH, flex: 1, minHeight: 0 }}>
             <ScrollView
               style={{ flex: 1 }}
               contentContainerStyle={styles.scroll}
@@ -7584,12 +7585,12 @@ const AchievementsScreen: React.FC = () => {
           </View>
 
           {/* Page 1 — Leaderboard */}
-          <View style={{ width: SCREEN_WIDTH, flex: 1 }}>
+          <View style={{ width: SCREEN_WIDTH, flex: 1, minHeight: 0 }}>
             <LeaderboardView />
           </View>
 
           {/* Page 2 — Store */}
-          <View style={{ width: SCREEN_WIDTH, flex: 1 }}>
+          <View style={{ width: SCREEN_WIDTH, flex: 1, minHeight: 0 }}>
             <StoreView />
           </View>
         </Animated.View>
