@@ -57,11 +57,15 @@ export default function ResponsiveGrid({
     >
       {React.Children.map(children, (child) => {
         if (!React.isValidElement(child)) return null;
-        const el = child as React.ReactElement<{ style?: StyleProp<ViewStyle> }>;
-        // Fixed cell width so every tile is the same size (a partial last
-        // row is left-aligned rather than stretching its items full-width).
+        const el = child as React.ReactElement<{
+          style?: StyleProp<ViewStyle>;
+          span?: "full";
+        }>;
+        // <GridItem span="full"> takes the whole row (full screen width);
+        // everything else is a fixed-width tile so the cards stay uniform.
+        const full = el.props.span === "full";
         return (
-          <View style={{ width: colWidth }}>
+          <View style={{ width: full ? "100%" : colWidth }}>
             {React.cloneElement(el, { style: [el.props.style, styles.fill] })}
           </View>
         );
