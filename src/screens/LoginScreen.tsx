@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import {
+  View,
   Text,
   TextInput,
   TouchableOpacity,
@@ -43,6 +44,7 @@ export default function LoginScreen({ navigation }: any) {
       showsVerticalScrollIndicator={false}
       automaticallyAdjustKeyboardInsets
     >
+      <View style={styles.formCol}>
       <Text style={[styles.title, { color: accent }]}>Welcome back</Text>
       <Text style={styles.subtitle}>Log in to your account</Text>
 
@@ -84,6 +86,7 @@ export default function LoginScreen({ navigation }: any) {
       <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
         <Text style={styles.link}>Don't have an account? <Text style={[styles.linkAccent, { color: accent }]}>Sign up</Text></Text>
       </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 }
@@ -92,8 +95,18 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
+    alignItems: 'center',
     paddingHorizontal: 28,
     backgroundColor: colors.background,
+  },
+  // Centered, max-width form column so the login form sits in a tidy
+  // card-width block on wide web viewports instead of stretching across
+  // the whole screen. On mobile the maxWidth is wider than the viewport,
+  // so it's effectively full-width.
+  formCol: {
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
   },
   title: {
     fontSize: 28,
