@@ -12,6 +12,8 @@ import {
   TextInput,
   Keyboard,
   Share,
+  StyleProp,
+  ViewStyle,
 } from 'react-native';
 import Reanimated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -31,6 +33,7 @@ import { HomeStackParamList } from '../navigation/HomeStackNavigator';
 import { useWorkouts } from '../services/WorkoutContext';
 import WorkoutCard from '../components/features/workout/WorkoutCard';
 import { colors } from '../theme/colors';
+import { useResponsive } from '../hooks/useResponsive';
 
 import { Feather, MaterialCommunityIcons } from '@expo/vector-icons';
 import { WeekStreakBar } from '../components/ui/WeekStreakBar';
@@ -113,6 +116,9 @@ interface SwipeableWorkoutCardProps {
   allRefs: React.MutableRefObject<(Swipeable | null)[]>;
   refIndex: number;
   enterIndex: number;
+  // On wide web the cards lay out in a grid; this sizes each card to a
+  // grid cell. Undefined on mobile (full-width stacked).
+  containerStyle?: StyleProp<ViewStyle>;
 }
 
 function SwipeableWorkoutCard({
@@ -125,6 +131,7 @@ function SwipeableWorkoutCard({
   allRefs,
   refIndex,
   enterIndex,
+  containerStyle,
 }: SwipeableWorkoutCardProps) {
   const swipeableRef = useRef<Swipeable>(null);
 
@@ -166,7 +173,7 @@ function SwipeableWorkoutCard({
     .reduceMotion(ReduceMotion.System);
 
   return (
-    <Reanimated.View entering={entering}>
+    <Reanimated.View entering={entering} style={containerStyle}>
       <Swipeable
         ref={setRef}
         friction={2}
@@ -321,6 +328,13 @@ export default function HomeScreen() {
   const { favoriteWorkoutIds: favorites } = useSettings();
   const [refreshKey, setRefreshKey] = React.useState(0);
 
+  // On wide web viewports, lay workout cards out in a horizontal wrapping
+  // grid instead of a vertical stack. `gridStyle`/`cardStyle` are undefined
+  // on mobile, so the phone UI keeps its full-width vertical list.
+  const { isWide } = useResponsive();
+  const gridStyle = isWide ? styles.cardGrid : undefined;
+  const cardStyle = isWide ? styles.cardItem : undefined;
+
   const allSwipeableRefs = useRef<(Swipeable | null)[]>([]);
 
   const closeAllSwipeables = useCallback(() => {
@@ -411,6 +425,7 @@ export default function HomeScreen() {
             {favoriteWorkouts.length > 0 && (
               <>
                 <SectionLabel title="FAVOURITES" />
+                <View style={gridStyle}>
                 {favoriteWorkouts.map((workout, i) => {
                   const globalIndex = workout.id
                     ? workouts.findIndex(w => w.id === workout.id)
@@ -425,6 +440,7 @@ export default function HomeScreen() {
                       allRefs={allSwipeableRefs}
                       refIndex={globalIndex}
                       enterIndex={i}
+                      containerStyle={cardStyle}
                       onPress={() => {
                         closeAllSwipeables();
                         navigation.navigate('WorkoutScreen', {
@@ -437,6 +453,7 @@ export default function HomeScreen() {
                     />
                   );
                 })}
+                </View>
               </>
             )}
 
@@ -446,7 +463,8 @@ export default function HomeScreen() {
             {nonFavoriteWorkouts.length === 0 ? (
               <EmptyState />
             ) : (
-              nonFavoriteWorkouts.map((workout, i) => {
+              <View style={gridStyle}>
+              {nonFavoriteWorkouts.map((workout, i) => {
                 const globalIndex = workout.id
                   ? workouts.findIndex(w => w.id === workout.id)
                   : workouts.indexOf(workout);
@@ -460,6 +478,7 @@ export default function HomeScreen() {
                     allRefs={allSwipeableRefs}
                     refIndex={globalIndex}
                     enterIndex={i}
+                    containerStyle={cardStyle}
                     onPress={() => {
                       closeAllSwipeables();
                       navigation.navigate('WorkoutScreen', {
@@ -471,7 +490,8 @@ export default function HomeScreen() {
                     onShare={() => handleShare(workout)}
                   />
                 );
-              })
+              })}
+              </View>
             )}
 
             {/* IMPORTED WORKOUTS */}
@@ -479,6 +499,7 @@ export default function HomeScreen() {
 
             <ImportLinkInput onImport={handleImportFromLink} />
 
+            <View style={gridStyle}>
             {nonFavoriteImported.map((workout, i) => {
               const globalIndex = workout.id
                 ? workouts.findIndex(w => w.id === workout.id)
@@ -493,6 +514,7 @@ export default function HomeScreen() {
                   allRefs={allSwipeableRefs}
                   refIndex={globalIndex}
                   enterIndex={i}
+                  containerStyle={cardStyle}
                   onPress={() => {
                     closeAllSwipeables();
                     navigation.navigate('WorkoutScreen', {
@@ -505,6 +527,7 @@ export default function HomeScreen() {
                 />
               );
             })}
+            </View>
           </KeyboardAwareScrollView>
 
         </Screen>
@@ -517,6 +540,18 @@ const styles = StyleSheet.create({
   swipeableChildren: {
     borderRadius: CARD_BORDER_RADIUS,
     overflow: 'hidden',
+  },
+
+  // Wide-web only: lay workout cards out in a horizontal wrapping grid.
+  // `cardItem` sizes each card to a fixed cell so they flow left-to-right
+  // and wrap; more columns appear as the content column gets wider.
+  cardGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  cardItem: {
+    width: 320,
   },
 
   actionOuter: {
