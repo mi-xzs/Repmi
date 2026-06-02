@@ -207,30 +207,57 @@ function noise(a: number, b: number): number {
   return (s - Math.floor(s)) * 2 - 1; // [-1, 1)
 }
 
-// Build 18 sessions across the past 7 weeks with realistic per-exercise
+// Build sessions across the past 7 weeks with realistic per-exercise
 // progression and an RPE per session. Exercises start at ~65% of their
 // "current" template kg seven weeks ago and ramp linearly to 100% today,
 // with small per-session noise. RPE rises gently as loads get heavier and
 // dips on the deload-style PUSH_LIGHT sessions.
+//
+// Sessions are placed on Mon / Wed / Fri / Sat of each week so the
+// Weekly tab is always populated with current-week data (regardless of
+// what day the seed runs).
 function buildSessions(): BuiltSession[] {
-  const rotation = [PUSH_DAY, PULL_DAY, LEG_DAY, PUSH_LIGHT];
   const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  // First pass: pick the dates + workouts (oldest → newest order).
-  const plan: { workout: Workout; daysAgo: number }[] = [];
-  let i = 0;
-  for (let daysAgo = 2; daysAgo <= 50 && i < 18; daysAgo += 2) {
-    if (daysAgo % 7 === 0) continue; // skip ~1 in 4 for realistic cadence
-    plan.push({ workout: rotation[i % rotation.length], daysAgo });
-    i++;
+  // Weekday → which workout that day of the week uses.
+  // 0 = Sunday … 6 = Saturday in JS.
+  const weekdaySchedule: Record<number, Workout> = {
+    1: PUSH_DAY,     // Monday
+    3: PULL_DAY,     // Wednesday
+    5: LEG_DAY,      // Friday
+    6: PUSH_LIGHT,   // Saturday
+  };
+  const sessionWeekdays = [1, 3, 5, 6]; // ordered earliest → latest in a week
+
+  // Start of THIS week (Monday). We anchor on Monday so weeks line up
+  // with how WeeklyDigest computes "this week".
+  const startOfThisWeek = new Date(today);
+  const dow = today.getDay();
+  const offsetToMon = dow === 0 ? -6 : 1 - dow; // Sun => -6, Mon => 0, Tue => -1, …
+  startOfThisWeek.setDate(today.getDate() + offsetToMon);
+
+  // Walk back 7 weeks (current week + 6 prior). For each week, emit a
+  // session for each weekday in `sessionWeekdays` — but skip dates in the
+  // future (current week's not-yet-arrived days).
+  const plan: { workout: Workout; date: Date }[] = [];
+  for (let weeksBack = 6; weeksBack >= 0; weeksBack--) {
+    const weekStart = new Date(startOfThisWeek);
+    weekStart.setDate(startOfThisWeek.getDate() - weeksBack * 7);
+    for (const wd of sessionWeekdays) {
+      const d = new Date(weekStart);
+      d.setDate(weekStart.getDate() + (wd - 1)); // wd: Mon=1, so offset = wd-1 from Monday
+      if (d > today) continue; // future day — skip
+      plan.push({ workout: weekdaySchedule[wd], date: d });
+    }
   }
-  plan.reverse(); // oldest-first so index → progression factor maps cleanly
+  // plan is already oldest → newest order, perfect for progression.
 
   const total = plan.length;
   const sessions: BuiltSession[] = [];
 
   for (let idx = 0; idx < plan.length; idx++) {
-    const { workout, daysAgo } = plan[idx];
+    const { workout, date: planDate } = plan[idx];
     const t = idx / Math.max(1, total - 1); // 0 (oldest) → 1 (newest)
     // Progression: 65% of current weights at start, 100% today.
     const baseFactor = 0.65 + t * 0.35;
@@ -265,8 +292,7 @@ function buildSessions(): BuiltSession[] {
     const rpeBase = 6.5 + t * 2.0 + (isLight ? -1.0 : 0);
     const rpe = Math.max(5, Math.min(10, Math.round(rpeBase + noise(idx, 7) * 0.8)));
 
-    const d = new Date(today);
-    d.setDate(today.getDate() - daysAgo);
+    const d = new Date(planDate);
     d.setHours(18, 30, 0, 0); // 6:30pm gym
 
     sessions.push({
@@ -347,27 +373,38 @@ async function main() {
   const { error: rErr } = await supabase.from('workout_rpe').insert(rpeRows);
   if (rErr) console.warn('RPE insert warning:', rErr.message);
 
-  // 5. Demo's own profile fields + stats. The profiles table doesn't have
-  // `updated_at` — PostgREST rejects the whole row if we include unknown
-  // columns, so we only send fields we know exist on this schema.
+  // 5. Demo's own profile fields + stats — computed from the sessions
+  // we just inserted so they stay in sync with the actual data.
   console.log('Updating demo profile + stats...');
-  const totalSets = WORKOUTS.flatMap((w) => w.sections).reduce((s, sec) => s + sec.rows.length, 0);
+  let totalVolume = 0;
+  let totalReps = 0;
+  let totalSets = 0;
+  let totalDuration = 0;
+  for (const sess of sessions) {
+    totalDuration += sess.duration;
+    for (const ex of sess.exercises) {
+      for (const set of ex.sets) {
+        totalSets++;
+        if (set.kg && set.reps) totalVolume += set.kg * set.reps;
+        if (set.reps) totalReps += set.reps;
+      }
+    }
+  }
   const { error: pErr } = await supabase.from('profiles').upsert({
     id: userId,
     username: 'repmi.demo',
     weekly_target: 4,
     is_public_profile: true,
-    // Hand-picked stats so the demo has a leaderboard presence between the
-    // mid-tier fake users.
+    // Hand-picked total_xp / weekly_xp so demo sits mid-leaderboard.
     total_xp: 21500,
     weekly_xp: 2200,
-    total_sessions: 18,
-    total_volume_kg: 560_000,
-    total_duration_sec: 18 * 4200, // 21h
+    total_sessions: sessions.length,
+    total_volume_kg: Math.round(totalVolume),
+    total_duration_sec: totalDuration,
     current_streak: 4,
     longest_streak: 19,
-    total_reps: 5_400,
-    total_sets: totalSets * 18,
+    total_reps: totalReps,
+    total_sets: totalSets,
     pr_count: 14,
   });
   if (pErr) console.warn('Demo profile upsert warning:', pErr.message);
