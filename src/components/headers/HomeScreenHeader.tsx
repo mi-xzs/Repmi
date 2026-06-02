@@ -10,6 +10,7 @@ import { useXP } from '../../services/XPContext';
 import { useProfile } from '../../services/ProfileContext';
 import { useAccent } from '../../services/SettingsContext';
 import { useNavigation } from '@react-navigation/native';
+import { useIsDemo } from '../../services/demoMode';
 
 const getGreeting = (): string => {
   const h = new Date().getHours();
@@ -24,6 +25,7 @@ export const HomeScreenHeader = () => {
   const navigation = useNavigation<any>();
 
   const { accent } = useAccent();
+  const isDemo = useIsDemo();
   const displayName = profile?.username || levelTitle.title;
   const xpProgress = Math.max(0, Math.min(1, levelInfo.progress));
   const green = accent;
@@ -67,7 +69,14 @@ export const HomeScreenHeader = () => {
 
       {/* Text + XP bar */}
       <View style={styles.textContainer}>
-        <Text style={styles.greetingText}>{getGreeting()}</Text>
+        <View style={styles.greetingRow}>
+          <Text style={styles.greetingText}>{getGreeting()}</Text>
+          {isDemo && (
+            <View style={[styles.demoPill, { borderColor: accent }]}>
+              <Text style={[styles.demoPillText, { color: accent }]}>DEMO</Text>
+            </View>
+          )}
+        </View>
         <Text style={styles.nameText} numberOfLines={1}>{displayName}</Text>
 
         {/* XP bar row */}
@@ -142,6 +151,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 2,
   },
+  greetingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   greetingText: {
     fontSize: 13,
     fontWeight: '900',
@@ -151,6 +165,19 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0,0,0,0.6)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+  },
+  // Tiny "DEMO" pill rendered next to the greeting when signed in as the
+  // demo account, so portfolio visitors know what they're seeing.
+  demoPill: {
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+  },
+  demoPillText: {
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 1.5,
   },
   nameText: {
     fontSize: 20,

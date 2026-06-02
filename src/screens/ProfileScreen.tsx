@@ -25,6 +25,7 @@ import { useWorkouts } from '../services/WorkoutContext';
 import { useXP } from '../services/XPContext';
 import { useProfile } from '../services/ProfileContext';
 import { useSettings, useAccent } from '../services/SettingsContext';
+import { useDemoGuard } from '../services/demoMode';
 import { useAuth } from '../services/AuthContext';
 import {
   fetchFollowCounts,
@@ -318,6 +319,7 @@ const ProfileScreen: React.FC = () => {
   const [followListMode, setFollowListMode] = useState<'followers' | 'following' | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingCover,  setUploadingCover]  = useState(false);
+  const demoGuard = useDemoGuard();
   const [volumeModalOpen, setVolumeModalOpen] = useState(false);
   // Incoming follow requests (private accounts) — drives the inbox badge.
   const [pendingRequests, setPendingRequests] = useState(0);
@@ -327,6 +329,7 @@ const ProfileScreen: React.FC = () => {
     setUploading: (v: boolean) => void,
     profileKey: 'avatar_url' | 'cover_url',
   ) => {
+    if (!demoGuard(bucket === 'avatars' ? 'Changing profile photo' : 'Changing cover photo')) return;
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) return;
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -350,7 +353,7 @@ const ProfileScreen: React.FC = () => {
     } finally {
       setUploading(false);
     }
-  }, [session?.user.id, updateProfile]);
+  }, [session?.user.id, updateProfile, demoGuard]);
 
   const pickAvatar = useCallback(() =>
     pickImage('avatars', setUploadingAvatar, 'avatar_url'), [pickImage]);

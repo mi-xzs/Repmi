@@ -41,6 +41,7 @@ import { WaterIntakeBar } from '../components/ui/WaterIntakeBar';
 import { shareWorkout, importWorkoutFromLink } from '../services/sharingService';
 import { useProfile } from '../services/ProfileContext';
 import { useSettings, useAccent } from '../services/SettingsContext';
+import { useDemoGuard } from '../services/demoMode';
 
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -134,6 +135,7 @@ function SwipeableWorkoutCard({
   containerStyle,
 }: SwipeableWorkoutCardProps) {
   const swipeableRef = useRef<Swipeable>(null);
+  const demoGuard = useDemoGuard();
 
   const setRef = (ref: Swipeable | null) => {
     swipeableRef.current = ref;
@@ -157,6 +159,7 @@ function SwipeableWorkoutCard({
 
   const handleDelete = () => {
     closeAll();
+    if (!demoGuard('Deleting a workout')) return;
     Alert.alert(
       'Delete workout',
       `Delete "${workout.name ?? 'this workout'}"?`,

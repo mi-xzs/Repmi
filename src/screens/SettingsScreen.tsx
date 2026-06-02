@@ -51,6 +51,7 @@ import { useResponsive, getContentWidth } from '../hooks/useResponsive';
 import { useAuth } from '../services/AuthContext';
 import { useProfile } from '../services/ProfileContext';
 import { useSettings, useAccent } from '../services/SettingsContext';
+import { useDemoGuard } from '../services/demoMode';
 import { deleteAccount, requireReAuth } from '../services/accountService';
 import { TrainingGoal } from '../types/user';
 
@@ -128,6 +129,7 @@ function AccountTab() {
   const { profile, updateProfile } = useProfile();
   const navigation = useNavigation<any>();
   const { accent } = useAccent();
+  const demoGuard = useDemoGuard();
 
   // H9 — prevent screenshots while the Settings screen is mounted
   // (bodyweight + height + email are all rendered here).
@@ -292,6 +294,7 @@ function AccountTab() {
   // The actual delete runs in performDeleteAccount after re-auth succeeds.
   const handleDeleteAccount = () => {
     if (isDeleting) return;
+    if (!demoGuard('Deleting the account')) return;
     const userId = session?.user?.id;
     if (!userId) return;
     setReAuth({ kind: 'delete_account', userId });
