@@ -10,22 +10,23 @@ import { logError } from './logger';
 // React mounts. Supabase fires a PASSWORD_RECOVERY auth event after it
 // parses the URL hash, but that event can race the listener attachment
 // in AuthContext's useEffect — if the parse finishes before we subscribe,
-// the event is silently lost and the user ends up on the home page
-// (signed in) or the login page (no session yet). Reading the URL
-// ourselves on first render and seeding `inPasswordRecovery=true`
-// closes that race for the implicit flow (#type=recovery) and the PKCE
-// flow (?code= on /auth/reset).
+// the event is silently lost and the user lands on the home page (since
+// Supabase already created a session) instead of the reset form.
+//
+// We detect by PATHNAME alone: `/auth/reset` is only ever reached via
+// the email link, no normal user navigates there. This is more robust
+// than checking the URL hash because:
+//   - Supabase clears the hash via history.replaceState after parsing,
+//     and that can fire before our useState initialiser runs
+//   - PKCE flow uses `?code=` which the implicit-flow check would miss
+//   - Even if the hash is partially eaten by some other handler, the
+//     path stays intact until we explicitly navigate away
 function detectRecoveryFromUrl(): boolean {
   if (Platform.OS !== 'web') return false;
   if (typeof window === 'undefined') return false;
   try {
-    const { hash, search, pathname } = window.location;
-    // Implicit flow — Supabase puts type=recovery in the URL hash.
-    if (hash && /(^|[#&])type=recovery(&|$)/.test(hash)) return true;
-    // PKCE flow — landing path is /auth/reset and a ?code is present.
-    if (pathname?.startsWith('/auth/reset') && /(^|[?&])code=/.test(search))
-      return true;
-    return false;
+    const pathname = window.location.pathname || '';
+    return pathname.startsWith('/auth/reset');
   } catch {
     return false;
   }

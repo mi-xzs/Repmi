@@ -49,6 +49,22 @@ export default function RootNavigator() {
   const { session, isLoading: authLoading, mfaRequired, inPasswordRecovery } = useAuth();
   const { hasProfile, isLoading: profileLoading } = useProfile();
 
+  // Recovery wins over the boot skeleton — the BootSkeleton waits for
+  // ProfileContext to settle, but ProfileContext for the recovery
+  // session triggers needless network work and (worse) can briefly
+  // render the home tab between the skeleton clearing and our flag
+  // check below. Short-circuit to the reset form immediately.
+  if (inPasswordRecovery) {
+    return (
+      <Root.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
+        <Root.Screen
+          name="PasswordResetConfirm"
+          component={PasswordResetConfirmScreen}
+        />
+      </Root.Navigator>
+    );
+  }
+
   const isBooting = authLoading || (session != null && !mfaRequired && profileLoading);
   if (useStableLoading(isBooting)) {
     return <BootSkeleton />;
@@ -56,17 +72,7 @@ export default function RootNavigator() {
 
   return (
     <Root.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
-      {inPasswordRecovery ? (
-        // Web: Supabase auto-created a recovery session from the URL
-        // hash. Skip Auth/Main and route directly to the reset form so
-        // the user sets a new password before they can use the app.
-        // Cleared by PasswordResetConfirmScreen on success (calls
-        // signOut + clearPasswordRecovery).
-        <Root.Screen
-          name="PasswordResetConfirm"
-          component={PasswordResetConfirmScreen}
-        />
-      ) : !session ? (
+      {!session ? (
         <Root.Screen name="Auth" component={AuthNavigator} />
       ) : mfaRequired ? (
         // H2 — AAL2 required. Lock the navigator to the challenge
