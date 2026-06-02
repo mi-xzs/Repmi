@@ -1,0 +1,15 @@
+# Dependencies & build output — Vercel reinstalls and rebuilds these in the cloud
+node_modules
+dist
+
+# Native projects — irrelevant to the `expo export -p web` build, and full of >100MB artifacts
+android
+ios
+
+# Caches / local
+.expo
+.git
+*.apk
+*.aab
+*.keystore
+*.log

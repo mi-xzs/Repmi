@@ -11,6 +11,7 @@ import {
 import { useAuth } from '../services/AuthContext';
 import { colors } from '../theme/colors';
 import { useAccent } from '../services/SettingsContext';
+import { DEMO_EMAIL, DEMO_PASSWORD, DEMO_ENABLED } from '../services/demoMode';
 
 export default function LoginScreen({ navigation }: any) {
   const { signIn } = useAuth();
@@ -33,6 +34,17 @@ export default function LoginScreen({ navigation }: any) {
     setError('');
     setLoading(true);
     const err = await signIn(email.trim(), password);
+    setLoading(false);
+    if (err) setError(err);
+  }
+
+  // One-click sign-in to the shared demo account for recruiters / portfolio
+  // reviewers. The account is pre-seeded with workouts + sessions so the app
+  // appears fully-populated without requiring a signup.
+  async function handleDemoLogin() {
+    setError('');
+    setLoading(true);
+    const err = await signIn(DEMO_EMAIL.trim(), DEMO_PASSWORD);
     setLoading(false);
     if (err) setError(err);
   }
@@ -73,6 +85,28 @@ export default function LoginScreen({ navigation }: any) {
           : <Text style={styles.buttonText}>Log In</Text>
         }
       </TouchableOpacity>
+
+      {/* Demo-mode quick login — appears only when EXPO_PUBLIC_DEMO_EMAIL is
+          set at build time. Lets recruiters skip signup and see the app
+          fully populated with sample data. */}
+      {DEMO_ENABLED && (
+        <>
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
+          <TouchableOpacity
+            style={[styles.demoButton, { borderColor: accent }]}
+            onPress={handleDemoLogin}
+            disabled={loading}
+          >
+            <Text style={[styles.demoButtonText, { color: accent }]}>
+              Try the demo →
+            </Text>
+          </TouchableOpacity>
+        </>
+      )}
 
       {/* H2 — Forgot password? Routes to PasswordResetScreen which calls
           supabase.auth.resetPasswordForEmail with a `repmi://auth/reset`
@@ -143,6 +177,36 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontWeight: '700',
     fontSize: 16,
+  },
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 14,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  dividerText: {
+    color: colors.button1,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+  },
+  demoButton: {
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1.5,
+    backgroundColor: 'transparent',
+  },
+  demoButtonText: {
+    fontWeight: '700',
+    fontSize: 15,
+    letterSpacing: 0.3,
   },
   link: {
     color: colors.button1,

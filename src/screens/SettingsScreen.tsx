@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Animated,
   Dimensions,
   KeyboardAvoidingView,
@@ -154,6 +153,7 @@ function AccountTab() {
     | { kind: 'delete_account'; userId: string }
     | null
   >(null);
+  const { notify, ask, dialog } = useDialog();
 
   useEffect(() => {
     isBiometricAvailable().then(setBioAvailable);
@@ -196,7 +196,7 @@ function AccountTab() {
     const { error } = await supabase.auth.mfa.unenroll({ factorId });
     if (error) {
       logError('mfa.unenroll.failed', { code: (error as { code?: string }).code });
-      Alert.alert('Failed', mapAuthError(error));
+      notify('Failed', mapAuthError(error));
     } else {
       setMfaEnrolled(null);
       // M8 — record the MFA-disable event in the audit log so a
@@ -212,7 +212,7 @@ function AccountTab() {
       setBlocked(prev => (prev ?? []).filter(b => b.id !== id));
     } catch (e) {
       logError('moderation.unblock.failed', { name: (e as Error)?.name });
-      Alert.alert('Unblock failed', mapGenericError(e));
+      notify('Unblock failed', mapGenericError(e));
     }
   };
 
@@ -230,7 +230,7 @@ function AccountTab() {
       const next = usernameChangeAvailableOn(
         (profile as { username_changed_at?: string | null })?.username_changed_at,
       );
-      Alert.alert(
+      notify(
         'Username locked',
         next
           ? `You can change your username again on ${next.toLocaleDateString()} (${remainingDays} day${remainingDays === 1 ? '' : 's'} away).`
@@ -245,23 +245,48 @@ function AccountTab() {
       // with hint 'username_change_rate_limit'. Surface generic copy.
       const msg = (e as { message?: string })?.message ?? '';
       if (/username_change_rate_limit/.test(msg)) {
-        Alert.alert(
+        notify(
           'Username locked',
           'You can change your username again 30 days after the last change.',
         );
       } else {
         logError('profile.username.update.failed', { name: (e as Error)?.name });
-        Alert.alert('Could not save', mapGenericError(e));
+        notify('Could not save', mapGenericError(e));
       }
     }
   };
 
-  const handleSignOut = () => {
-    Alert.alert('Sign out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign out', style: 'destructive', onPress: signOut },
-    ]);
+  // Use an in-app modal (styled like ReAuthModal) rather than Alert.alert,
+  // which is a no-op on react-native-web and would never fire signOut.
+  const handleSignOut = () =>
+    ask({
+      title: 'Sign out',
+      message: 'Are you sure you want to sign out?',
+      confirmLabel: 'Sign out',
+      destructive: true,
+      onConfirm: signOut,
+    });
+
+  const sendPasswordReset = async () => {
+    if (!session?.user?.email) return;
+    const { error } = await supabase.auth.resetPasswordForEmail(session.user.email);
+    if (error) {
+      logError('auth.passwordReset.failed', { code: (error as { code?: string }).code });
+      notify('Failed', mapAuthError(error));
+    } else {
+      // M8 — record password-reset request in the audit log.
+      logAuditEvent('password_reset_requested', null, {});
+      notify('Sent', 'Check your inbox for the reset link.');
+    }
   };
+
+  const handleChangePassword = () =>
+    ask({
+      title: 'Change password',
+      message: 'A reset link will be sent to your email.',
+      confirmLabel: 'Send link',
+      onConfirm: sendPasswordReset,
+    });
 
   // A6 / M3 — Delete account is gated by ReAuthModal (password + biometric).
   // The actual delete runs in performDeleteAccount after re-auth succeeds.
@@ -282,7 +307,7 @@ function AccountTab() {
     } catch (e) {
       setIsDeleting(false);
       logError('account.delete.failed', { name: (e as Error)?.name });
-      Alert.alert(
+      notify(
         'Delete failed',
         `${mapGenericError(e)}\n\nPlease try again, or email support if the problem persists.`,
       );
@@ -348,28 +373,7 @@ function AccountTab() {
         <Row
           icon="lock"
           label="Change password"
-          onPress={() => {
-            Alert.alert('Change password', 'A reset link will be sent to your email.', [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Send link',
-                onPress: async () => {
-                  if (!session?.user?.email) return;
-                  const { error } = await supabase.auth.resetPasswordForEmail(
-                    session.user.email,
-                  );
-                  if (error) {
-                    logError('auth.passwordReset.failed', { code: (error as { code?: string }).code });
-                    Alert.alert('Failed', mapAuthError(error));
-                  } else {
-                    // M8 — record password-reset request in the audit log.
-                    logAuditEvent('password_reset_requested', null, {});
-                    Alert.alert('Sent', 'Check your inbox for the reset link.');
-                  }
-                },
-              },
-            ]);
-          }}
+          onPress={handleChangePassword}
         />
         {/* H2 — Two-factor authentication. */}
         <Row
@@ -434,8 +438,141 @@ function AccountTab() {
         onCancel={() => setReAuth(null)}
         onConfirm={handleReAuthConfirm}
       />
+
+      {dialog}
     </ScrollView>
   );
+}
+
+// Lightweight in-app confirmation dialog styled to match the app (and the
+// ReAuthModal). Used instead of Alert.alert so it renders identically on
+// native and web (where Alert.alert is a no-op). confirmColor overrides the
+// confirm button tint (red for destructive ops, accent otherwise).
+function ConfirmModal({
+  visible,
+  title,
+  message,
+  confirmLabel,
+  confirmColor,
+  onCancel,
+  onConfirm,
+}: {
+  visible: boolean;
+  title: string;
+  message: string;
+  confirmLabel: string;
+  confirmColor?: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+      <View style={s.modalOverlay}>
+        <View style={s.modalCard}>
+          <Text style={s.modalTitle}>{title}</Text>
+          <Text style={s.modalMessage}>{message}</Text>
+          <View style={s.modalButtons}>
+            <TouchableOpacity onPress={onCancel} style={[s.modalBtn, s.modalBtnCancel]}>
+              <Text style={s.modalBtnTextCancel}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={onConfirm}
+              style={[s.modalBtn, s.modalBtnConfirm, confirmColor ? { backgroundColor: confirmColor } : null]}
+            >
+              <Text style={s.modalBtnTextConfirm}>{confirmLabel}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+// Single-button notice dialog (the styled replacement for an info/error
+// Alert.alert with no choice to make).
+function NoticeModal({
+  visible,
+  title,
+  message,
+  accentColor,
+  onClose,
+}: {
+  visible: boolean;
+  title: string;
+  message: string;
+  accentColor: string;
+  onClose: () => void;
+}) {
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+      <View style={s.modalOverlay}>
+        <View style={s.modalCard}>
+          <Text style={s.modalTitle}>{title}</Text>
+          <Text style={s.modalMessage}>{message}</Text>
+          <View style={s.modalButtons}>
+            <TouchableOpacity
+              onPress={onClose}
+              style={[s.modalBtn, s.modalBtnConfirm, { backgroundColor: accentColor }]}
+            >
+              <Text style={s.modalBtnTextConfirm}>OK</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+type ConfirmOpts = {
+  title: string;
+  message: string;
+  confirmLabel: string;
+  destructive?: boolean;
+  onConfirm: () => void;
+};
+
+// In-app replacement for Alert.alert. Returns notify()/ask() to open a
+// styled notice or confirm dialog, plus a `dialog` element each tab drops
+// into its tree. Self-contained so it works in every tab without prop
+// drilling — and, unlike Alert.alert, renders on web.
+function useDialog() {
+  const { accent } = useAccent();
+  const [notice, setNotice] = useState<{ title: string; message: string } | null>(null);
+  const [confirm, setConfirm] = useState<ConfirmOpts | null>(null);
+
+  const notify = useCallback((title: string, message: string) => {
+    setNotice({ title, message });
+  }, []);
+  const ask = useCallback((opts: ConfirmOpts) => {
+    setConfirm(opts);
+  }, []);
+
+  const dialog = (
+    <>
+      <NoticeModal
+        visible={notice !== null}
+        title={notice?.title ?? ''}
+        message={notice?.message ?? ''}
+        accentColor={accent}
+        onClose={() => setNotice(null)}
+      />
+      <ConfirmModal
+        visible={confirm !== null}
+        title={confirm?.title ?? ''}
+        message={confirm?.message ?? ''}
+        confirmLabel={confirm?.confirmLabel ?? 'OK'}
+        confirmColor={confirm?.destructive ? '#FF6B6B' : accent}
+        onCancel={() => setConfirm(null)}
+        onConfirm={() => {
+          const fn = confirm?.onConfirm;
+          setConfirm(null);
+          fn?.();
+        }}
+      />
+    </>
+  );
+
+  return { notify, ask, dialog };
 }
 
 // A6 / M3 — modal that collects the password and routes through
@@ -850,6 +987,7 @@ function CustomizationTab() {
 function PrivacyTab() {
   const { publicProfile, openFollows, setPublicProfile, setOpenFollows } = useSettings();
   const { accent, accentDim } = useAccent();
+  const { notify, dialog } = useDialog();
 
   // M1 — Crash-reporting opt-in. The toggle is loaded from SecureStore
   // on mount and persists each flip via the observability module
@@ -912,9 +1050,10 @@ function PrivacyTab() {
       </SettingsSection>
 
       <SettingsSection title="Data">
-        <Row icon="download" label="Export my data"  onPress={() => Alert.alert('Coming soon', 'Data export will be available in a future update.')} />
+        <Row icon="download" label="Export my data"  onPress={() => notify('Coming soon', 'Data export will be available in a future update.')} />
         <Row icon="eye-off"  label="Hide from search" last right={<Text style={s.rowValue}>Coming soon</Text>} />
       </SettingsSection>
+      {dialog}
     </ScrollView>
   );
 }

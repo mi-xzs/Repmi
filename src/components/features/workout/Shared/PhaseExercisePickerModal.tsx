@@ -72,6 +72,12 @@ export const PHASE_CATEGORIES: PhaseCategory[] = [
       // Misc dynamic primers
       'Knee-to-Wall Stretch', 'Iron Cross Stretch', 'Scorpions',
       'Side-to-Side Squat', 'Prisoner Squat', 'Power Position Wall Drill',
+      // Flows + transitional drills
+      'Inchworm Walkout', 'Down-Dog to Up-Dog Flow',
+      'Walking Toe Touches', 'Knee Hug to Reverse Lunge',
+      'Lateral Lunge to Drop Step',
+      'Shoulder Rolls (Forward)', 'Shoulder Rolls (Backward)',
+      'Squat-to-Stand (Toe-Touch)',
     ],
   },
   {
@@ -110,6 +116,12 @@ export const PHASE_CATEGORIES: PhaseCategory[] = [
       'Seated Spinal Twist', 'Supine Spinal Twist',
       // Side body
       'Kneeling Side Bend', 'Standing Side Bend',
+      // Yoga / floor poses
+      'Pigeon Pose', 'Half Pigeon Pose', 'Lizard Pose',
+      'Child\'s Pose', 'Downward Dog', 'Cobra Pose', 'Sphinx Pose',
+      'Happy Baby', 'Reclined Figure Four',
+      'Single-Leg Forward Fold (Standing)', 'Single-Leg Forward Fold (Seated)',
+      'Straddle Forward Fold', 'Wall-Assisted Kneeling Quad Stretch',
       // Recovery
       'Legs-Up-the-Wall',
     ],
@@ -147,6 +159,11 @@ export const PHASE_CATEGORIES: PhaseCategory[] = [
       'Heel Walks', 'Toe Walks',
       // Side body
       'Seated Side Stretch',
+      // Additional mobility drills
+      '90/90 Hip Lift-Off', 'Pigeon with Forward Fold',
+      'Downward Dog Heel Drop', 'Thoracic Bridge',
+      'Jefferson Curl', 'Wrist Rocks (Palm Up)', 'Wrist Rocks (Palm Down)',
+      'Wrist Push-Up Prep', 'Loaded Beast', 'Side Kick-Through',
     ],
   },
   {

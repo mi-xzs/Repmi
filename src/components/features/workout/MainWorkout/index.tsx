@@ -56,6 +56,9 @@ type Props = {
   linkedFromPrev?: boolean;
   linkedToNext?: boolean;
   highlightNextSet?: boolean;
+  // Overall workout title (e.g. "Leg Day") — passed to the exercise picker so
+  // it can surface workout-relevant muscle groups at the top.
+  workoutTitle?: string;
 };
 
 export type WorkoutSectionHandle = {
@@ -128,6 +131,7 @@ const WorkoutSection = forwardRef<WorkoutSectionHandle, Props>(function WorkoutS
     linkedFromPrev = false,
     linkedToNext = false,
     highlightNextSet = true,
+    workoutTitle,
   },
   ref
 ) {
@@ -830,6 +834,7 @@ const WorkoutSection = forwardRef<WorkoutSectionHandle, Props>(function WorkoutS
             setWorkoutNameModalVisible(false);
           }}
           excludeSections={['Warm Up']}
+          workoutContext={workoutTitle}
         />
       )}
 
@@ -845,6 +850,7 @@ const WorkoutSection = forwardRef<WorkoutSectionHandle, Props>(function WorkoutS
             setSwapModalVisible(false);
           }}
           title="Swap Exercise"
+          workoutContext={workoutTitle}
         />
       )}
 

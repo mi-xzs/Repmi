@@ -19,6 +19,7 @@ export type MuscleGroup =
   | 'Quads'
   | 'Hamstrings'
   | 'Glutes'
+  | 'Adductors'
   | 'Calves'
   | 'Core'
   | 'Obliques'
@@ -41,12 +42,24 @@ export type Equipment =
 
 export type ExerciseTag = 'compound' | 'isolation' | 'unilateral';
 
+// Training style — separates *what* the exercise is from *what muscle* it
+// trains. Undefined defaults to general strength (most lifting entries).
+// Used by the picker to optionally filter by training style.
+export type ExerciseStyle =
+  | 'plyometric'
+  | 'calisthenics'
+  | 'olympic'
+  | 'powerlifting'
+  | 'cardio'
+  | 'mobility';
+
 export type Exercise = {
   name: string;
   muscle: MuscleGroup;
   equipment: Equipment;
   mode: ExerciseMode;
   tags?: ExerciseTag[];
+  style?: ExerciseStyle;
 };
 
 // ─── Catalog ──────────────────────────────────────────────────────────────────
@@ -355,7 +368,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Belt Squat', muscle: 'Quads', equipment: 'Machine', mode: 'weight', tags: ['compound'] },
   { name: 'Leg Extension', muscle: 'Quads', equipment: 'Machine', mode: 'weight', tags: ['isolation'] },
   { name: 'Single-Leg Leg Extension', muscle: 'Quads', equipment: 'Machine', mode: 'weight', tags: ['isolation', 'unilateral'] },
-  { name: 'Adductor Machine', muscle: 'Glutes', equipment: 'Machine', mode: 'weight', tags: ['isolation'] },
+  { name: 'Adductor Machine', muscle: 'Adductors', equipment: 'Machine', mode: 'weight', tags: ['isolation'] },
   { name: 'Goblet Squat', muscle: 'Quads', equipment: 'Dumbbell', mode: 'weight', tags: ['compound'] },
   { name: 'Goblet Squat (Kettlebell)', muscle: 'Quads', equipment: 'Kettlebell', mode: 'weight', tags: ['compound'] },
   { name: 'Dumbbell Bulgarian Split Squat', muscle: 'Quads', equipment: 'Dumbbell', mode: 'weight', tags: ['compound', 'unilateral'] },
@@ -442,8 +455,8 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Bodyweight Glute Kickback', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation', 'unilateral'] },
   { name: 'Hip Abduction Machine', muscle: 'Glutes', equipment: 'Machine', mode: 'weight', tags: ['isolation'] },
   { name: 'Cable Hip Abduction', muscle: 'Glutes', equipment: 'Cable', mode: 'weight', tags: ['isolation', 'unilateral'] },
-  { name: 'Cable Hip Adduction', muscle: 'Glutes', equipment: 'Cable', mode: 'weight', tags: ['isolation', 'unilateral'] },
-  { name: 'Copenhagen Plank', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation', 'unilateral'] },
+  { name: 'Cable Hip Adduction', muscle: 'Adductors', equipment: 'Cable', mode: 'weight', tags: ['isolation', 'unilateral'] },
+  { name: 'Copenhagen Plank', muscle: 'Adductors', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation', 'unilateral'] },
   { name: 'Banded Clamshell', muscle: 'Glutes', equipment: 'Bands', mode: 'weight', tags: ['isolation', 'unilateral'] },
   { name: 'Fire Hydrant', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation', 'unilateral'] },
   { name: 'Banded Lateral Walk', muscle: 'Glutes', equipment: 'Bands', mode: 'weight', tags: ['isolation'] },
@@ -713,6 +726,76 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Keg Carry', muscle: 'Full Body', equipment: 'Other', mode: 'distance', tags: ['compound'] },
   { name: 'Sandbag Clean', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
   { name: 'Sandbag-Over-Bar', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
+
+  // ── Plyometrics — additional upper-body & loaded variants ─────────────────
+  { name: 'Depth Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'plyometric' },
+  { name: 'Hand-Release Plyo Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'plyometric' },
+  { name: 'Single-Arm Plyo Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'], style: 'plyometric' },
+  { name: 'Plyo Pull-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'plyometric' },
+  { name: 'Clap Pull-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'plyometric' },
+  { name: 'Hex Bar Jump Shrug', muscle: 'Full Body', equipment: 'Barbell', mode: 'weight', tags: ['compound'], style: 'plyometric' },
+  { name: 'Hardstyle Kettlebell Swing', muscle: 'Glutes', equipment: 'Kettlebell', mode: 'weight', tags: ['compound'], style: 'plyometric' },
+  { name: 'Double Kettlebell Swing', muscle: 'Glutes', equipment: 'Kettlebell', mode: 'weight', tags: ['compound'], style: 'plyometric' },
+  { name: 'Kettlebell Snatch', muscle: 'Full Body', equipment: 'Kettlebell', mode: 'weight', tags: ['compound', 'unilateral'], style: 'plyometric' },
+  { name: 'Medicine Ball Chest Pass', muscle: 'Chest', equipment: 'Other', mode: 'weight', tags: ['compound'], style: 'plyometric' },
+  { name: 'Medicine Ball Shotput Throw', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound', 'unilateral'], style: 'plyometric' },
+  { name: 'Medicine Ball Lateral Throw', muscle: 'Obliques', equipment: 'Other', mode: 'weight', tags: ['compound'], style: 'plyometric' },
+  { name: 'Continuous Broad Jump', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'distance', tags: ['compound'], style: 'plyometric' },
+  { name: 'Reactive Broad Jump', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'distance', tags: ['compound'], style: 'plyometric' },
+  { name: 'Altitude Drop', muscle: 'Full Body', equipment: 'Other', mode: 'bodyweight', tags: ['compound'], style: 'plyometric' },
+
+  // ── Calisthenics — skill progressions ─────────────────────────────────────
+  // Front Lever family
+  { name: 'Tuck Front Lever Hold', muscle: 'Back', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  { name: 'Advanced Tuck Front Lever Hold', muscle: 'Back', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  { name: 'Straddle Front Lever Hold', muscle: 'Back', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  { name: 'Full Front Lever Hold', muscle: 'Back', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  { name: 'Front Lever Raise', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  { name: 'Front Lever Pull-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  // Back Lever family
+  { name: 'Tuck Back Lever Hold', muscle: 'Back', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  { name: 'Straddle Back Lever Hold', muscle: 'Back', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  { name: 'Full Back Lever Hold', muscle: 'Back', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  { name: 'Skin the Cat', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  // Pull variants
+  { name: 'Archer Pull-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'], style: 'calisthenics' },
+  { name: 'Typewriter Pull-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'], style: 'calisthenics' },
+  { name: 'Commando Pull-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  { name: 'One-Arm Pull-Up Negative', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'], style: 'calisthenics' },
+  { name: 'One-Arm Pull-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'], style: 'calisthenics' },
+  { name: 'L-Sit Pull-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  // Muscle-Up family
+  { name: 'Bar Muscle-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  { name: 'Strict Bar Muscle-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  { name: 'Kipping Muscle-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  { name: 'Ring Muscle-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  { name: 'Muscle-Up Negative', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  // Planche family
+  { name: 'Planche Lean', muscle: 'Chest', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  { name: 'Tuck Planche Hold', muscle: 'Chest', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  { name: 'Advanced Tuck Planche Hold', muscle: 'Chest', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  { name: 'Straddle Planche Hold', muscle: 'Chest', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  { name: 'Full Planche Hold', muscle: 'Chest', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  // Push variants
+  { name: 'One-Arm Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'], style: 'calisthenics' },
+  { name: 'Aztec Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  { name: 'Superman Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  { name: 'Hindu Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  // Handstand work
+  { name: 'Wall Handstand Hold', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'timed', tags: ['compound'], style: 'calisthenics' },
+  { name: 'Free Handstand Hold', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'timed', tags: ['compound'], style: 'calisthenics' },
+  { name: 'Press to Handstand', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  { name: 'Handstand Walk', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'distance', tags: ['compound'], style: 'calisthenics' },
+  { name: 'Deficit Handstand Push-Up', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  { name: 'Freestanding Handstand Push-Up', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
+  // Human Flag + Side Lever
+  { name: 'Tuck Human Flag Hold', muscle: 'Obliques', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  { name: 'Straddle Human Flag Hold', muscle: 'Obliques', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  { name: 'Full Human Flag Hold', muscle: 'Obliques', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  { name: 'Side Lever Hold', muscle: 'Obliques', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  // Core skills (V-Sit, Manna)
+  { name: 'V-Sit Hold', muscle: 'Core', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+  { name: 'Manna Hold', muscle: 'Core', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
 ];
 
 // Display order for the muscle filter pills. Roughly mirrors the catalog
@@ -727,6 +810,7 @@ export const MUSCLE_GROUPS: MuscleGroup[] = [
   'Quads',
   'Hamstrings',
   'Glutes',
+  'Adductors',
   'Calves',
   'Core',
   'Obliques',
@@ -766,4 +850,179 @@ export function findExercise(name: string): Exercise | undefined {
 // fall back to heuristics.
 export function getExerciseMode(name: string): ExerciseMode | undefined {
   return EXERCISE_BY_NAME.get(name.toLowerCase())?.mode;
+}
+
+// Given a workout name (e.g. "Leg Day", "Push", "Lower Body"), return the
+// muscle groups that should be prioritised in the exercise picker so the
+// relevant exercises appear at the top. Empty set = no prioritisation.
+export function getPriorityMuscles(workoutName: string | undefined): Set<MuscleGroup> {
+  const m = new Set<MuscleGroup>();
+  if (!workoutName) return m;
+  const n = workoutName.toLowerCase();
+
+  // Splits (compound names first so they don't collide with single-word checks)
+  if (/lower\s*body|leg\s*day|\blegs?\b/.test(n)) {
+    m.add('Quads');
+    m.add('Hamstrings');
+    m.add('Glutes');
+    m.add('Calves');
+    m.add('Adductors');
+  }
+  if (/upper\s*body|upper\s*day/.test(n)) {
+    m.add('Chest');
+    m.add('Back');
+    m.add('Shoulders');
+    m.add('Biceps');
+    m.add('Triceps');
+    m.add('Forearms');
+  }
+  if (/\bpush\b/.test(n)) {
+    m.add('Chest');
+    m.add('Shoulders');
+    m.add('Triceps');
+  }
+  if (/\bpull\b/.test(n)) {
+    m.add('Back');
+    m.add('Biceps');
+    m.add('Forearms');
+  }
+  if (/\barms?\b/.test(n)) {
+    m.add('Biceps');
+    m.add('Triceps');
+    m.add('Forearms');
+  }
+
+  // Direct muscle calls
+  if (/\bchest\b|pec/.test(n)) m.add('Chest');
+  if (/\bback\b|lats?/.test(n)) m.add('Back');
+  if (/shoulders?|delts?/.test(n)) m.add('Shoulders');
+  if (/biceps?|\bbis\b/.test(n)) m.add('Biceps');
+  if (/triceps?|\btris\b/.test(n)) m.add('Triceps');
+  if (/forearms?/.test(n)) m.add('Forearms');
+  if (/glutes?|booty/.test(n)) {
+    m.add('Glutes');
+    m.add('Hamstrings');
+    m.add('Adductors');
+  }
+  if (/quads?|quadriceps/.test(n)) m.add('Quads');
+  if (/hamstrings?|hams?/.test(n)) m.add('Hamstrings');
+  if (/calves?|\bcalf\b/.test(n)) m.add('Calves');
+  if (/\bcore\b|\babs?\b/.test(n)) {
+    m.add('Core');
+    m.add('Obliques');
+  }
+  if (/obliques?/.test(n)) m.add('Obliques');
+  if (/cardio|conditioning|hiit/.test(n)) m.add('Cardio');
+
+  return m;
+}
+
+// Determine a brief sub-region label (e.g. "Glute Max", "Upper", "Lats") for
+// the primary muscle based on the exercise's name. Used to give the top
+// muscle pill a precise hint without burdening the secondary pills.
+// Returns undefined if the exercise doesn't clearly target one sub-region.
+function getPrimaryDetail(primary: MuscleGroup, name: string): string | undefined {
+  switch (primary) {
+    case 'Chest':
+      if (/incline/.test(name)) return 'Upper';
+      if (/decline/.test(name)) return 'Lower';
+      return undefined; // flat / generic chest
+    case 'Back':
+      if (/pull-?up|chin-?up|pulldown|pullover/.test(name)) return 'Lats';
+      if (/shrug|upright row/.test(name)) return 'Traps';
+      if (/face pull/.test(name)) return 'Rear Delts';
+      // Hyperextension / back extension isolate the erectors; deadlift family
+      // is whole-posterior-chain, so don't claim a sub-region for those.
+      if (/hyperextension|back extension/.test(name)) return 'Erectors';
+      if (/row/.test(name)) return 'Lats';
+      return undefined;
+    case 'Shoulders':
+      if (/rear|reverse fly|face pull/.test(name)) return 'Rear Delts';
+      if (/lateral raise|side raise|upright/.test(name)) return 'Side Delts';
+      if (
+        /front raise|overhead press|military|shoulder press|arnold|push press|z press|bradford|behind-the-neck|landmine press|pike|handstand/.test(
+          name,
+        )
+      )
+        return 'Front Delts';
+      return undefined;
+    case 'Glutes':
+      if (/abductor|lateral|clamshell|fire hydrant|side step|monster walk|band walk/.test(name))
+        return 'Glute Med';
+      if (/hip thrust|bridge|kickback|frog pump|extension|donkey/.test(name))
+        return 'Glute Max';
+      return undefined;
+    case 'Calves':
+      if (/seated/.test(name)) return 'Soleus';
+      // Default standing-position calf raises to gastroc.
+      if (/calf|donkey|leg press/.test(name)) return 'Gastroc';
+      return undefined;
+    case 'Triceps':
+      if (/overhead|skull|french press/.test(name)) return 'Long Head';
+      if (/pushdown|kickback/.test(name)) return 'Lateral Head';
+      if (/close-?grip|diamond|push-?up/.test(name)) return 'Medial Head';
+      return undefined;
+    case 'Biceps':
+      if (/hammer/.test(name)) return 'Brachialis';
+      if (/preacher|spider|concentration/.test(name)) return 'Short Head';
+      if (/incline/.test(name)) return 'Long Head';
+      return undefined;
+    case 'Core':
+      if (/leg raise|reverse crunch|hanging knee|toes[- ]to[- ]bar/.test(name)) return 'Lower Abs';
+      if (/crunch|sit-?up|ab rollout|cable crunch/.test(name)) return 'Upper Abs';
+      return undefined;
+    default:
+      return undefined;
+  }
+}
+
+// Returns the primary muscle (from the catalog), an optional sub-region hint
+// for the primary (e.g. "Glute Max", "Upper", "Lats"), and up to 2 likely
+// secondary muscles. Used by the exercise picker's long-press info popup.
+export function getExerciseMuscles(
+  exercise: Exercise,
+): { primary: MuscleGroup; primaryDetail?: string; secondary: MuscleGroup[] } {
+  const name = exercise.name.toLowerCase();
+  const primary = exercise.muscle;
+  const primaryDetail = getPrimaryDetail(primary, name);
+  const isCompound = exercise.tags?.includes('compound') ?? false;
+  if (!isCompound) return { primary, primaryDetail, secondary: [] };
+
+  const sec: MuscleGroup[] = [];
+  switch (primary) {
+    case 'Chest':
+      sec.push('Triceps', 'Shoulders');
+      break;
+    case 'Back':
+      if (/deadlift|rdl|romanian|good morning/.test(name)) {
+        sec.push('Hamstrings', 'Glutes');
+      } else if (/pull-?up|chin-?up|pulldown|row|pullover/.test(name)) {
+        sec.push('Biceps');
+      }
+      break;
+    case 'Shoulders':
+      // Pressing variants recruit triceps — covers OHP, push press, pike & handstand push-ups, wall walks.
+      if (/press|push-?up|handstand|wall walk/.test(name)) sec.push('Triceps');
+      break;
+    case 'Triceps':
+      // Includes diamond/close-grip push-ups (bodyweight compounds).
+      if (/dip|bench|press|push-?up/.test(name)) sec.push('Chest', 'Shoulders');
+      break;
+    case 'Quads':
+      sec.push('Glutes', 'Hamstrings');
+      break;
+    case 'Hamstrings':
+      sec.push('Glutes', 'Lower Back');
+      break;
+    case 'Glutes':
+      // Hip-hinge variants (RDL/B-Stance RDL): glutes + hamstrings + lower back.
+      if (/rdl|romanian|deadlift|good morning/.test(name)) sec.push('Hamstrings', 'Lower Back');
+      else if (/hip thrust|bridge|kickback/.test(name)) sec.push('Hamstrings');
+      else sec.push('Hamstrings', 'Quads');
+      break;
+    case 'Biceps':
+      sec.push('Forearms');
+      break;
+  }
+  return { primary, primaryDetail, secondary: sec.slice(0, 2) };
 }

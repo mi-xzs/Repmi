@@ -20,6 +20,7 @@ import { useAccent } from '../services/SettingsContext';
 import { TrainingGoal } from '../types/user';
 import { checkUsernameAvailable } from '../services/profileService';
 import { validateUsername } from '../utils/validateUsername';
+import WebBirthdayPicker from '../components/WebBirthdayPicker';
 
 // ─── data ─────────────────────────────────────────────────────────────────────
 
@@ -149,6 +150,7 @@ function StepName({
 const MAX_BIRTH_DATE = (() => { const d = new Date(); d.setFullYear(d.getFullYear() - 16); return d; })();
 const MIN_BIRTH_DATE = (() => { const d = new Date(); d.setFullYear(d.getFullYear() - 100); return d; })();
 
+
 interface StepStatsProps {
   birthDate: Date | null; setBirthDate: (v: Date) => void;
   weightVal: string; setWeightVal: (v: string) => void;
@@ -167,7 +169,7 @@ function StepStats({
   heightIn, setHeightIn,
   heightUnit, setHeightUnit,
 }: StepStatsProps) {
-  const { accent } = useAccent();
+  const { accent, accentDim, accentSubtle } = useAccent();
   const [showPicker, setShowPicker] = useState(false);
   const [pendingDate, setPendingDate] = useState<Date>(MAX_BIRTH_DATE);
 
@@ -186,39 +188,53 @@ function StepStats({
       <Text style={s.subtitle}>Optional — helps personalise your experience</Text>
 
       <Text style={s.fieldLabel}>Birthday</Text>
-      <TouchableOpacity style={[s.input, s.birthdayRow]} onPress={openPicker} activeOpacity={0.7}>
-        <Text style={[s.birthdayText, !birthDate && s.birthdayPlaceholder]}>{displayDate}</Text>
-        <Feather name="calendar" size={16} color={colors.button1} />
-      </TouchableOpacity>
+      {Platform.OS === 'web' ? (
+        <WebBirthdayPicker
+          value={birthDate}
+          onChange={setBirthDate}
+          accent={accent}
+          accentDim={accentDim}
+          accentSubtle={accentSubtle}
+          minDate={MIN_BIRTH_DATE}
+          maxDate={MAX_BIRTH_DATE}
+        />
+      ) : (
+        <>
+          <TouchableOpacity style={[s.input, s.birthdayRow]} onPress={openPicker} activeOpacity={0.7}>
+            <Text style={[s.birthdayText, !birthDate && s.birthdayPlaceholder]}>{displayDate}</Text>
+            <Feather name="calendar" size={16} color={colors.button1} />
+          </TouchableOpacity>
 
-      <Modal visible={showPicker} transparent animationType="fade" onRequestClose={() => setShowPicker(false)}>
-        <TouchableOpacity style={s.pickerOverlay} activeOpacity={1} onPress={() => setShowPicker(false)}>
-          <View style={s.pickerCenterer}>
-            <TouchableOpacity activeOpacity={1}>
-              <View style={s.pickerSheet}>
-                <View style={s.pickerHeader}>
-                  <TouchableOpacity onPress={() => setShowPicker(false)}>
-                    <Text style={s.pickerCancel}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => { setBirthDate(pendingDate); setShowPicker(false); }}>
-                    <Text style={[s.pickerDone, { color: accent }]}>Done</Text>
-                  </TouchableOpacity>
-                </View>
-                <DateTimePicker
-                  value={pendingDate}
-                  mode="date"
-                  display="spinner"
-                  maximumDate={MAX_BIRTH_DATE}
-                  minimumDate={MIN_BIRTH_DATE}
-                  onChange={(_, date) => { if (date) setPendingDate(date); }}
-                  themeVariant="dark"
-                  style={{ width: '100%' }}
-                />
+          <Modal visible={showPicker} transparent animationType="fade" onRequestClose={() => setShowPicker(false)}>
+            <TouchableOpacity style={s.pickerOverlay} activeOpacity={1} onPress={() => setShowPicker(false)}>
+              <View style={s.pickerCenterer}>
+                <TouchableOpacity activeOpacity={1}>
+                  <View style={s.pickerSheet}>
+                    <View style={s.pickerHeader}>
+                      <TouchableOpacity onPress={() => setShowPicker(false)}>
+                        <Text style={s.pickerCancel}>Cancel</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={() => { setBirthDate(pendingDate); setShowPicker(false); }}>
+                        <Text style={[s.pickerDone, { color: accent }]}>Done</Text>
+                      </TouchableOpacity>
+                    </View>
+                    <DateTimePicker
+                      value={pendingDate}
+                      mode="date"
+                      display="spinner"
+                      maximumDate={MAX_BIRTH_DATE}
+                      minimumDate={MIN_BIRTH_DATE}
+                      onChange={(_, date) => { if (date) setPendingDate(date); }}
+                      themeVariant="dark"
+                      style={{ width: '100%' }}
+                    />
+                  </View>
+                </TouchableOpacity>
               </View>
             </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+          </Modal>
+        </>
+      )}
 
       <View style={s.fieldHeaderRow}>
         <Text style={s.fieldLabel}>Weight</Text>

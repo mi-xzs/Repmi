@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { Modal, View, Text, Pressable, FlatList, TextInput, ScrollView, StyleSheet } from 'react-native';
+import { Modal, View, Text, Pressable, FlatList, TextInput, ScrollView, StyleSheet, Platform, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../../../theme/colors';
@@ -12,6 +12,8 @@ import {
   Exercise,
   MuscleGroup,
   Equipment,
+  getExerciseMuscles,
+  getPriorityMuscles,
 } from '../../../../constants/exerciseCatalog';
 
 type ExerciseRow =
@@ -30,6 +32,9 @@ type Props = {
   excludeSections?: string[];
   // Optional title override (e.g. "Swap Exercise" vs default "Select Exercise").
   title?: string;
+  // Workout name / context (e.g. "Leg Day", "Push"). When provided, muscle
+  // groups matching the workout focus are surfaced at the top of the list.
+  workoutContext?: string;
 };
 
 export default function ExercisePickerModal({
@@ -41,13 +46,22 @@ export default function ExercisePickerModal({
   onClose,
   excludeSections,
   title,
+  workoutContext,
 }: Props) {
   const { accent } = useAccent();
+  const { height: winH } = useWindowDimensions();
+  // On web the modal's overlay may not propagate a definite height to children,
+  // so a percentage `height: '85%'` on the sheet can resolve to 0. Use a
+  // concrete pixel height instead.
+  const webSheetHeight = Math.round(winH * 0.85);
   const flatListRef = useRef<FlatList>(null);
   const [muscleFilter, setMuscleFilter] = useState<MuscleGroup | null>(null);
   const [equipmentFilter, setEquipmentFilter] = useState<Equipment | null>(null);
   // Which dropdown is currently expanded — at most one at a time.
   const [openDropdown, setOpenDropdown] = useState<'muscle' | 'equipment' | null>(null);
+  // Long-press info popup: shows the exercise's primary muscle (large) and up
+  // to two likely secondary muscles (smaller). Works on app + web.
+  const [infoExercise, setInfoExercise] = useState<Exercise | null>(null);
 
   // Reset filters whenever the modal is reopened so it doesn't carry stale
   // state across different rows / sections.
@@ -83,15 +97,28 @@ export default function ExercisePickerModal({
       byMuscle.set(ex.muscle, bucket);
     }
 
+    // Reorder muscle groups so workout-relevant ones appear first when a
+    // workout context is set. e.g. workoutContext "Leg Day" → Quads, Hams,
+    // Glutes, Calves, Adductors at top; the rest below in their normal order.
+    const priority = getPriorityMuscles(workoutContext);
+    const orderedGroups = (
+      priority.size > 0
+        ? [
+            ...MUSCLE_GROUPS.filter((g) => priority.has(g)),
+            ...MUSCLE_GROUPS.filter((g) => !priority.has(g)),
+          ]
+        : MUSCLE_GROUPS
+    );
+
     const result: ExerciseRow[] = [];
-    for (const muscle of MUSCLE_GROUPS) {
+    for (const muscle of orderedGroups) {
       const items = byMuscle.get(muscle);
       if (!items || items.length === 0) continue;
       result.push({ type: 'header', label: muscle });
       items.forEach((exercise) => result.push({ type: 'item', exercise }));
     }
     return result;
-  }, [searchQuery, muscleFilter, equipmentFilter, excludeSections]);
+  }, [searchQuery, muscleFilter, equipmentFilter, excludeSections, workoutContext]);
 
   const handleSelectExercise = (exercise: Exercise) => {
     if (selectedRowIndex !== null) {
@@ -109,13 +136,20 @@ export default function ExercisePickerModal({
       );
     }
     const ex = item.exercise;
+    const expanded = infoExercise?.name === ex.name;
+    const muscles = expanded ? getExerciseMuscles(ex) : null;
     return (
       <Pressable
         style={({ pressed }) => [
           pickerStyles.pickerRow,
           pressed && pickerStyles.pickerRowActive,
+          expanded && { backgroundColor: 'rgba(255,255,255,0.04)' },
         ]}
+        // Tap always picks the exercise; long-press toggles the muscle info
+        // pills under the row (and tapping any other row picks normally).
         onPress={() => handleSelectExercise(ex)}
+        onLongPress={() => setInfoExercise(expanded ? null : ex)}
+        delayLongPress={300}
       >
         <View style={{ flex: 1 }}>
           <Text style={pickerStyles.pickerRowText}>{ex.name}</Text>
@@ -123,6 +157,25 @@ export default function ExercisePickerModal({
             {ex.equipment}
             {ex.tags && ex.tags.length > 0 ? ` · ${ex.tags.join(', ')}` : ''}
           </Text>
+          {muscles && (
+            <View style={inlineMuscleStyles.row}>
+              <View style={inlineMuscleStyles.primaryPill}>
+                <Text style={[inlineMuscleStyles.primaryText, { color: accent }]}>
+                  {muscles.primary}
+                  {muscles.primaryDetail ? (
+                    <Text style={inlineMuscleStyles.primaryDetail}>
+                      {' '}({muscles.primaryDetail})
+                    </Text>
+                  ) : null}
+                </Text>
+              </View>
+              {muscles.secondary.map((m) => (
+                <View key={m} style={inlineMuscleStyles.secondaryPill}>
+                  <Text style={inlineMuscleStyles.secondaryText}>{m}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       </Pressable>
     );
@@ -133,7 +186,15 @@ export default function ExercisePickerModal({
       <View style={pickerStyles.overlay}>
         <BlurView intensity={40} tint="dark" style={pickerStyles.blur} />
 
-        <View style={pickerStyles.pickerSheet}>
+        <View
+          style={[
+            pickerStyles.pickerSheet,
+            // On web, give the sheet a definite pixel height so the FlatList's
+            // flex:1 has a bounded container to scroll inside. Using a % height
+            // can resolve to 0 on web's modal portal.
+            Platform.OS === 'web' && { height: webSheetHeight, maxHeight: webSheetHeight },
+          ]}
+        >
           <View style={pickerStyles.pickerHandle} />
 
           <Text style={pickerStyles.pickerTitle}>{title ?? 'Select Exercise'}</Text>
@@ -283,19 +344,25 @@ export default function ExercisePickerModal({
             onChangeText={onSearchChange}
           />
 
-          {/* List */}
-          <FlatList
-            ref={flatListRef}
-            data={filteredItems}
-            keyExtractor={(item, i) => (item.type === 'header' ? `h_${item.label}_${i}` : `x_${item.exercise.name}`)}
-            renderItem={renderItem}
-            showsVerticalScrollIndicator={false}
-            bounces={false}
-            style={{ overflow: 'hidden' }}
-            ListEmptyComponent={
-              <Text style={pickerStyles.emptyText}>No exercises match your filters</Text>
-            }
-          />
+          {/* List — wrapped in a flex:1/minHeight:0 View so RN-web's outer
+              FlatList wrapper gets a definite parent height for scrolling.
+              Do NOT add overflow:'hidden' on the FlatList's own `style`: it
+              clips the inner scroller from outside on RN-web. */}
+          <View style={{ flex: 1, minHeight: 0 }}>
+            <FlatList
+              ref={flatListRef}
+              data={filteredItems}
+              keyExtractor={(item, i) => (item.type === 'header' ? `h_${item.label}_${i}` : `x_${item.exercise.name}`)}
+              renderItem={renderItem}
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              style={{ flex: 1, minHeight: 0 }}
+              contentContainerStyle={{ flexGrow: 1 }}
+              ListEmptyComponent={
+                <Text style={pickerStyles.emptyText}>No exercises match your filters</Text>
+              }
+            />
+          </View>
 
           {/* Cancel */}
           <Pressable style={pickerStyles.cancelButton} onPress={onClose}>
@@ -531,5 +598,46 @@ const pickerStyles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 15,
     letterSpacing: 0.4,
+  },
+});
+
+// Inline muscle pills shown under the row when long-pressed.
+// Primary is the largest; up to 2 smaller secondaries follow.
+const inlineMuscleStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    gap: 6,
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  primaryPill: {
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  primaryText: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  primaryDetail: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.button1,
+    letterSpacing: 0.2,
+  },
+  secondaryPill: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+  },
+  secondaryText: {
+    color: colors.button1,
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
 });

@@ -82,7 +82,7 @@ const PERIOD_LABELS: Record<Period, string> = { W: "W", M: "M", Y: "Y" };
 const ProgressionLineChart: React.FC<Props> = ({
   data,
   exerciseName = "Exercise",
-  height = 200,
+  height = 160,
   mode = "weight",
   title,
 }) => {

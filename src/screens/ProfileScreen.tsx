@@ -89,24 +89,32 @@ function StatPill({
   icon: string;
   onLongPress?: () => void;
 }) {
+  // Bigger pills on wide web; mobile keeps the compact baseline.
+  const { isWide } = useResponsive();
+  const containerStyle = isWide
+    ? [pillStyles.container, { padding: 20, gap: 8, borderRadius: 14 }]
+    : pillStyles.container;
+  const valueStyle = isWide ? [pillStyles.value, { fontSize: 24 }] : pillStyles.value;
+  const labelStyle = isWide ? [pillStyles.label, { fontSize: 12 }] : pillStyles.label;
+
   const content = (
     <>
-      <Feather name={icon as any} size={14} color={colors.highlight} />
-      <Text style={pillStyles.value} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+      <Feather name={icon as any} size={isWide ? 20 : 14} color={colors.highlight} />
+      <Text style={valueStyle} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         {value}
       </Text>
-      <Text style={pillStyles.label}>{label}</Text>
+      <Text style={labelStyle}>{label}</Text>
     </>
   );
 
   if (onLongPress) {
     return (
-      <Pressable onLongPress={onLongPress} delayLongPress={250} style={pillStyles.container}>
+      <Pressable onLongPress={onLongPress} delayLongPress={250} style={containerStyle}>
         {content}
       </Pressable>
     );
   }
-  return <View style={pillStyles.container}>{content}</View>;
+  return <View style={containerStyle}>{content}</View>;
 }
 
 const pillStyles = StyleSheet.create({
@@ -134,16 +142,22 @@ const pillStyles = StyleSheet.create({
 
 // ─── workout calendar ─────────────────────────────────────────────────────────
 
-const CELL = 11;
-const GAP  = 3;
-const STRIDE = CELL + GAP;
-
 function WorkoutCalendar({ sessions }: { sessions: WorkoutSession[] }) {
   const { accent } = useAccent();
   const { width: screenWidth } = useWindowDimensions();
+  const { isWide } = useResponsive();
   const scrollRef = useRef<ScrollView>(null);
   // Cap to the content column on wide web so the calendar fits the column.
   const visibleWidth = getContentWidth(screenWidth) - (16 * 2 + 14 * 2);
+  // The calendar shows ~52 weeks (180d before + 180d after today). On wide
+  // web we size cells so the whole ~52-column grid spans the container with
+  // no horizontal scroll. Mobile keeps the original compact 11px cells.
+  const WEEK_COLS = 52;
+  const GAP = isWide ? 4 : 3;
+  const CELL = isWide
+    ? Math.max(11, Math.floor((visibleWidth - WEEK_COLS * GAP) / WEEK_COLS))
+    : 11;
+  const STRIDE = CELL + GAP;
 
   const workoutDates = useMemo(() => {
     const set = new Set<string>();
@@ -281,7 +295,7 @@ function WorkoutCalendar({ sessions }: { sessions: WorkoutSession[] }) {
 // ─── component ────────────────────────────────────────────────────────────────
 
 const ProfileScreen: React.FC = () => {
-  const { contentMaxWidth } = useResponsive();
+  const { contentMaxWidth, isWide } = useResponsive();
   const rootWideStyle = contentMaxWidth
     ? { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' as const }
     : null;
@@ -475,11 +489,16 @@ const ProfileScreen: React.FC = () => {
       <ScrollView showsVerticalScrollIndicator={false}>
 
         {/* ── Cover + Avatar ── avatar straddles the cover's bottom edge ── */}
-        <View style={styles.coverContainer}>
-          <TouchableOpacity style={styles.coverTap} onPress={pickCover} activeOpacity={0.85}>
+        {/* Taller cover on web (360 vs 220 mobile baseline). */}
+        <View style={[styles.coverContainer, isWide && { height: 360 }]}>
+          <TouchableOpacity
+            style={[styles.coverTap, isWide && { height: 360 }]}
+            onPress={pickCover}
+            activeOpacity={0.85}
+          >
             {profile?.cover_url
-              ? <Image source={{ uri: profile.cover_url }} style={styles.cover} />
-              : <View style={styles.coverPlaceholder} />
+              ? <Image source={{ uri: profile.cover_url }} style={[styles.cover, isWide && { height: 360 }]} />
+              : <View style={[styles.coverPlaceholder, isWide && { height: 360 }]} />
             }
             {uploadingCover
               ? <View style={styles.coverOverlay}><ActivityIndicator color="#fff" /></View>
@@ -638,57 +657,67 @@ const ProfileScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* ── Workouts ── */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Top Workouts</Text>
-            {topWorkouts.length === 0 ? (
-              <View style={styles.emptyState}>
-                <Feather name="award" size={18} color={colors.button2} />
-                <Text style={styles.emptyHint}>Complete a session to see your top workouts</Text>
-              </View>
-            ) : (
-              <View style={styles.workoutsPanel}>
-                {topWorkouts.map((w, i) => {
-                  const isTop = i === 0;
-                  const isLast = i === topWorkouts.length - 1;
-                  return (
-                    <View key={i} style={[styles.workoutRow, !isLast && styles.workoutRowDivider]}>
-                      <View style={styles.workoutRankCol}>
-                        <Text style={[styles.workoutRankLabel, isTop && { color: accent }]}>
-                          {i + 1}
-                        </Text>
-                      </View>
-                      <View style={styles.workoutBody}>
-                        <View style={styles.workoutHead}>
-                          <Text style={styles.workoutName} numberOfLines={1}>{w.name}</Text>
-                          <View style={styles.workoutPrimary}>
-                            <Text style={styles.workoutPrimaryValue}>{w.sessionCount}</Text>
-                            <Text style={styles.workoutPrimaryUnit}>times</Text>
+          {/* ── Bottom row (web): Top Workouts + Top Muscles side by side ── */}
+          <View style={isWide ? { flexDirection: 'row', gap: 14, alignItems: 'stretch' } : undefined}>
+            {/* Top Workouts */}
+            <View style={[styles.section, isWide && { flex: 1 }]}>
+              <Text style={styles.sectionTitle}>Top Workouts</Text>
+              {topWorkouts.length === 0 ? (
+                <View style={styles.emptyState}>
+                  <Feather name="award" size={18} color={colors.button2} />
+                  <Text style={styles.emptyHint}>Complete a session to see your top workouts</Text>
+                </View>
+              ) : (
+                <View style={[styles.workoutsPanel, isWide && { flex: 1 }]}>
+                  {topWorkouts.map((w, i) => {
+                    const isTop = i === 0;
+                    const isLast = i === topWorkouts.length - 1;
+                    return (
+                      <View
+                        key={i}
+                        style={[
+                          styles.workoutRow,
+                          !isLast && styles.workoutRowDivider,
+                          isWide && { flex: 1 },
+                        ]}
+                      >
+                        <View style={styles.workoutRankCol}>
+                          <Text style={[styles.workoutRankLabel, isTop && { color: accent }]}>
+                            {i + 1}
+                          </Text>
+                        </View>
+                        <View style={styles.workoutBody}>
+                          <View style={styles.workoutHead}>
+                            <Text style={styles.workoutName} numberOfLines={1}>{w.name}</Text>
+                            <View style={styles.workoutPrimary}>
+                              <Text style={styles.workoutPrimaryValue}>{w.sessionCount}</Text>
+                              <Text style={styles.workoutPrimaryUnit}>times</Text>
+                            </View>
+                          </View>
+                          <View style={styles.workoutMetaRow}>
+                            <Text style={styles.workoutMetaText}>{fmtDuration(w.time)}</Text>
+                            <Text style={styles.workoutMetaDot}>·</Text>
+                            <Text style={styles.workoutMetaText}>{formatVolumeShort(w.volume)}</Text>
+                            <Text style={styles.workoutMetaDot}>·</Text>
+                            <Text style={styles.workoutMetaText}>{w.sets.toLocaleString()} sets</Text>
                           </View>
                         </View>
-                        <View style={styles.workoutMetaRow}>
-                          <Text style={styles.workoutMetaText}>{fmtDuration(w.time)}</Text>
-                          <Text style={styles.workoutMetaDot}>·</Text>
-                          <Text style={styles.workoutMetaText}>{formatVolumeShort(w.volume)}</Text>
-                          <Text style={styles.workoutMetaDot}>·</Text>
-                          <Text style={styles.workoutMetaText}>{w.sets.toLocaleString()} sets</Text>
-                        </View>
                       </View>
-                    </View>
-                  );
-                })}
-              </View>
-            )}
-          </View>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
 
-          {/* ── Muscle focus radar ── */}
-          <View style={styles.section}>
-            <RadarChart
-              data={topMuscles}
-              title="Top Muscles"
-              color="accent"
-              emptyMessage="Complete a session to see your muscle focus"
-            />
+            {/* Top Muscles (Radar) */}
+            <View style={[styles.section, isWide && { flex: 1 }]}>
+              <RadarChart
+                data={topMuscles}
+                title="Top Muscles"
+                color="accent"
+                emptyMessage="Complete a session to see your muscle focus"
+              />
+            </View>
           </View>
 
           <View style={{ height: 40 }} />

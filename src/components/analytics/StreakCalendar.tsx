@@ -1,7 +1,7 @@
 // src/components/analytics/StreakCalendar.tsx
 
 import React, { useMemo, useState } from "react";
-import { Dimensions, Text, TouchableOpacity, View } from "react-native";
+import { Dimensions, Platform, Text, TouchableOpacity, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { styles } from "../../screens/Analytics.Styles";
 import { colors } from "../../theme/colors";
@@ -68,10 +68,14 @@ const buildMonthGrid = (year: number, month: number): CalendarDay[] => {
 
 const StreakCalendar: React.FC<Props> = ({ sessions }) => {
   const { accent } = useAccent();
-  // Cap to the content column on wide web so the calendar grid doesn't
-  // bleed past the centered column.
+  // On wide web the calendar sits inside a half-row card, so its working width
+  // is roughly half the content area (minus card padding), NOT the full screen.
   const screenW  = getContentWidth(Dimensions.get("window").width);
-  const cellSize = Math.floor((screenW - 48 - 28 - 6 * 6) / 7);
+  const isWebWide = Platform.OS === "web" && Dimensions.get("window").width >= 768;
+  const workingW = isWebWide
+    ? Math.floor((screenW - 14) / 2) - 24  // half-row cell minus card padding
+    : screenW - 48 - 28;
+  const cellSize = Math.floor((workingW - 6 * 6) / 7);
 
   const [monthOffset, setMonthOffset] = useState(0);
 
@@ -111,7 +115,7 @@ const StreakCalendar: React.FC<Props> = ({ sessions }) => {
   const canGoForward = monthOffset < 0;
 
   return (
-    <View style={styles.calendarContainer}>
+    <View style={[styles.calendarContainer, Platform.OS === "web" && { backgroundColor: "transparent", padding: 0, flex: 1, width: "100%" }]}>
 
       {/* Month / year navigation */}
       <View style={{

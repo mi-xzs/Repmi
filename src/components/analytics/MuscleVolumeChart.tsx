@@ -122,6 +122,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 12,
     gap: 10,
+    flexGrow: 1,
+    justifyContent: 'space-between',
   },
   row: {
     flexDirection: 'column',

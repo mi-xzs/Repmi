@@ -1,7 +1,7 @@
 // src/components/analytics/RadarChart.tsx
 
 import React from "react";
-import { Dimensions, Text, View } from "react-native";
+import { Dimensions, Platform, Text, View } from "react-native";
 import { getContentWidth } from "../../hooks/useResponsive";
 import Svg, {
   Circle,
@@ -106,7 +106,7 @@ const RadarChart: React.FC<Props> = ({ data, title, color, emptyMessage }) => {
   const { accent, accentDim } = useAccent();
   if (data.length === 0) {
     return (
-      <View style={styles.radarContainer}>
+      <View style={[styles.radarContainer, Platform.OS === "web" && { backgroundColor: "transparent", padding: 0, flex: 1, width: "100%", justifyContent: "center" }]}>
         <Text style={styles.radarTitle}>{title}</Text>
         <View style={styles.radarEmpty}>
           <Feather
@@ -127,7 +127,7 @@ const RadarChart: React.FC<Props> = ({ data, title, color, emptyMessage }) => {
   if (data.length < MIN_ENTRIES) {
     const remaining = MIN_ENTRIES - data.length;
     return (
-      <View style={styles.radarContainer}>
+      <View style={[styles.radarContainer, Platform.OS === "web" && { backgroundColor: "transparent", padding: 0, flex: 1, width: "100%", justifyContent: "center" }]}>
         <Text style={styles.radarTitle}>{title}</Text>
         <View style={styles.radarEmpty}>
           <Feather
@@ -160,7 +160,7 @@ const RadarChart: React.FC<Props> = ({ data, title, color, emptyMessage }) => {
     .join(" ");
 
   return (
-    <View style={styles.radarContainer}>
+    <View style={[styles.radarContainer, Platform.OS === "web" && { backgroundColor: "transparent", padding: 0, flex: 1, width: "100%", justifyContent: "center" }]}>
       <Text style={styles.radarTitle}>{title}</Text>
 
       <View style={{ alignItems: "center", marginHorizontal: -BLEED }}>

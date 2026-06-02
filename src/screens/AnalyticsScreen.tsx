@@ -395,219 +395,181 @@ const AnalyticsScreen: React.FC = () => {
                   <AnalyticsTabSkeleton />
                 ) : (
                   <ResponsiveGrid itemWidth={400}>
-                    <View style={{ gap: 10 }}>
-                      <View style={[styles.cardRow, { marginBottom: 0 }]}>
-                        <StatCard
-                          label="Sessions"
-                          value={sessionCount > 0 ? `${sessionCount}` : '—'}
-                          icon="activity"
-                        />
-                        <StatCard label="Last" value={fmtDuration(lastDur)} icon="clock" />
-                      </View>
-                      <View style={[styles.cardRow, { marginBottom: 0 }]}>
-                        <StatCard
-                          label="Average"
-                          value={fmtDuration(avg(durations))}
-                          icon="trending-up"
-                        />
-                        <StatCard label="Best" value={fmtDuration(best(durations))} icon="award" />
-                      </View>
-                    </View>
+                    {/* Top row: Stats | Warm-up+Structure | Targeted Muscles */}
+                    <GridItem span="full">
+                      <View
+                        style={
+                          isWide
+                            ? { flexDirection: 'row', gap: 14, alignItems: 'stretch' }
+                            : { gap: 14 }
+                        }
+                      >
+                        {/* Left half (matches RPE Over Time's half-width below): Stats + Warm-up/Structure */}
+                        <View
+                          style={
+                            isWide
+                              ? { flex: 1, flexDirection: 'row', gap: 14, alignItems: 'stretch' }
+                              : { gap: 14 }
+                          }
+                        >
+                          {/* Column 1: Stats (2x2 of compact StatCards) */}
+                          <View style={[{ gap: 10 }, isWide && { width: 300 }]}>
+                            <View style={[styles.cardRow, { marginBottom: 0 }]}>
+                              <StatCard
+                                label="Sessions"
+                                value={sessionCount > 0 ? `${sessionCount}` : '—'}
+                                icon="activity"
+                              />
+                              <StatCard label="Last" value={fmtDuration(lastDur)} icon="clock" />
+                            </View>
+                            <View style={[styles.cardRow, { marginBottom: 0 }]}>
+                              <StatCard
+                                label="Average"
+                                value={fmtDuration(avg(durations))}
+                                icon="trending-up"
+                              />
+                              <StatCard
+                                label="Best"
+                                value={fmtDuration(best(durations))}
+                                icon="award"
+                              />
+                            </View>
+                          </View>
 
-                    {warmUpStats && warmUpStats.count > 0 && (
-                      <View style={{ gap: 14 }}>
-                        <View style={[styles.section, { paddingTop: 12 }]}>
-                          <View style={[styles.cardHeader, { marginBottom: 8 }]}>
-                            <Feather name="sunrise" size={14} color={accent} />
-                            <Text style={[styles.cardTitle, { marginLeft: 6 }]}>Warm-up</Text>
-                          </View>
-                          <View style={styles.cardRow}>
-                            <StatCard
-                              label="Last"
-                              value={warmUpStats.last > 0 ? fmtDuration(warmUpStats.last) : '—'}
-                              icon="sunrise"
-                              compact
-                            />
-                            <StatCard
-                              label="Avg"
-                              value={warmUpStats.avg > 0 ? fmtDuration(warmUpStats.avg) : '—'}
-                              icon="bar-chart-2"
-                              compact
-                            />
-                            <StatCard
-                              label="Consistency"
-                              value={`${warmUpStats.consistency}%`}
-                              icon="check-circle"
-                              compact
-                            />
+                          {/* Column 2: Warm-up + Workout Structure stacked (Structure standalone when no warm-up) */}
+                          <View style={[{ gap: 14 }, isWide && { flex: 1 }]}>
+                            {warmUpStats && warmUpStats.count > 0 && (
+                              <View style={[styles.section, { paddingTop: 12 }]}>
+                                <View style={[styles.cardHeader, { marginBottom: 8 }]}>
+                                  <Feather name="sunrise" size={14} color={accent} />
+                                  <Text style={[styles.cardTitle, { marginLeft: 6 }]}>Warm-up</Text>
+                                </View>
+                                <View style={styles.cardRow}>
+                                  <StatCard
+                                    label="Last"
+                                    value={
+                                      warmUpStats.last > 0 ? fmtDuration(warmUpStats.last) : '—'
+                                    }
+                                    icon="sunrise"
+                                    compact
+                                  />
+                                  <StatCard
+                                    label="Avg"
+                                    value={warmUpStats.avg > 0 ? fmtDuration(warmUpStats.avg) : '—'}
+                                    icon="bar-chart-2"
+                                    compact
+                                  />
+                                  <StatCard
+                                    label="Consistency"
+                                    value={`${warmUpStats.consistency}%`}
+                                    icon="check-circle"
+                                    compact
+                                  />
+                                </View>
+                              </View>
+                            )}
+
+                            {/* Workout Structure stacked directly under Warm-up (same grid tile) */}
+                            <View style={styles.section}>
+                              <View style={[styles.cardHeader, { marginBottom: 8 }]}>
+                                <Feather name="grid" size={14} color={accent} />
+                                <Text style={[styles.cardTitle, { marginLeft: 6 }]}>
+                                  Workout Structure
+                                </Text>
+                              </View>
+                              <View style={[styles.card, { marginBottom: 0 }]}>
+                                <View style={styles.structureRow}>
+                                  <View style={styles.structureItem}>
+                                    <Text
+                                      style={styles.structureValue}
+                                      numberOfLines={1}
+                                      adjustsFontSizeToFit
+                                    >
+                                      {workout.sections.length}
+                                    </Text>
+                                    <Text
+                                      style={styles.structureLabel}
+                                      numberOfLines={1}
+                                      adjustsFontSizeToFit
+                                    >
+                                      Exercises
+                                    </Text>
+                                  </View>
+                                  <View style={styles.structureDivider} />
+                                  <View style={styles.structureItem}>
+                                    <Text
+                                      style={styles.structureValue}
+                                      numberOfLines={1}
+                                      adjustsFontSizeToFit
+                                    >
+                                      {totalSets}
+                                    </Text>
+                                    <Text
+                                      style={styles.structureLabel}
+                                      numberOfLines={1}
+                                      adjustsFontSizeToFit
+                                    >
+                                      Total Sets
+                                    </Text>
+                                  </View>
+                                  <View style={styles.structureDivider} />
+                                  <View style={styles.structureItem}>
+                                    <Text
+                                      style={styles.structureValue}
+                                      numberOfLines={1}
+                                      adjustsFontSizeToFit
+                                    >
+                                      {sessionCount > 0 ? sessionCount : '—'}
+                                    </Text>
+                                    <Text
+                                      style={styles.structureLabel}
+                                      numberOfLines={1}
+                                      adjustsFontSizeToFit
+                                    >
+                                      Times Done
+                                    </Text>
+                                  </View>
+                                  <View style={styles.structureDivider} />
+                                  <View style={styles.structureItem}>
+                                    <Text
+                                      style={styles.structureValue}
+                                      numberOfLines={1}
+                                      adjustsFontSizeToFit
+                                    >
+                                      {lastPerformedLabel}
+                                    </Text>
+                                    <Text
+                                      style={styles.structureLabel}
+                                      numberOfLines={1}
+                                      adjustsFontSizeToFit
+                                    >
+                                      Last Done
+                                    </Text>
+                                  </View>
+                                </View>
+                              </View>
+                            </View>
                           </View>
                         </View>
 
-                        {/* Workout Structure stacked directly under Warm-up (same grid tile) */}
-                        <View style={styles.section}>
-                          <View style={[styles.cardHeader, { marginBottom: 8 }]}>
-                            <Feather name="grid" size={14} color={accent} />
-                            <Text style={[styles.cardTitle, { marginLeft: 6 }]}>
-                              Workout Structure
-                            </Text>
-                          </View>
-                          <View style={[styles.card, { marginBottom: 0 }]}>
-                            <View style={styles.structureRow}>
-                              <View style={styles.structureItem}>
-                                <Text
-                                  style={styles.structureValue}
-                                  numberOfLines={1}
-                                  adjustsFontSizeToFit
-                                >
-                                  {workout.sections.length}
-                                </Text>
-                                <Text
-                                  style={styles.structureLabel}
-                                  numberOfLines={1}
-                                  adjustsFontSizeToFit
-                                >
-                                  Exercises
+                        {/* Right half: Targeted Muscles (matches RPE width) */}
+                        {hasMuscleSets && (
+                          <View style={isWide ? { flex: 1 } : undefined}>
+                            <View style={[styles.section, isWide && { flex: 1 }]}>
+                              <View style={[styles.cardHeader, { marginBottom: 8 }]}>
+                                <Feather name="target" size={14} color={accent} />
+                                <Text style={[styles.cardTitle, { marginLeft: 6 }]}>
+                                  Targeted Muscles
                                 </Text>
                               </View>
-                              <View style={styles.structureDivider} />
-                              <View style={styles.structureItem}>
-                                <Text
-                                  style={styles.structureValue}
-                                  numberOfLines={1}
-                                  adjustsFontSizeToFit
-                                >
-                                  {totalSets}
-                                </Text>
-                                <Text
-                                  style={styles.structureLabel}
-                                  numberOfLines={1}
-                                  adjustsFontSizeToFit
-                                >
-                                  Total Sets
-                                </Text>
-                              </View>
-                              <View style={styles.structureDivider} />
-                              <View style={styles.structureItem}>
-                                <Text
-                                  style={styles.structureValue}
-                                  numberOfLines={1}
-                                  adjustsFontSizeToFit
-                                >
-                                  {sessionCount > 0 ? sessionCount : '—'}
-                                </Text>
-                                <Text
-                                  style={styles.structureLabel}
-                                  numberOfLines={1}
-                                  adjustsFontSizeToFit
-                                >
-                                  Times Done
-                                </Text>
-                              </View>
-                              <View style={styles.structureDivider} />
-                              <View style={styles.structureItem}>
-                                <Text
-                                  style={styles.structureValue}
-                                  numberOfLines={1}
-                                  adjustsFontSizeToFit
-                                >
-                                  {lastPerformedLabel}
-                                </Text>
-                                <Text
-                                  style={styles.structureLabel}
-                                  numberOfLines={1}
-                                  adjustsFontSizeToFit
-                                >
-                                  Last Done
-                                </Text>
+                              <View style={isWide ? { flex: 1 } : undefined}>
+                                <MuscleVolumeChart volumeByGroup={muscleSets} />
                               </View>
                             </View>
                           </View>
-                        </View>
+                        )}
                       </View>
-                    )}
-
-                    {/* When Warm-up isn't shown, render Workout Structure on its own */}
-                    {(!warmUpStats || warmUpStats.count === 0) && (
-                      <View style={styles.section}>
-                        <View style={[styles.cardHeader, { marginBottom: 8 }]}>
-                          <Feather name="grid" size={14} color={accent} />
-                          <Text style={[styles.cardTitle, { marginLeft: 6 }]}>
-                            Workout Structure
-                          </Text>
-                        </View>
-                        <View style={[styles.card, { marginBottom: 0 }]}>
-                          <View style={styles.structureRow}>
-                            <View style={styles.structureItem}>
-                              <Text
-                                style={styles.structureValue}
-                                numberOfLines={1}
-                                adjustsFontSizeToFit
-                              >
-                                {workout.sections.length}
-                              </Text>
-                              <Text
-                                style={styles.structureLabel}
-                                numberOfLines={1}
-                                adjustsFontSizeToFit
-                              >
-                                Exercises
-                              </Text>
-                            </View>
-                            <View style={styles.structureDivider} />
-                            <View style={styles.structureItem}>
-                              <Text
-                                style={styles.structureValue}
-                                numberOfLines={1}
-                                adjustsFontSizeToFit
-                              >
-                                {totalSets}
-                              </Text>
-                              <Text
-                                style={styles.structureLabel}
-                                numberOfLines={1}
-                                adjustsFontSizeToFit
-                              >
-                                Total Sets
-                              </Text>
-                            </View>
-                            <View style={styles.structureDivider} />
-                            <View style={styles.structureItem}>
-                              <Text
-                                style={styles.structureValue}
-                                numberOfLines={1}
-                                adjustsFontSizeToFit
-                              >
-                                {sessionCount > 0 ? sessionCount : '—'}
-                              </Text>
-                              <Text
-                                style={styles.structureLabel}
-                                numberOfLines={1}
-                                adjustsFontSizeToFit
-                              >
-                                Times Done
-                              </Text>
-                            </View>
-                            <View style={styles.structureDivider} />
-                            <View style={styles.structureItem}>
-                              <Text
-                                style={styles.structureValue}
-                                numberOfLines={1}
-                                adjustsFontSizeToFit
-                              >
-                                {lastPerformedLabel}
-                              </Text>
-                              <Text
-                                style={styles.structureLabel}
-                                numberOfLines={1}
-                                adjustsFontSizeToFit
-                              >
-                                Last Done
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-                      </View>
-                    )}
+                    </GridItem>
 
                     {cooldownStats && cooldownStats.count > 0 && (
                       <View style={styles.section}>
@@ -664,18 +626,6 @@ const AnalyticsScreen: React.FC = () => {
                       </View>
                     </View>
                   ) */}
-
-                    {hasMuscleSets && (
-                      <View style={styles.section}>
-                        <View style={[styles.cardHeader, { marginBottom: 8 }]}>
-                          <Feather name="target" size={14} color={accent} />
-                          <Text style={[styles.cardTitle, { marginLeft: 6 }]}>
-                            Targeted Muscles
-                          </Text>
-                        </View>
-                        <MuscleVolumeChart volumeByGroup={muscleSets} />
-                      </View>
-                    )}
 
                     <GridItem span="full">
                       <View

@@ -81,7 +81,7 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
   const screenWidth = getContentWidth(Dimensions.get('window').width);
   const WIDTH = boxW > 0 ? boxW : screenWidth - 80;
   // On web, fill the available height of the cell (measured); otherwise fixed.
-  const HEIGHT = isWeb ? Math.max(availH, 220) : 220;
+  const HEIGHT = isWeb ? Math.max(availH, 160) : 160;
 
   const PAD_LEFT = 32;
   const PAD_RIGHT = 16;

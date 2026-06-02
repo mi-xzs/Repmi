@@ -249,6 +249,7 @@ export default function CreateWorkoutScreen() {
                   }}
                   value={sec.rows}
                   workoutName={sec.exerciseName}
+                  workoutTitle={workoutName ?? undefined}
                   exerciseMode={sec.exerciseMode}
                   linkedFromPrev={prevLinked}
                   linkedToNext={sec.linkedToNext === true}
