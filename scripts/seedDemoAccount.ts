@@ -19,6 +19,35 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+// ─── helpers ────────────────────────────────────────────────────────────────
+
+// Reads the app icon and uploads it to the avatars bucket as the demo
+// account's profile picture. Idempotent — overwrites the same path on
+// every re-run via { upsert: true }. Returns the storage path on success.
+async function uploadDemoAvatar(
+  supabase: ReturnType<typeof createClient>,
+  userId: string,
+): Promise<string | null> {
+  const iconPath = resolve(__dirname, '..', 'src', 'assets', 'icon.png');
+  if (!existsSync(iconPath)) {
+    console.warn('  icon.png not found at', iconPath);
+    return null;
+  }
+  const file = readFileSync(iconPath);
+  // Deterministic path so re-runs overwrite the same object instead of
+  // accumulating new uploads.
+  const path = `${userId}/demo-logo.png`;
+  const { error } = await supabase.storage.from('avatars').upload(path, file, {
+    contentType: 'image/png',
+    upsert: true,
+  });
+  if (error) {
+    console.warn('  Avatar upload failed:', error.message);
+    return null;
+  }
+  return path;
+}
+
 // ─── env loading ────────────────────────────────────────────────────────────
 // Tiny dotenv shim so the script works without an extra dependency.
 const envPath = resolve(__dirname, '..', '.env');
@@ -373,6 +402,11 @@ async function main() {
   const { error: rErr } = await supabase.from('workout_rpe').insert(rpeRows);
   if (rErr) console.warn('RPE insert warning:', rErr.message);
 
+  // 4c. Upload the app logo as the demo's avatar (idempotent — overwrites
+  // the same storage path on every run).
+  console.log('Uploading demo avatar (app logo)...');
+  const avatarPath = await uploadDemoAvatar(supabase, userId);
+
   // 5. Demo's own profile fields + stats — computed from the sessions
   // we just inserted so they stay in sync with the actual data.
   console.log('Updating demo profile + stats...');
@@ -390,7 +424,7 @@ async function main() {
       }
     }
   }
-  const { error: pErr } = await supabase.from('profiles').upsert({
+  const profilePatch: Record<string, unknown> = {
     id: userId,
     username: 'repmi.demo',
     weekly_target: 4,
@@ -406,7 +440,11 @@ async function main() {
     total_reps: totalReps,
     total_sets: totalSets,
     pr_count: 14,
-  });
+  };
+  // Only set the avatar path if the logo upload succeeded — the client
+  // mints a fresh signed URL from `avatar_path` on every profile load.
+  if (avatarPath) profilePatch.avatar_path = avatarPath;
+  const { error: pErr } = await supabase.from('profiles').upsert(profilePatch);
   if (pErr) console.warn('Demo profile upsert warning:', pErr.message);
 
   // 6. Fake leaderboard users — created (or reused) via auth.admin, then
