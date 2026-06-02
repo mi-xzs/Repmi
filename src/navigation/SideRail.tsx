@@ -167,7 +167,8 @@ const railStyles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "800",
     letterSpacing: 0.5,
-    color: colors.background,
+    // Match the "MY WORKOUTS" section label on HomeScreen.
+    color: colors.titleText,
   },
   items: {
     gap: 4,
