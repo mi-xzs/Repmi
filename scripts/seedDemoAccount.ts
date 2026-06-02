@@ -144,24 +144,42 @@ const PUSH_LIGHT: Workout = {
 
 const WORKOUTS: Workout[] = [PUSH_DAY, PULL_DAY, LEG_DAY, PUSH_LIGHT];
 
-// Mark a session's rows as completed (done=true), with mild progression noise.
-function completeRows(rows: Row[], dayOffset: number): Row[] {
-  return rows.map((r, i) => ({
-    ...r,
-    // Slight wave: most sets done; occasionally drop a final rep.
-    kg: r.kg,
-    reps: Math.max(1, r.reps - (i === rows.length - 1 && dayOffset % 3 === 0 ? 1 : 0)),
-    done: true,
-  }));
+// ─── session set shape ─────────────────────────────────────────────────────
+// Recorded session sets are NOT the same shape as the workout-template rows.
+// Each set has a `label` ('1','2','3'... for working sets, 'W' for warm-up)
+// and only includes the relevant metric fields. This matches SessionSet in
+// src/screens/WorkoutScreen.tsx and the WorkoutSessionPayloadSchema.
+type SessionSet = {
+  label: string;
+  kg?: number;
+  reps?: number;
+  minutes?: number;
+  seconds?: number;
+  meters?: number;
+};
+
+// Convert a template row into a recorded SessionSet for a given working-set
+// index. Drops the `sets/done` template fields and adds the `label`.
+function rowToSessionSet(row: Row, workingIndex: number, dayOffset: number): SessionSet {
+  // Slight wave so the data looks like a real human's: occasionally drop
+  // the final rep on heavy sets to mimic missed reps.
+  const dropLast = workingIndex >= 3 && dayOffset % 5 === 0;
+  const set: SessionSet = { label: String(workingIndex) };
+  if (row.kg > 0) set.kg = row.kg;
+  if (row.reps > 0) set.reps = Math.max(1, row.reps - (dropLast ? 1 : 0));
+  if ((row.minutes ?? 0) > 0) set.minutes = row.minutes;
+  if ((row.seconds ?? 0) > 0) set.seconds = row.seconds;
+  if ((row.meters ?? 0) > 0) set.meters = row.meters;
+  return set;
 }
 
 // Build 18 sessions across the past 7 weeks, rotating Push/Pull/Legs/Push-Light.
-function buildSessions(workouts: Workout[]) {
+function buildSessions(_workouts: Workout[]) {
   const sessions: Array<{
     workout_id: string;
     date: string;
     duration: number;
-    exercises: { name: string; sets: Row[] }[];
+    exercises: { name: string; sets: SessionSet[] }[];
   }> = [];
 
   const rotation = [PUSH_DAY, PULL_DAY, LEG_DAY, PUSH_LIGHT];
@@ -177,7 +195,7 @@ function buildSessions(workouts: Workout[]) {
     d.setHours(18, 30, 0, 0); // 6:30pm gym
     const exercises = w.sections.map((sec) => ({
       name: sec.exerciseName,
-      sets: completeRows(sec.rows, daysAgo),
+      sets: sec.rows.map((row, idx) => rowToSessionSet(row, idx + 1, daysAgo)),
     }));
     sessions.push({
       workout_id: w.id,
