@@ -6731,7 +6731,10 @@ function AchievementsSkeleton() {
 // ─── Screen ────────────────────────────────────────────────
 
 const AchievementsScreen: React.FC = () => {
-  const { contentMaxWidth, isWide } = useResponsive();
+  const { contentMaxWidth, isWide, width: winW } = useResponsive();
+  // Reactive pager/page width — the module-level SCREEN_WIDTH is read once
+  // at app load, so pages overflow when the window has resized since then.
+  const pagerW = getContentWidth(winW);
   // On wide web, center the screen in the content column. Height comes from
   // flex:1 (matching AnalyticsScreen) — the pager row below must use `flex: 1`
   // (not `flexGrow: 1`) for the per-page ScrollViews to get bounded heights.
@@ -6766,7 +6769,7 @@ const AchievementsScreen: React.FC = () => {
       tabIndexRef.current = index;
       setTabIndex(index);
       Animated.spring(translateX, {
-        toValue: -index * SCREEN_WIDTH,
+        toValue: -index * pagerW,
         useNativeDriver: true,
         velocity: -velocityX,
         tension: 68,
@@ -6774,7 +6777,7 @@ const AchievementsScreen: React.FC = () => {
         overshootClamping: false,
       }).start();
     },
-    [translateX],
+    [translateX, pagerW],
   );
 
   // Drive the pager from the side-rail sub-tab param on wide web.
@@ -6782,6 +6785,11 @@ const AchievementsScreen: React.FC = () => {
   useEffect(() => {
     if (isWide && typeof railTab === 'number') snapToIndex(railTab);
   }, [railTab, isWide, snapToIndex]);
+
+  // Keep the active page aligned when the window (and so pagerW) resizes.
+  useEffect(() => {
+    translateX.setValue(-tabIndexRef.current * pagerW);
+  }, [pagerW, translateX]);
 
   const panResponder = useRef(
     PanResponder.create({
@@ -7402,7 +7410,7 @@ const AchievementsScreen: React.FC = () => {
           <SwipeTabs
             tabs={[...TAB_LABELS]}
             translateX={translateX}
-            screenWidth={SCREEN_WIDTH}
+            screenWidth={pagerW}
             activeIndex={tabIndex}
             onTabPress={snapToIndex}
           />
@@ -7417,12 +7425,12 @@ const AchievementsScreen: React.FC = () => {
           style={{
             flex: 1,
             flexDirection: 'row',
-            width: SCREEN_WIDTH * TAB_COUNT,
+            width: pagerW * TAB_COUNT,
             transform: [{ translateX }],
           }}
         >
           {/* Page 0 — Achievements */}
-          <View style={{ width: SCREEN_WIDTH, flex: 1, minHeight: 0 }}>
+          <View style={{ width: pagerW, flex: 1, minHeight: 0 }}>
             <ScrollView
               style={{ flex: 1 }}
               contentContainerStyle={styles.scroll}
@@ -7592,12 +7600,12 @@ const AchievementsScreen: React.FC = () => {
           </View>
 
           {/* Page 1 — Leaderboard */}
-          <View style={{ width: SCREEN_WIDTH, flex: 1, minHeight: 0 }}>
+          <View style={{ width: pagerW, flex: 1, minHeight: 0 }}>
             <LeaderboardView />
           </View>
 
           {/* Page 2 — Store */}
-          <View style={{ width: SCREEN_WIDTH, flex: 1, minHeight: 0 }}>
+          <View style={{ width: pagerW, flex: 1, minHeight: 0 }}>
             <StoreView />
           </View>
         </Animated.View>

@@ -24,8 +24,9 @@ import { resolve } from 'node:path';
 // Reads the app icon and uploads it to the avatars bucket as the demo
 // account's profile picture. Idempotent — overwrites the same path on
 // every re-run via { upsert: true }. Returns the storage path on success.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function uploadDemoAvatar(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   userId: string,
 ): Promise<string | null> {
   const iconPath = resolve(__dirname, '..', 'src', 'assets', 'icon.png');
