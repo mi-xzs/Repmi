@@ -140,7 +140,20 @@ function App() {
 
   return (
     <SafeAreaProvider>
-      <NavigationContainer theme={NAV_THEME} linking={LINKING}>
+      <NavigationContainer
+        theme={NAV_THEME}
+        linking={LINKING}
+        // On web, React Navigation auto-sets document.title from the focused
+        // route's name. For nested navigators that can resolve to `undefined`,
+        // which shows up in the browser tab. Force the title to "Repmi" — or
+        // "<Screen> · Repmi" when a screen explicitly sets its own title.
+        documentTitle={{
+          formatter: (options, route) => {
+            const screen = options?.title ?? route?.name;
+            return screen ? `${screen} · Repmi` : 'Repmi';
+          },
+        }}
+      >
         <ThreatGate>
           <AuthProvider>
             <BiometricGate>
