@@ -17,6 +17,19 @@ import {
 } from 'react-native';
 import * as Linking from 'expo-linking';
 import { supabase } from '../services/supabase';
+
+// The redirect URL Supabase appends the recovery tokens to. MUST match
+// an entry in Supabase Dashboard → Auth → URL Configuration → Redirect
+// URLs, otherwise Supabase silently falls back to the Site URL and
+// strips the tokens (the user ends up on bare repmi.co.uk).
+//
+// Web: hard-code the production origin so it's bit-for-bit identical
+// to the allowlist entry. Expo's Linking.createURL on web can produce
+// subtly different shapes (trailing slash, hash-based URL) depending
+// on how it's configured, which historically broke matching.
+// Native: keep the deep-link path so iOS/Android open the app
+// directly via the repmi:// scheme.
+const PRODUCTION_RESET_URL = 'https://repmi.co.uk/auth/reset';
 import { colors } from '../theme/colors';
 import { useAccent } from '../services/SettingsContext';
 import { mapAuthError } from '../services/errorMessages';
@@ -36,10 +49,13 @@ export default function PasswordResetScreen({ navigation }: any) {
     }
     setLoading(true);
     setError('');
-    // The redirect URL is parsed by Linking on launch — see
-    // RootNavigator's URL handler which routes /auth/reset to the
-    // confirm screen.
-    const redirectTo = Linking.createURL('auth/reset');
+    // Web: explicit production URL (must match the Supabase Redirect
+    // URLs allowlist literally). Native: Expo deep-link via the repmi://
+    // scheme, parsed by Linking on launch.
+    const redirectTo =
+      Platform.OS === 'web'
+        ? PRODUCTION_RESET_URL
+        : Linking.createURL('auth/reset');
     const { error: err } = await supabase.auth.resetPasswordForEmail(
       email.trim(),
       { redirectTo },
