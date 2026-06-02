@@ -1,0 +1,42 @@
+name: Seed demo account
+
+# Refreshes the shared demo Supabase account so portfolio reviewers always
+# see a populated app with recent-looking session dates. Runs:
+#   - nightly at 04:00 UTC (cron)
+#   - on demand via the "Run workflow" button in the Actions tab
+
+on:
+  schedule:
+    # Every day at 04:00 UTC (~midnight EST / 5am London)
+    - cron: '0 4 * * *'
+  workflow_dispatch: {}
+
+# Don't run two seeds at once — if a manual run overlaps the cron, queue.
+concurrency:
+  group: seed-demo
+  cancel-in-progress: false
+
+jobs:
+  seed:
+    name: Seed demo account
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run seed
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          EXPO_PUBLIC_DEMO_EMAIL: ${{ secrets.EXPO_PUBLIC_DEMO_EMAIL }}
+        run: npm run seed:demo
