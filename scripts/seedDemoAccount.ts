@@ -179,9 +179,9 @@ const FAKE_USERS: FakeUser[] = [
 
 // ─── session set shape ─────────────────────────────────────────────────────
 // Recorded session sets are NOT the same shape as the workout-template rows.
-// Each set has a `label` ('1','2','3'... for working sets, 'W' for warm-up)
-// and only includes the relevant metric fields. This matches SessionSet in
-// src/screens/WorkoutScreen.tsx and the WorkoutSessionPayloadSchema.
+// Each set has a `label` ('1','2','3'... for working sets) and only the
+// relevant metric fields. Matches SessionSet in src/screens/WorkoutScreen.tsx
+// and the WorkoutSessionPayloadSchema.
 type SessionSet = {
   label: string;
   kg?: number;
@@ -191,53 +191,94 @@ type SessionSet = {
   meters?: number;
 };
 
-// Convert a template row into a recorded SessionSet for a given working-set
-// index. Drops the `sets/done` template fields and adds the `label`.
-function rowToSessionSet(row: Row, workingIndex: number, dayOffset: number): SessionSet {
-  // Slight wave so the data looks like a real human's: occasionally drop
-  // the final rep on heavy sets to mimic missed reps.
-  const dropLast = workingIndex >= 3 && dayOffset % 5 === 0;
-  const set: SessionSet = { label: String(workingIndex) };
-  if (row.kg > 0) set.kg = row.kg;
-  if (row.reps > 0) set.reps = Math.max(1, row.reps - (dropLast ? 1 : 0));
-  if ((row.minutes ?? 0) > 0) set.minutes = row.minutes;
-  if ((row.seconds ?? 0) > 0) set.seconds = row.seconds;
-  if ((row.meters ?? 0) > 0) set.meters = row.meters;
-  return set;
+interface BuiltSession {
+  workout_id: string;
+  workout_name: string;
+  date: string; // ISO
+  duration: number;
+  exercises: { name: string; sets: SessionSet[] }[];
+  rpe: number; // 1–10, one per session
 }
 
-// Build 18 sessions across the past 7 weeks, rotating Push/Pull/Legs/Push-Light.
-function buildSessions(_workouts: Workout[]) {
-  const sessions: Array<{
-    workout_id: string;
-    date: string;
-    duration: number;
-    exercises: { name: string; sets: SessionSet[] }[];
-  }> = [];
+// Slightly deterministic "noise" so the data feels human without looking
+// random. Returns a value in [-1, 1] derived from two integer seeds.
+function noise(a: number, b: number): number {
+  const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453;
+  return (s - Math.floor(s)) * 2 - 1; // [-1, 1)
+}
 
+// Build 18 sessions across the past 7 weeks with realistic per-exercise
+// progression and an RPE per session. Exercises start at ~65% of their
+// "current" template kg seven weeks ago and ramp linearly to 100% today,
+// with small per-session noise. RPE rises gently as loads get heavier and
+// dips on the deload-style PUSH_LIGHT sessions.
+function buildSessions(): BuiltSession[] {
   const rotation = [PUSH_DAY, PULL_DAY, LEG_DAY, PUSH_LIGHT];
   const today = new Date();
-  // Walk back ~7 weeks, ~3 sessions/week.
+
+  // First pass: pick the dates + workouts (oldest → newest order).
+  const plan: { workout: Workout; daysAgo: number }[] = [];
   let i = 0;
   for (let daysAgo = 2; daysAgo <= 50 && i < 18; daysAgo += 2) {
-    // Skip ~1 in 4 days to create a realistic mixed cadence.
-    if (daysAgo % 7 === 0) continue;
-    const w = rotation[i % rotation.length];
+    if (daysAgo % 7 === 0) continue; // skip ~1 in 4 for realistic cadence
+    plan.push({ workout: rotation[i % rotation.length], daysAgo });
+    i++;
+  }
+  plan.reverse(); // oldest-first so index → progression factor maps cleanly
+
+  const total = plan.length;
+  const sessions: BuiltSession[] = [];
+
+  for (let idx = 0; idx < plan.length; idx++) {
+    const { workout, daysAgo } = plan[idx];
+    const t = idx / Math.max(1, total - 1); // 0 (oldest) → 1 (newest)
+    // Progression: 65% of current weights at start, 100% today.
+    const baseFactor = 0.65 + t * 0.35;
+    // PUSH_LIGHT is a deload-style day — keep it at ~70% of current.
+    const isLight = workout === PUSH_LIGHT;
+    const progressionFactor = isLight ? 0.65 + t * 0.10 : baseFactor;
+
+    const exercises = workout.sections.map((sec) => ({
+      name: sec.exerciseName,
+      sets: sec.rows.map((row, setIdx) => {
+        const set: SessionSet = { label: String(setIdx + 1) };
+        if (row.kg > 0) {
+          // Per-set noise ± ~2%
+          const wobble = 1 + noise(idx, setIdx) * 0.02;
+          // Round to nearest 2.5 kg for realism.
+          set.kg = Math.max(5, Math.round((row.kg * progressionFactor * wobble) / 2.5) * 2.5);
+        }
+        if (row.reps > 0) {
+          // Occasionally drop the final rep on the heaviest set on heavy days.
+          const dropLast = !isLight && setIdx >= row.sets - 1 && noise(idx, setIdx + 99) > 0.5;
+          set.reps = Math.max(1, row.reps - (dropLast ? 1 : 0));
+        }
+        if ((row.minutes ?? 0) > 0) set.minutes = row.minutes;
+        if ((row.seconds ?? 0) > 0) set.seconds = row.seconds;
+        if ((row.meters ?? 0) > 0) set.meters = row.meters;
+        return set;
+      }),
+    }));
+
+    // RPE: scales from ~6 → ~9 with progression, dips ~1 on Light days,
+    // plus per-session jitter. Stored as integer 1–10 per schema.
+    const rpeBase = 6.5 + t * 2.0 + (isLight ? -1.0 : 0);
+    const rpe = Math.max(5, Math.min(10, Math.round(rpeBase + noise(idx, 7) * 0.8)));
+
     const d = new Date(today);
     d.setDate(today.getDate() - daysAgo);
     d.setHours(18, 30, 0, 0); // 6:30pm gym
-    const exercises = w.sections.map((sec) => ({
-      name: sec.exerciseName,
-      sets: sec.rows.map((row, idx) => rowToSessionSet(row, idx + 1, daysAgo)),
-    }));
+
     sessions.push({
-      workout_id: w.id,
+      workout_id: workout.id,
+      workout_name: workout.workoutName,
       date: d.toISOString(),
-      duration: 3600 + (i % 3) * 600, // 60–80 min
+      duration: 3600 + (idx % 3) * 600, // 60–80 min
       exercises,
+      rpe,
     });
-    i++;
   }
+
   return sessions;
 }
 
@@ -279,8 +320,8 @@ async function main() {
     process.exit(1);
   }
 
-  // 4. Insert sessions
-  const sessions = buildSessions(WORKOUTS);
+  // 4. Insert sessions with realistic progression + RPE per session
+  const sessions = buildSessions();
   console.log(`Inserting ${sessions.length} sessions...`);
   const sessionRows = sessions.map((s) => ({
     user_id: userId,
@@ -294,6 +335,17 @@ async function main() {
     console.error('Session insert failed:', sErr.message);
     process.exit(1);
   }
+
+  // 4b. RPE entries — one per session, recorded at the session date.
+  console.log(`Inserting ${sessions.length} RPE entries...`);
+  const rpeRows = sessions.map((s) => ({
+    user_id: userId,
+    workout_id: s.workout_id,
+    rating: s.rpe,
+    recorded_at: s.date,
+  }));
+  const { error: rErr } = await supabase.from('workout_rpe').insert(rpeRows);
+  if (rErr) console.warn('RPE insert warning:', rErr.message);
 
   // 5. Demo's own profile fields + stats. The profiles table doesn't have
   // `updated_at` — PostgREST rejects the whole row if we include unknown
