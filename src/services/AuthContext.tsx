@@ -54,7 +54,11 @@ interface AuthContextValue {
   setPasswordRecovery: () => void;
   // Called by PasswordResetConfirmScreen after a successful update.
   clearPasswordRecovery: () => void;
-  signUp: (email: string, password: string) => Promise<string | null>;
+  signUp: (
+    email: string,
+    password: string,
+    emailRedirectTo?: string,
+  ) => Promise<string | null>;
   signIn: (email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
   refreshAAL: () => Promise<void>;
@@ -125,8 +129,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setInPasswordRecovery(false);
   }
 
-  async function signUp(email: string, password: string): Promise<string | null> {
-    const { error } = await supabase.auth.signUp({ email, password });
+  async function signUp(
+    email: string,
+    password: string,
+    emailRedirectTo?: string,
+  ): Promise<string | null> {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      // Routes the "Confirm email" button in the welcome email to the
+      // app's confirmation deep link. Without this, Supabase falls
+      // back to the dashboard Site URL, which on native lands the user
+      // on the app's root screen without parsing the recovery tokens.
+      options: emailRedirectTo ? { emailRedirectTo } : undefined,
+    });
     if (error) {
       // M7: log the raw error code for diagnostics; return scrubbed
       // copy so the UI can't accidentally surface the email leak that

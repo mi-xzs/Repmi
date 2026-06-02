@@ -100,20 +100,24 @@ function BiometricGate({ children }: { children: React.ReactNode }) {
 //     links from before the rename keep resolving. Drop after one release.
 //   - `https://repmi.co.uk` is included so Universal Links / App Links route
 //     the same screens once the .well-known files ship.
-// Supabase implicit-flow recovery URLs come back as
-// `…/auth/reset#access_token=…&refresh_token=…&type=recovery`. React
-// Navigation's linking parser only decodes query strings into
-// `route.params`, NOT hash fragments. Rewrite `/auth/reset#…` to
-// `/auth/reset?…` before handing the URL to the parser so the screen
-// receives the tokens via `route.params.access_token` etc.
+// Supabase implicit-flow email URLs come back as
+// `…/auth/<path>#access_token=…&refresh_token=…&type=<recovery|signup>`.
+// React Navigation's linking parser only decodes query strings into
+// `route.params`, NOT hash fragments. Rewrite the hash to a query string
+// for both /auth/reset (password recovery) and /auth/confirm (signup
+// confirmation) so the screens receive the tokens via route.params.
 //
 // Web is unaffected — Supabase's `detectSessionInUrl` consumes the hash
 // directly and our pathname-based recovery flag bypasses route params.
-function normaliseRecoveryUrl(url: string | null): string | null {
+function normaliseAuthCallbackUrl(url: string | null): string | null {
   if (!url) return null;
-  return url.includes('/auth/reset#')
-    ? url.replace('/auth/reset#', '/auth/reset?')
-    : url;
+  if (url.includes('/auth/reset#')) {
+    return url.replace('/auth/reset#', '/auth/reset?');
+  }
+  if (url.includes('/auth/confirm#')) {
+    return url.replace('/auth/confirm#', '/auth/confirm?');
+  }
+  return url;
 }
 
 const LINKING: LinkingOptions<any> = {
@@ -128,17 +132,18 @@ const LINKING: LinkingOptions<any> = {
       Auth: {
         screens: {
           PasswordResetConfirm: 'auth/reset',
+          EmailConfirm: 'auth/confirm',
         },
       },
     },
   },
   async getInitialURL() {
     const url = await Linking.getInitialURL();
-    return normaliseRecoveryUrl(url);
+    return normaliseAuthCallbackUrl(url);
   },
   subscribe(listener) {
     const sub = Linking.addEventListener('url', ({ url }) => {
-      const normalised = normaliseRecoveryUrl(url);
+      const normalised = normaliseAuthCallbackUrl(url);
       if (normalised) listener(normalised);
     });
     return () => sub.remove();

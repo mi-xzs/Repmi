@@ -8,6 +8,7 @@ export type AuthStackParamList = {
   SignUp: undefined;
   PasswordReset: undefined;
   PasswordResetConfirm: undefined;
+  EmailConfirm: undefined;
   MFAChallenge: undefined;
 };
 

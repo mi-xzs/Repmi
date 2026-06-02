@@ -21,6 +21,14 @@ import {
 } from '../services/passwordPolicy';
 import { logError } from '../services/logger';
 
+// The "Confirm email" link in the signup welcome email points here. MUST
+// be in Supabase Dashboard → Auth → URL Configuration → Redirect URLs,
+// otherwise Supabase silently falls back to the Site URL and strips the
+// tokens. Native uses Universal Links (iOS) / App Links (Android) — both
+// route this https URL to the app when installed, and fall back to the
+// web flow when not.
+const EMAIL_CONFIRM_URL = 'https://repmi.co.uk/auth/confirm';
+
 export default function SignUpScreen({ navigation }: any) {
   const { signUp } = useAuth();
   const { accent } = useAccent();
@@ -75,7 +83,7 @@ export default function SignUpScreen({ navigation }: any) {
       logError('passwordPolicy.breachCheck.unavailable', { screen: 'signup' });
     }
 
-    const err = await signUp(email.trim(), password);
+    const err = await signUp(email.trim(), password, EMAIL_CONFIRM_URL);
     setLoading(false);
     if (err) {
       setError(err);
