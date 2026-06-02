@@ -244,7 +244,9 @@ async function main() {
     process.exit(1);
   }
 
-  // 5. Profile fields
+  // 5. Profile fields. The profiles table doesn't have `updated_at` —
+  // PostgREST rejects the whole row if we include unknown columns, so
+  // we only send fields we know exist on this schema.
   console.log('Updating profile fields...');
   const { error: pErr } = await supabase
     .from('profiles')
@@ -252,7 +254,6 @@ async function main() {
       id: userId,
       username: 'repmi.demo',
       weekly_target: 4,
-      updated_at: new Date().toISOString(),
     });
   if (pErr) {
     console.warn('Profile upsert warning:', pErr.message);
