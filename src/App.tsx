@@ -136,6 +136,46 @@ function App() {
         '*{scrollbar-width:none!important;-ms-overflow-style:none!important}';
       document.head.appendChild(style);
     }
+
+    // Mobile-browser chrome theming — kill the white bars at the top/bottom
+    // of the viewport on phone browsers (the address bar area + the iOS
+    // bottom toolbar overscroll region).
+    //   - `theme-color` colours the address bar on Chrome/Edge/Samsung
+    //     Internet on Android and on iOS 15+ Safari.
+    //   - `apple-mobile-web-app-*` meta tags handle the case where the user
+    //     adds the site to their home screen (PWA full-screen mode).
+    //   - Updating the viewport with `viewport-fit=cover` lets the page
+    //     extend behind the iOS notch / home indicator so the dark body
+    //     bg fills the safe-area instead of showing white.
+    //   - Setting `<body>` background colour covers rubber-band overscroll
+    //     and any frame the browser paints behind the React root.
+    if (Platform.OS === 'web' && typeof document !== 'undefined' && !document.getElementById('repmi-mobile-theme')) {
+      const marker = document.createElement('meta');
+      marker.id = 'repmi-mobile-theme';
+      marker.name = 'repmi-mobile-theme';
+      marker.content = '1';
+      document.head.appendChild(marker);
+
+      const ensureMeta = (name: string, content: string) => {
+        let el = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement | null;
+        if (!el) {
+          el = document.createElement('meta');
+          el.name = name;
+          document.head.appendChild(el);
+        }
+        el.content = content;
+      };
+      ensureMeta('theme-color', colors.background);
+      ensureMeta('apple-mobile-web-app-capable', 'yes');
+      ensureMeta('apple-mobile-web-app-status-bar-style', 'black-translucent');
+      ensureMeta('mobile-web-app-capable', 'yes');
+      ensureMeta(
+        'viewport',
+        'width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover',
+      );
+      document.documentElement.style.backgroundColor = colors.background;
+      document.body.style.backgroundColor = colors.background;
+    }
   }, []);
 
   return (
