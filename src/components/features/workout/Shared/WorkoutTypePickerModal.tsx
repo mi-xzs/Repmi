@@ -16,6 +16,8 @@ import {
   TextInput,
   ScrollView,
   StyleSheet,
+  Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
@@ -67,6 +69,11 @@ export default function WorkoutTypePickerModal({
   maxParts = 3,
 }: Props) {
   const { accent } = useAccent();
+  const { height: winH } = useWindowDimensions();
+  // On web the modal portal doesn't propagate a definite height to children,
+  // so a percentage `maxHeight: '85%'` on the sheet resolves to 0. Force a
+  // concrete pixel height instead.
+  const webSheetHeight = Math.round(winH * 0.85);
   const [categoryFilter, setCategoryFilter] = useState<Category | null>(null);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -154,7 +161,13 @@ export default function WorkoutTypePickerModal({
       <View style={pickerStyles.overlay}>
         <BlurView intensity={40} tint="dark" style={pickerStyles.blur} />
 
-        <View style={pickerStyles.pickerSheet}>
+        <View
+          style={[
+            pickerStyles.pickerSheet,
+            // Web: definite pixel height so the FlatList's flex:1 gets bounds.
+            Platform.OS === 'web' && { height: webSheetHeight, maxHeight: webSheetHeight },
+          ]}
+        >
           <View style={pickerStyles.pickerHandle} />
 
           <Text style={pickerStyles.pickerTitle}>Choose Workout Type</Text>
@@ -285,22 +298,28 @@ export default function WorkoutTypePickerModal({
             autoCorrect={false}
           />
 
-          {/* List */}
-          <FlatList
-            data={filteredItems}
-            keyExtractor={(item, i) =>
-              item.type === 'header' ? `h_${item.label}` : `i_${item.label}_${i}`
-            }
-            renderItem={renderItem}
-            showsVerticalScrollIndicator={false}
-            bounces={false}
-            style={{ overflow: 'hidden' }}
-            ListEmptyComponent={
-              <Text style={pickerStyles.emptyText}>
-                {reachedMax ? 'Limit reached' : 'No matches'}
-              </Text>
-            }
-          />
+          {/* List — wrapped in flex:1/minHeight:0 so RN-web gives the
+              FlatList's inner scroller a definite bounded height. Do NOT
+              add overflow:'hidden' on the FlatList style — it clips the
+              inner scroll div from outside on RN-web. */}
+          <View style={{ flex: 1, minHeight: 0 }}>
+            <FlatList
+              data={filteredItems}
+              keyExtractor={(item, i) =>
+                item.type === 'header' ? `h_${item.label}` : `i_${item.label}_${i}`
+              }
+              renderItem={renderItem}
+              showsVerticalScrollIndicator={false}
+              bounces={false}
+              style={{ flex: 1, minHeight: 0 }}
+              contentContainerStyle={{ flexGrow: 1 }}
+              ListEmptyComponent={
+                <Text style={pickerStyles.emptyText}>
+                  {reachedMax ? 'Limit reached' : 'No matches'}
+                </Text>
+              }
+            />
+          </View>
 
           {/* Footer */}
           <View style={pickerStyles.footer}>
