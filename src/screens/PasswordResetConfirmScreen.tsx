@@ -40,7 +40,13 @@ import { Skeleton } from '../components/ui/Skeleton';
 
 export default function PasswordResetConfirmScreen({ navigation, route }: any) {
   const { accent } = useAccent();
-  const { clearPasswordRecovery, signOut, session, inPasswordRecovery } = useAuth();
+  const {
+    setPasswordRecovery,
+    clearPasswordRecovery,
+    signOut,
+    session,
+    inPasswordRecovery,
+  } = useAuth();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
@@ -70,6 +76,13 @@ export default function PasswordResetConfirmScreen({ navigation, route }: any) {
     const accessToken: string | undefined = route.params?.access_token;
     const refreshToken: string | undefined = route.params?.refresh_token;
     if (accessToken && refreshToken) {
+      // Native: flag recovery BEFORE setSession() — otherwise the
+      // SIGNED_IN event would flip session != null while
+      // inPasswordRecovery is still false, and RootNavigator would
+      // unmount this screen mid-flight and route to Main. Setting the
+      // flag first guarantees RootNavigator stays on the reset form
+      // through the whole session-creation flow.
+      setPasswordRecovery();
       supabase.auth
         .setSession({ access_token: accessToken, refresh_token: refreshToken })
         .then(({ error: err }) => {

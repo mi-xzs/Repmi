@@ -45,6 +45,13 @@ interface AuthContextValue {
   // state — otherwise the recovery session would route the user
   // straight to the home tab and they'd never see the reset form.
   inPasswordRecovery: boolean;
+  // Called by PasswordResetConfirmScreen when it detects recovery
+  // tokens in route.params and is about to call setSession(). Without
+  // this explicit set, RootNavigator would see "session arrived, no
+  // recovery flag" and route the user to Main, unmounting the reset
+  // form. Web uses the synchronous pathname check in
+  // detectRecoveryFromUrl() and so doesn't need this.
+  setPasswordRecovery: () => void;
   // Called by PasswordResetConfirmScreen after a successful update.
   clearPasswordRecovery: () => void;
   signUp: (email: string, password: string) => Promise<string | null>;
@@ -110,6 +117,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => listener.subscription.unsubscribe();
   }, []);
 
+  function setPasswordRecovery() {
+    setInPasswordRecovery(true);
+  }
+
   function clearPasswordRecovery() {
     setInPasswordRecovery(false);
   }
@@ -161,6 +172,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isLoading,
         mfaRequired,
         inPasswordRecovery,
+        setPasswordRecovery,
         clearPasswordRecovery,
         signUp,
         signIn,

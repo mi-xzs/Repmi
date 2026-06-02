@@ -49,13 +49,19 @@ export default function PasswordResetScreen({ navigation }: any) {
     }
     setLoading(true);
     setError('');
-    // Web: explicit production URL (must match the Supabase Redirect
-    // URLs allowlist literally). Native: Expo deep-link via the repmi://
-    // scheme, parsed by Linking on launch.
-    const redirectTo =
-      Platform.OS === 'web'
-        ? PRODUCTION_RESET_URL
-        : Linking.createURL('auth/reset');
+    // ALWAYS use the production https URL — regardless of platform.
+    // Reasons:
+    //   - Email clients (Gmail web/iOS, Outlook) refuse to make
+    //     custom-scheme links (`repmi://`) clickable. The user would
+    //     see broken/plain text in the email body.
+    //   - Cross-device flow: a user requests reset on their phone but
+    //     opens the email on a laptop — only https:// links survive
+    //     that hop.
+    //   - On native with App Links / Universal Links verified
+    //     (.well-known files in public/), Android/iOS auto-route the
+    //     https URL to the installed app. Without the app installed,
+    //     the user gets the web flow as a clean fallback.
+    const redirectTo = PRODUCTION_RESET_URL;
     const { error: err } = await supabase.auth.resetPasswordForEmail(
       email.trim(),
       { redirectTo },
