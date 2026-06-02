@@ -6,7 +6,7 @@
 // ships in the native bundle.
 
 import React from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, Image, Pressable, StyleSheet } from "react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import { Feather } from "@expo/vector-icons";
 
@@ -83,6 +83,11 @@ export default function SideRail({
   return (
     <View style={railStyles.rail}>
       <View style={railStyles.brand}>
+        <Image
+          source={require("../assets/icon.png")}
+          style={railStyles.brandIcon}
+          resizeMode="contain"
+        />
         <Text style={railStyles.brandText}>Repmi</Text>
       </View>
       <View style={railStyles.items}>
@@ -148,13 +153,21 @@ const railStyles = StyleSheet.create({
     gap: 24,
   },
   brand: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
     paddingHorizontal: 12,
+  },
+  brandIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 6,
   },
   brandText: {
     fontSize: 22,
     fontWeight: "800",
     letterSpacing: 0.5,
-    color: colors.highlight,
+    color: colors.background,
   },
   items: {
     gap: 4,

@@ -53,6 +53,7 @@ import { getLevelFromXP, getLevelTitle } from '../services/xpService';
 import { fmtDuration } from '../utils/analyticsHelpers';
 import RadarChart from '../components/analytics/RadarChart';
 import { logError } from '../services/logger';
+import { useDemoGuard } from '../services/demoMode';
 
 const GOAL_META: Record<string, { label: string; icon: string; color: string; bg: string }> = {
   strength:    { label: 'Strength',    icon: 'trending-up', color: '#6D6D6D', bg: 'rgba(109,109,109,0.12)' },
@@ -133,6 +134,7 @@ export default function UserProfileScreen() {
   const navigation = useNavigation<any>();
   const { accent } = useAccent();
   const { session } = useAuth();
+  const demoGuard = useDemoGuard();
   const targetId: string = route.params?.userId;
   const viewerId = session?.user.id;
   const isSelf = viewerId === targetId;
@@ -175,6 +177,9 @@ export default function UserProfileScreen() {
   // H12 — Block & Report.
   const handleBlock = useCallback(() => {
     setMenuOpen(false);
+    // SECURITY (M1) — block in demo mode so a shared demo account
+    // can't be used to grief real users' block lists.
+    if (!demoGuard('Blocking users')) return;
     Alert.alert(
       `Block ${profile?.username ?? 'this user'}?`,
       `They won't be able to see your profile, follow you, or appear in your search results. You'll also unfollow each other.`,
@@ -194,12 +199,15 @@ export default function UserProfileScreen() {
         },
       ],
     );
-  }, [profile, targetId, navigation]);
+  }, [profile, targetId, navigation, demoGuard]);
 
   const openReport = useCallback(() => {
     setMenuOpen(false);
+    // SECURITY (M1) — block in demo mode so the shared account can't
+    // be used to file fake reports against real users.
+    if (!demoGuard('Reporting users')) return;
     setReportOpen(true);
-  }, []);
+  }, [demoGuard]);
 
   const submitReport = useCallback(async () => {
     if (!reportReason) {
@@ -222,6 +230,9 @@ export default function UserProfileScreen() {
 
   const handleToggle = useCallback(async () => {
     if (!viewerId || isSelf) return;
+    // SECURITY (M1) — block in demo mode so the shared account can't
+    // be used to spam follow requests at real users.
+    if (!demoGuard('Following users')) return;
     setPending(true);
     const prevState = followState;
     // already engaged (following OR requested) → tapping clears it
@@ -258,7 +269,7 @@ export default function UserProfileScreen() {
     } finally {
       setPending(false);
     }
-  }, [viewerId, isSelf, followState, targetId]);
+  }, [viewerId, isSelf, followState, targetId, demoGuard]);
 
   if (loading) {
     return (

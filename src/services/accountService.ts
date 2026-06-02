@@ -5,7 +5,11 @@ import {
   isBiometricAvailable,
 } from './biometricService';
 
-const PROFILE_IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
+// SECURITY (M2) — buckets the user owns objects in. We sweep every
+// file under the user's `${userId}/` prefix at delete time so no
+// avatar / cover orphans survive the account deletion (GDPR
+// "right to be forgotten"). Add new buckets here as they're created.
+const USER_OWNED_BUCKETS = ['avatars', 'covers'] as const;
 
 /**
  * A6 / M3 — Fresh re-auth gate for destructive operations
@@ -34,12 +38,37 @@ export async function requireReAuth(
 }
 
 /**
+ * List every object the user owns under `${userId}/` in a bucket and
+ * delete them in a single `remove()` call. Returns nothing — failures
+ * are swallowed (the DB cleanup is the user-facing guarantee).
+ *
+ * SECURITY (M2): previous implementation deleted hard-coded paths of
+ * the form `${userId}.${ext}`, but the upload path was migrated to
+ * `${userId}/${randomUUID}.${ext}` (see profileService.uploadProfileImage).
+ * The hard-coded list therefore matched zero objects in production and
+ * orphaned every avatar/cover on account deletion. Switching to a
+ * prefix-list-then-remove sweep deletes the new-style paths AND any
+ * stragglers from older clients.
+ */
+async function purgeUserStoragePrefix(bucket: string, userId: string): Promise<void> {
+  try {
+    const { data, error } = await supabase.storage.from(bucket).list(userId, { limit: 100 });
+    if (error || !data?.length) return;
+    const paths = data.map(f => `${userId}/${f.name}`);
+    await supabase.storage.from(bucket).remove(paths);
+  } catch {
+    // best-effort — DB cleanup is the user-facing guarantee
+  }
+}
+
+/**
  * Permanently delete the signed-in user's account and all associated data.
  *
  * Order matters:
- *  1. Strip storage objects (avatar/cover). We attempt every known extension
- *     because we don't know which one the user uploaded; missing-file errors
- *     are ignored.
+ *  1. Strip storage objects (avatar/cover) — list every file under the
+ *     user's `${userId}/` prefix in each bucket and remove them. We don't
+ *     hard-code extensions because uploads use randomised filenames
+ *     (`${userId}/${uuid}.${ext}`).
  *  2. Call the SECURITY DEFINER `delete_user` RPC, which removes the user's
  *     rows from every public table plus `auth.users`.
  *  3. Sign out locally and wipe AsyncStorage so the device is clean even if
@@ -54,12 +83,9 @@ export async function requireReAuth(
  * workouts list, water counts) that live in SecureStore.
  */
 export async function deleteAccount(userId: string): Promise<void> {
-  const paths = PROFILE_IMAGE_EXTENSIONS.map(ext => `${userId}.${ext}`);
-
-  await Promise.allSettled([
-    supabase.storage.from('avatars').remove(paths),
-    supabase.storage.from('covers').remove(paths),
-  ]);
+  await Promise.allSettled(
+    USER_OWNED_BUCKETS.map(b => purgeUserStoragePrefix(b, userId)),
+  );
 
   const { error } = await supabase.rpc('delete_user');
   if (error) throw error;

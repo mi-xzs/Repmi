@@ -22,11 +22,28 @@ const LINK_PATTERN = /gymtracker\.link\/w\/([0-9a-f-]{36})/i;
 
 const DEFAULT_EXPIRY_DAYS = 30;
 
-export async function shareWorkout(workout: WorkoutData, username?: string): Promise<string> {
+export async function shareWorkout(workout: WorkoutData): Promise<string> {
   // Resolve the authenticated user so we can stamp ownership without
   // trusting a client-supplied id.
   const { data: userResp } = await supabase.auth.getUser();
   const userId = userResp?.user?.id ?? null;
+
+  // SECURITY (M3) — look up the sharer's username from `profiles`
+  // server-side instead of trusting a caller-supplied string. The
+  // previous shape (`shareWorkout(workout, username)`) let a tampered
+  // client write any string into `shared_by`, so the importer screen
+  // could be made to display "Shared by ElonMusk" for an attacker's
+  // payload. Now `shared_by` is whatever the authenticated user's
+  // current profile.username is — or null if we can't resolve it.
+  let resolvedUsername: string | null = null;
+  if (userId) {
+    const { data: prof } = await supabase
+      .from('profiles')
+      .select('username')
+      .eq('id', userId)
+      .maybeSingle();
+    resolvedUsername = (prof as { username?: string | null } | null)?.username ?? null;
+  }
 
   // SECURITY (H2) — validate the payload before insert. Strict schema:
   // bounded string lengths, bounded array sizes, no unknown keys. A
@@ -47,7 +64,7 @@ export async function shareWorkout(workout: WorkoutData, username?: string): Pro
   // (older Supabase project — keeps the rollout decoupled).
   const payload: Record<string, unknown> = { workout_data: validated.data, expires_at: expiresAt };
   if (userId) payload.user_id = userId;
-  if (username) payload.shared_by = username;
+  if (resolvedUsername) payload.shared_by = resolvedUsername;
 
   let { data, error } = await supabase
     .from('shared_workouts')
@@ -59,7 +76,7 @@ export async function shareWorkout(workout: WorkoutData, username?: string): Pro
     // Retry without the new columns in case the migration hasn't run
     // on this environment yet.
     const legacyPayload: Record<string, unknown> = { workout_data: validated.data };
-    if (username) legacyPayload.shared_by = username;
+    if (resolvedUsername) legacyPayload.shared_by = resolvedUsername;
     ({ data, error } = await supabase
       .from('shared_workouts')
       .insert(legacyPayload)

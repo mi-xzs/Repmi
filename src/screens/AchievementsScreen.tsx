@@ -56,6 +56,7 @@ import { useFocusEffect, useNavigation, useRoute, type RouteProp } from '@react-
 import type { RootTabParamList } from '../navigation/types';
 import { colors } from '../theme/colors';
 import { useResponsive, getContentWidth } from '../hooks/useResponsive';
+import { useDemoGuard } from '../services/demoMode';
 import { useAuth } from '../services/AuthContext';
 import { loadAllSessions as sbLoadAllSessions } from '../services/sessionService';
 import { useWorkouts } from '../services/WorkoutContext';
@@ -3043,6 +3044,9 @@ function AddFriendModal({
   // button while the network call is settling.
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const navigation = useNavigation<any>();
+  // SECURITY (M1) — block follow/unfollow in demo mode so the shared
+  // account can't be used to spam real users with follow requests.
+  const demoGuard = useDemoGuard();
 
   // Card spring on appearance — same spec as ProfilePreviewModal so
   // the two modals share kinetic vocabulary.
@@ -3095,6 +3099,7 @@ function AddFriendModal({
   const handleToggleFollow = useCallback(
     async (target: ProfileSearchResult) => {
       if (!followerId) return;
+      if (!demoGuard('Following users')) return;
       const isFollowing = followingIds.has(target.id);
       // Mark pending and optimistically flip the visible state.
       setPendingIds((prev) => new Set(prev).add(target.id));
@@ -3128,7 +3133,7 @@ function AddFriendModal({
         });
       }
     },
-    [followerId, followingIds],
+    [followerId, followingIds, demoGuard],
   );
 
   return (

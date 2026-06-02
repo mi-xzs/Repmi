@@ -222,6 +222,10 @@ function AccountTab() {
     const trimmed = usernameInput.trim();
     setEditingUsername(false);
     if (!trimmed || trimmed === profile?.username) return;
+    // SECURITY (C1) — block in demo mode. The 30-day server-side
+    // rename rate limit means a single visitor could otherwise lock
+    // the demo handle to an arbitrary string for a month.
+    if (!demoGuard('Renaming the demo account')) return;
     // M11 — client-side check against the 30-day window. The server
     // trigger is the authoritative gate, but checking here avoids a
     // round-trip + lets us show a friendlier message.
@@ -282,13 +286,18 @@ function AccountTab() {
     }
   };
 
-  const handleChangePassword = () =>
+  const handleChangePassword = () => {
+    // SECURITY (C1) — block in demo mode. Otherwise a visitor could
+    // trigger a password-reset email to the demo inbox (or change the
+    // demo password outright, locking everyone else out).
+    if (!demoGuard('Changing the demo password')) return;
     ask({
       title: 'Change password',
       message: 'A reset link will be sent to your email.',
       confirmLabel: 'Send link',
       onConfirm: sendPasswordReset,
     });
+  };
 
   // A6 / M3 — Delete account is gated by ReAuthModal (password + biometric).
   // The actual delete runs in performDeleteAccount after re-auth succeeds.
@@ -379,10 +388,19 @@ function AccountTab() {
           onPress={handleChangePassword}
         />
         {/* H2 — Two-factor authentication. */}
+        {/* SECURITY (C1) — block enrolment in demo mode. Without this gate,
+            any visitor could bind their own TOTP secret to the shared demo
+            account, permanently locking every future recruiter out of the
+            login flow. Disable is also gated so the demo's own MFA state
+            (if it were ever enabled by an admin) can't be flipped off. */}
         <Row
           icon="shield"
           label={mfaEnrolled ? 'Two-factor: enabled' : 'Enable two-factor (TOTP)'}
-          onPress={() => mfaEnrolled ? disableMfa() : navigation.navigate('MFAEnroll')}
+          onPress={() => {
+            if (!demoGuard(mfaEnrolled ? 'Disabling two-factor' : 'Enabling two-factor')) return;
+            if (mfaEnrolled) disableMfa();
+            else navigation.navigate('MFAEnroll');
+          }}
         />
         {/* H2 — Biometric unlock. */}
         <Row
@@ -991,6 +1009,19 @@ function PrivacyTab() {
   const { publicProfile, openFollows, setPublicProfile, setOpenFollows } = useSettings();
   const { accent, accentDim } = useAccent();
   const { notify, dialog } = useDialog();
+  // SECURITY (C1) — gate privacy toggles in demo mode. Without this,
+  // any visitor could flip the demo profile to private (hiding it from
+  // search + leaderboard) or close follows, gutting the "fully populated"
+  // demo experience for every future recruiter.
+  const demoGuard = useDemoGuard();
+  const guardedSetPublicProfile = (v: boolean) => {
+    if (!demoGuard('Changing profile privacy')) return;
+    setPublicProfile(v);
+  };
+  const guardedSetOpenFollows = (v: boolean) => {
+    if (!demoGuard('Changing follow privacy')) return;
+    setOpenFollows(v);
+  };
 
   // M1 — Crash-reporting opt-in. The toggle is loaded from SecureStore
   // on mount and persists each flip via the observability module
@@ -1014,7 +1045,7 @@ function PrivacyTab() {
           right={
             <Switch
               value={publicProfile}
-              onValueChange={setPublicProfile}
+              onValueChange={guardedSetPublicProfile}
               trackColor={{ false: colors.button3, true: accentDim }}
               thumbColor={publicProfile ? accent : colors.button1}
             />
@@ -1027,7 +1058,7 @@ function PrivacyTab() {
           right={
             <Switch
               value={openFollows}
-              onValueChange={setOpenFollows}
+              onValueChange={guardedSetOpenFollows}
               trackColor={{ false: colors.button3, true: accentDim }}
               thumbColor={openFollows ? accent : colors.button1}
             />

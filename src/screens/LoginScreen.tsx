@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,12 @@ import { useAuth } from '../services/AuthContext';
 import { colors } from '../theme/colors';
 import { useAccent } from '../services/SettingsContext';
 import { DEMO_EMAIL, DEMO_PASSWORD, DEMO_ENABLED } from '../services/demoMode';
+import {
+  clearThrottle,
+  formatLockout,
+  getLockoutSecondsRemaining,
+  recordFailedAttempt,
+} from '../services/loginThrottle';
 
 export default function LoginScreen({ navigation }: any) {
   const { signIn } = useAuth();
@@ -20,22 +26,80 @@ export default function LoginScreen({ navigation }: any) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  // H2 — Per-email failed-login throttle. `lockoutSeconds > 0` disables
+  // the button and shows a countdown until another attempt is allowed.
+  // The counter is persisted in AsyncStorage (see loginThrottle.ts), so
+  // refreshing the page does NOT reset it — defeats the trivial F5 bypass.
+  const [lockoutSeconds, setLockoutSeconds] = useState(0);
+  // Avoid stomping on a fresh countdown when the user toggles back to an
+  // older email mid-tick.
+  const lastCheckedEmailRef = useRef('');
 
   // M6 — login is explicit-tap only. The previous auto-submit useEffect
   // (fired when password-manager autofill populated both fields) was
   // removed: it caused surprise logins on autofill and made failed-attempt
   // throttling harder to reason about. The user must press "Log In".
 
+  // H2 — Re-check the lockout window whenever the email field changes
+  // (typing a new email starts fresh; returning to a locked email
+  // resurfaces the countdown). Also ticks once per second while locked
+  // to keep the displayed countdown live.
+  useEffect(() => {
+    const trimmed = email.trim().toLowerCase();
+    lastCheckedEmailRef.current = trimmed;
+    if (!trimmed) {
+      setLockoutSeconds(0);
+      return;
+    }
+    let cancelled = false;
+    getLockoutSecondsRemaining(trimmed).then(secs => {
+      if (cancelled || lastCheckedEmailRef.current !== trimmed) return;
+      setLockoutSeconds(secs);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [email]);
+
+  useEffect(() => {
+    if (lockoutSeconds <= 0) return;
+    const handle = setInterval(() => {
+      setLockoutSeconds(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(handle);
+  }, [lockoutSeconds > 0]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function handleLogin() {
     if (!email || !password) {
       setError('Please fill in all fields.');
       return;
     }
+    // H2 — short-circuit if locked. Re-read from storage in case the lock
+    // was set by another tab / a previous mount we don't have state for.
+    const trimmedEmail = email.trim();
+    const remaining = await getLockoutSecondsRemaining(trimmedEmail);
+    if (remaining > 0) {
+      setLockoutSeconds(remaining);
+      setError(`Too many attempts. Try again in ${formatLockout(remaining)}.`);
+      return;
+    }
     setError('');
     setLoading(true);
-    const err = await signIn(email.trim(), password);
+    const err = await signIn(trimmedEmail, password);
     setLoading(false);
-    if (err) setError(err);
+    if (err) {
+      // H2 — record the failure and surface the new lockout if any.
+      const { lockoutSeconds: lock } = await recordFailedAttempt(trimmedEmail);
+      if (lock > 0) {
+        setLockoutSeconds(lock);
+        setError(`Too many attempts. Try again in ${formatLockout(lock)}.`);
+      } else {
+        setError(err);
+      }
+    } else {
+      // H2 — successful login clears any prior failure count for this email.
+      await clearThrottle(trimmedEmail);
+    }
   }
 
   // One-click sign-in to the shared demo account for recruiters / portfolio
@@ -79,11 +143,24 @@ export default function LoginScreen({ navigation }: any) {
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
-      <TouchableOpacity style={[styles.button, { backgroundColor: accent }]} onPress={handleLogin} disabled={loading}>
-        {loading
-          ? <ActivityIndicator color={colors.background} />
-          : <Text style={styles.buttonText}>Log In</Text>
-        }
+      <TouchableOpacity
+        style={[
+          styles.button,
+          { backgroundColor: accent },
+          (loading || lockoutSeconds > 0) && styles.buttonDisabled,
+        ]}
+        onPress={handleLogin}
+        disabled={loading || lockoutSeconds > 0}
+      >
+        {loading ? (
+          <ActivityIndicator color={colors.background} />
+        ) : lockoutSeconds > 0 ? (
+          <Text style={styles.buttonText}>
+            Try again in {formatLockout(lockoutSeconds)}
+          </Text>
+        ) : (
+          <Text style={styles.buttonText}>Log In</Text>
+        )}
       </TouchableOpacity>
 
       {/* Demo-mode quick login — appears only when EXPO_PUBLIC_DEMO_EMAIL is
@@ -172,6 +249,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 4,
     marginBottom: 20,
+  },
+  buttonDisabled: {
+    opacity: 0.55,
   },
   buttonText: {
     color: colors.background,

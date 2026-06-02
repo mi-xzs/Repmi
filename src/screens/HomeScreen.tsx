@@ -353,7 +353,9 @@ export default function HomeScreen() {
 
   const handleShare = async (workout: any) => {
     try {
-      const link = await shareWorkout(workout, profile?.username ?? undefined);
+      // SECURITY (M3) — `shared_by` is now resolved server-side from the
+      // authenticated user's profile, so no username is passed here.
+      const link = await shareWorkout(workout);
       await Share.share({
         message: `Check out my workout "${workout.workoutName}"!\n${link}`,
       });
