@@ -1,9 +1,35 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import { clearLocalUserData } from './clearLocalUserData';
 import { mapAuthError } from './errorMessages';
 import { logError } from './logger';
+
+// Web-only: detect a password-recovery landing URL synchronously, before
+// React mounts. Supabase fires a PASSWORD_RECOVERY auth event after it
+// parses the URL hash, but that event can race the listener attachment
+// in AuthContext's useEffect — if the parse finishes before we subscribe,
+// the event is silently lost and the user ends up on the home page
+// (signed in) or the login page (no session yet). Reading the URL
+// ourselves on first render and seeding `inPasswordRecovery=true`
+// closes that race for the implicit flow (#type=recovery) and the PKCE
+// flow (?code= on /auth/reset).
+function detectRecoveryFromUrl(): boolean {
+  if (Platform.OS !== 'web') return false;
+  if (typeof window === 'undefined') return false;
+  try {
+    const { hash, search, pathname } = window.location;
+    // Implicit flow — Supabase puts type=recovery in the URL hash.
+    if (hash && /(^|[#&])type=recovery(&|$)/.test(hash)) return true;
+    // PKCE flow — landing path is /auth/reset and a ?code is present.
+    if (pathname?.startsWith('/auth/reset') && /(^|[?&])code=/.test(search))
+      return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
 
 interface AuthContextValue {
   session: Session | null;
@@ -32,7 +58,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mfaRequired, setMfaRequired] = useState(false);
-  const [inPasswordRecovery, setInPasswordRecovery] = useState(false);
+  // Seed from URL on first render so we don't race Supabase's
+  // PASSWORD_RECOVERY event. Once set true, only clearPasswordRecovery()
+  // or signOut() flips it back.
+  const [inPasswordRecovery, setInPasswordRecovery] = useState<boolean>(
+    () => detectRecoveryFromUrl(),
+  );
 
   // H2 — Recompute the MFA gate after a session changes. If the
   // user has a verified TOTP factor but the session is still AAL1,

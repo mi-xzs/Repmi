@@ -29,6 +29,15 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     // Native uses deep-link query params (parsed by Expo Linking) and
     // calls setSession() explicitly — so detectSessionInUrl stays off.
     detectSessionInUrl: Platform.OS === 'web',
+    // Use implicit flow rather than PKCE. PKCE requires the
+    // code_verifier to be in the SAME browser that initiated the
+    // request — which breaks the common pattern of requesting a reset
+    // on one device and opening the email on another. Implicit flow
+    // puts the access_token directly in the URL hash, so any browser
+    // that opens the link can complete the reset. The token is
+    // single-use and short-lived (~1h), so the security trade-off is
+    // minimal for the email-based flows we use.
+    flowType: 'implicit',
   },
 });
 
