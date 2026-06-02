@@ -36,6 +36,7 @@ import { mapAuthError } from '../services/errorMessages';
 import { logError } from '../services/logger';
 import { logAuditEvent } from '../services/profileService';
 import { useAuth } from '../services/AuthContext';
+import { Skeleton } from '../components/ui/Skeleton';
 
 export default function PasswordResetConfirmScreen({ navigation, route }: any) {
   const { accent } = useAccent();
@@ -148,6 +149,24 @@ export default function PasswordResetConfirmScreen({ navigation, route }: any) {
     } catch {
       // Web after signOut may already have re-mounted Auth → no-op
     }
+  }
+
+  // Web flash mitigation: while the recovery session is being verified
+  // (sessionReady=false, no error yet), show a skeleton silhouette
+  // matching the form layout. Without this, the user lands on a brief
+  // white page while Supabase's URL-hash parse + auth listeners fire.
+  if (!sessionReady && !error) {
+    return (
+      <View style={s.container}>
+        <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
+          <Skeleton width="60%" height={32} radius={6} style={{ marginBottom: 10 }} />
+          <Skeleton width="85%" height={16} radius={4} style={{ marginBottom: 32 }} />
+          <Skeleton height={50} radius={12} style={{ marginBottom: 12 }} />
+          <Skeleton height={50} radius={12} style={{ marginBottom: 12 }} />
+          <Skeleton height={50} radius={12} style={{ marginTop: 4 }} />
+        </ScrollView>
+      </View>
+    );
   }
 
   return (

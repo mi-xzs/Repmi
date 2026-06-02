@@ -22,6 +22,20 @@ import {
   wrapApp,
 } from './services/observability';
 
+// Web: paint the body background BEFORE React mounts so the user
+// never sees a flash of white between bundle load and the first
+// render. Runs at module-load time (before any component), which is
+// the earliest hook we have without modifying the static index.html.
+// Doing this inside a useEffect leaves a gap of one paint frame where
+// the default white body shows through — visible especially on slow
+// devices and when navigating into deep-linked screens like /auth/reset.
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  document.documentElement.style.backgroundColor = colors.background;
+  if (document.body) {
+    document.body.style.backgroundColor = colors.background;
+  }
+}
+
 /**
  * H2 — Biometric foreground gate.
  *
