@@ -376,7 +376,7 @@ const WeeklyDigest: React.FC<Props> = ({ workouts }) => {
         }
       >
         {/* 1. Sessions */}
-        <View style={[styles.gridCard, isWide && { flexGrow: 1, flexBasis: '22%', width: undefined, minWidth: 180, minHeight: 220 }]}>
+        <View style={[styles.gridCard, isWide && { flexGrow: 1, flexBasis: '30%', width: undefined, minWidth: 180, minHeight: 220 }]}>
           <Feather name="activity" size={16} color={accent} />
           <Text style={styles.gridValue} numberOfLines={1} adjustsFontSizeToFit>
             {totalSessions}
@@ -389,7 +389,7 @@ const WeeklyDigest: React.FC<Props> = ({ workouts }) => {
         </View>
 
         {/* 2. Total Time */}
-        <View style={[styles.gridCard, isWide && { flexGrow: 1, flexBasis: '22%', width: undefined, minWidth: 180, minHeight: 220 }]}>
+        <View style={[styles.gridCard, isWide && { flexGrow: 1, flexBasis: '30%', width: undefined, minWidth: 180, minHeight: 220 }]}>
           <Feather name="clock" size={16} color={accent} />
           <Text style={styles.gridValue} numberOfLines={1} adjustsFontSizeToFit>
             {fmtDuration(totalDuration)}
@@ -401,7 +401,7 @@ const WeeklyDigest: React.FC<Props> = ({ workouts }) => {
         </View>
 
         {/* 3. Total Sets */}
-        <View style={[styles.gridCard, isWide && { flexGrow: 1, flexBasis: '22%', width: undefined, minWidth: 180, minHeight: 220 }]}>
+        <View style={[styles.gridCard, isWide && { flexGrow: 1, flexBasis: '30%', width: undefined, minWidth: 180, minHeight: 220 }]}>
           <Feather name="layers" size={16} color={accent} />
           <Text style={styles.gridValue} numberOfLines={1} adjustsFontSizeToFit>
             {totalSets}
@@ -413,7 +413,7 @@ const WeeklyDigest: React.FC<Props> = ({ workouts }) => {
         </View>
 
         {/* 4. Volume */}
-        <View style={[styles.gridCard, isWide && { flexGrow: 1, flexBasis: '22%', width: undefined, minWidth: 180, minHeight: 220 }]}>
+        <View style={[styles.gridCard, isWide && { flexGrow: 1, flexBasis: '30%', width: undefined, minWidth: 180, minHeight: 220 }]}>
           <Feather name="trending-up" size={16} color={accent} />
           <Text style={styles.gridValue} numberOfLines={1} adjustsFontSizeToFit>
             {`${Math.round(totalVolume).toLocaleString()}kg`}
@@ -427,7 +427,7 @@ const WeeklyDigest: React.FC<Props> = ({ workouts }) => {
 
         {/* 5. Top Exercise */}
         {topExercise && (
-          <View style={[styles.gridCard, isWide && { flexGrow: 1, flexBasis: '22%', width: undefined, minWidth: 180, minHeight: 220 }]}>
+          <View style={[styles.gridCard, isWide && { flexGrow: 1, flexBasis: '30%', width: undefined, minWidth: 180, minHeight: 220 }]}>
             <Feather name="star" size={16} color={accent} />
             <Text style={styles.gridValue} numberOfLines={1} adjustsFontSizeToFit>
               {topExercise}
@@ -441,7 +441,7 @@ const WeeklyDigest: React.FC<Props> = ({ workouts }) => {
 
         {/* 6. Top Muscle */}
         {topMuscles.length > 0 && (
-          <View style={[styles.gridCard, isWide && { flexGrow: 1, flexBasis: '22%', width: undefined, minWidth: 180, minHeight: 220 }]}>
+          <View style={[styles.gridCard, isWide && { flexGrow: 1, flexBasis: '30%', width: undefined, minWidth: 180, minHeight: 220 }]}>
             <Feather name="target" size={16} color={accent} />
             <Text style={styles.gridValue} numberOfLines={1} adjustsFontSizeToFit>
               {topMuscles[0].name}
@@ -454,7 +454,7 @@ const WeeklyDigest: React.FC<Props> = ({ workouts }) => {
         )}
 
         {/* 7. Consistency */}
-        <View style={[styles.gridCard, isWide && { flexGrow: 1, flexBasis: '22%', width: undefined, minWidth: 180, minHeight: 220 }]}>
+        <View style={[styles.gridCard, isWide && { flexGrow: 1, flexBasis: '30%', width: undefined, minWidth: 180, minHeight: 220 }]}>
           <Feather name="zap" size={16} color={accent} />
           <Text style={styles.gridValue} numberOfLines={1} adjustsFontSizeToFit>
             {totalSessions}/{weeklyTarget}
