@@ -37,7 +37,8 @@ const WORKOUT_TYPE_SECTIONS: { category: Category; items: string[] }[] = [
   {
     category: 'Training Styles',
     items: [
-      'Push', 'Pull', 'Strength', 'Hypertrophy', 'Functional Training',
+      'Push', 'Push (Light)', 'Pull', 'Pull (Light)', 'Legs (Light)',
+      'Strength', 'Hypertrophy', 'Deload', 'Functional Training',
       'Olympic Lifting', 'Calisthenics', 'Plyometrics',
     ],
   },
