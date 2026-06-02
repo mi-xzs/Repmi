@@ -11,6 +11,15 @@ interface AuthContextValue {
   // H2 — true when the user has a valid Supabase session at AAL1 but
   // has TOTP enrolled and must verify a code before reaching AAL2.
   mfaRequired: boolean;
+  // True between the moment the user clicks a password-reset email
+  // link (Supabase fires PASSWORD_RECOVERY) and the moment they finish
+  // setting a new password. While true, RootNavigator hijacks the
+  // navigator to PasswordResetConfirmScreen regardless of session
+  // state — otherwise the recovery session would route the user
+  // straight to the home tab and they'd never see the reset form.
+  inPasswordRecovery: boolean;
+  // Called by PasswordResetConfirmScreen after a successful update.
+  clearPasswordRecovery: () => void;
   signUp: (email: string, password: string) => Promise<string | null>;
   signIn: (email: string, password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
@@ -23,6 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [mfaRequired, setMfaRequired] = useState(false);
+  const [inPasswordRecovery, setInPasswordRecovery] = useState(false);
 
   // H2 — Recompute the MFA gate after a session changes. If the
   // user has a verified TOTP factor but the session is still AAL1,
@@ -52,14 +62,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.session) refreshAAL();
     });
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
       if (s) refreshAAL();
       else setMfaRequired(false);
+      // Web: Supabase fires PASSWORD_RECOVERY after parsing the recovery
+      // tokens from the URL hash (detectSessionInUrl=true on web). We
+      // mirror that into state so RootNavigator can route to the reset
+      // form instead of the home tab.
+      if (event === 'PASSWORD_RECOVERY') {
+        setInPasswordRecovery(true);
+      }
     });
 
     return () => listener.subscription.unsubscribe();
   }, []);
+
+  function clearPasswordRecovery() {
+    setInPasswordRecovery(false);
+  }
 
   async function signUp(email: string, password: string): Promise<string | null> {
     const { error } = await supabase.auth.signUp({ email, password });
@@ -98,11 +119,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     await clearLocalUserData();
     setMfaRequired(false);
+    setInPasswordRecovery(false);
   }
 
   return (
     <AuthContext.Provider
-      value={{ session, isLoading, mfaRequired, signUp, signIn, signOut, refreshAAL }}
+      value={{
+        session,
+        isLoading,
+        mfaRequired,
+        inPasswordRecovery,
+        clearPasswordRecovery,
+        signUp,
+        signIn,
+        signOut,
+        refreshAAL,
+      }}
     >
       {children}
     </AuthContext.Provider>

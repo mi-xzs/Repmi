@@ -22,7 +22,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     storage: sessionStorage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // Web: let Supabase parse `#access_token=…&type=recovery` from the
+    // URL hash after the user clicks a confirm-signup / password-reset
+    // email link. Without this, the recovery session is never created
+    // and the PasswordResetConfirmScreen has no token to work with.
+    // Native uses deep-link query params (parsed by Expo Linking) and
+    // calls setSession() explicitly — so detectSessionInUrl stays off.
+    detectSessionInUrl: Platform.OS === 'web',
   },
 });
 

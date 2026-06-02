@@ -18,6 +18,7 @@ import type { RootStackParamList } from './types';
 import MFAChallengeScreen from '../screens/MFAChallengeScreen';
 import MFAEnrollScreen from '../screens/MFAEnrollScreen';
 import HealthDataConsentScreen from '../screens/HealthDataConsentScreen';
+import PasswordResetConfirmScreen from '../screens/PasswordResetConfirmScreen';
 
 const Root = createNativeStackNavigator<RootStackParamList>();
 
@@ -45,7 +46,7 @@ function BootSkeleton() {
 }
 
 export default function RootNavigator() {
-  const { session, isLoading: authLoading, mfaRequired } = useAuth();
+  const { session, isLoading: authLoading, mfaRequired, inPasswordRecovery } = useAuth();
   const { hasProfile, isLoading: profileLoading } = useProfile();
 
   const isBooting = authLoading || (session != null && !mfaRequired && profileLoading);
@@ -55,7 +56,17 @@ export default function RootNavigator() {
 
   return (
     <Root.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
-      {!session ? (
+      {inPasswordRecovery ? (
+        // Web: Supabase auto-created a recovery session from the URL
+        // hash. Skip Auth/Main and route directly to the reset form so
+        // the user sets a new password before they can use the app.
+        // Cleared by PasswordResetConfirmScreen on success (calls
+        // signOut + clearPasswordRecovery).
+        <Root.Screen
+          name="PasswordResetConfirm"
+          component={PasswordResetConfirmScreen}
+        />
+      ) : !session ? (
         <Root.Screen name="Auth" component={AuthNavigator} />
       ) : mfaRequired ? (
         // H2 — AAL2 required. Lock the navigator to the challenge

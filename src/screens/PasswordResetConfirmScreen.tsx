@@ -35,9 +35,11 @@ import {
 import { mapAuthError } from '../services/errorMessages';
 import { logError } from '../services/logger';
 import { logAuditEvent } from '../services/profileService';
+import { useAuth } from '../services/AuthContext';
 
 export default function PasswordResetConfirmScreen({ navigation, route }: any) {
   const { accent } = useAccent();
+  const { clearPasswordRecovery, signOut, session, inPasswordRecovery } = useAuth();
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState('');
@@ -52,10 +54,17 @@ export default function PasswordResetConfirmScreen({ navigation, route }: any) {
     }, []),
   );
 
-  // The reset email's redirect URL contains an `access_token` +
-  // `refresh_token` (or a one-time `code`). Supabase JS prefers the
-  // hash-fragment tokens; the deep-link handler in App.tsx forwards
-  // both shapes into `route.params`.
+  // Two routes can land here:
+  //
+  //   1. NATIVE — Expo Linking parses the deep link's query params
+  //      (`access_token`, `refresh_token`) and forwards them via
+  //      `route.params`. Call setSession() explicitly.
+  //
+  //   2. WEB — Supabase's `detectSessionInUrl: true` auto-consumes the
+  //      `#access_token=…&type=recovery` fragment, creates a session,
+  //      and fires PASSWORD_RECOVERY. AuthContext flips `inPasswordRecovery`
+  //      to true, which is why RootNavigator routes us here. By the time
+  //      this screen mounts the session is already available.
   useEffect(() => {
     const accessToken: string | undefined = route.params?.access_token;
     const refreshToken: string | undefined = route.params?.refresh_token;
@@ -69,18 +78,22 @@ export default function PasswordResetConfirmScreen({ navigation, route }: any) {
             setSessionReady(true);
           }
         });
-    } else {
-      // No token in deep-link params — the user might be already
-      // signed in (e.g. opened the link from inside the app). Trust
-      // the existing session if there is one.
-      supabase.auth.getSession().then(({ data }) => {
-        setSessionReady(!!data.session);
-        if (!data.session) {
-          setError('Reset link is invalid or expired. Request a new one.');
-        }
-      });
+      return;
     }
-  }, [route.params]);
+    // Web: the recovery session is already in context.
+    if (inPasswordRecovery && session) {
+      setSessionReady(true);
+      return;
+    }
+    // Fall-through: maybe already signed in (e.g. user re-opened the
+    // app and navigated here manually). Trust the existing session.
+    supabase.auth.getSession().then(({ data }) => {
+      setSessionReady(!!data.session);
+      if (!data.session) {
+        setError('Reset link is invalid or expired. Request a new one.');
+      }
+    });
+  }, [route.params, inPasswordRecovery, session]);
 
   const { rules, isValid } = validatePassword(password);
 
@@ -119,7 +132,22 @@ export default function PasswordResetConfirmScreen({ navigation, route }: any) {
     // A8 / M7 — record the password change in the audit log so a
     // compromised account can prove when the credential was rotated.
     await logAuditEvent('password_changed', null, { via: 'reset_link' });
-    navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+    // Web flow: the user was put through this screen via the
+    // inPasswordRecovery flag on a Supabase-auto-created session.
+    // Clear the flag + sign out so the next render lands them on Login
+    // with the new credentials (forces them to log in fresh rather
+    // than auto-authenticating with the recovery-grade session).
+    clearPasswordRecovery();
+    await signOut().catch(() => {});
+    // On native, navigation.reset → Login is still the right target
+    // (we're inside AuthNavigator). On web, RootNavigator will swap to
+    // AuthNavigator on its own once session=null, so the navigation
+    // call is a no-op there — safe to leave.
+    try {
+      navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+    } catch {
+      // Web after signOut may already have re-mounted Auth → no-op
+    }
   }
 
   return (
