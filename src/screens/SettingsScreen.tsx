@@ -710,6 +710,11 @@ function PreferencesTab() {
   const { accent, accentDim, accentSubtle } = useAccent();
   const { session } = useAuth();
   const navigation = useNavigation<any>();
+  // SECURITY (C1) — gate every profile-mutating handler in this tab.
+  // Weight, height, weekly target, and goal are all visible on the demo
+  // account's profile card; a visitor changing them grieves the experience
+  // for every future recruiter. Server-side trigger backstops this.
+  const demoGuard = useDemoGuard();
 
   // H4 — gate the first save of body metrics on GDPR Art. 9 consent.
   // We lazily import to avoid pulling consent code into screens that
@@ -735,11 +740,13 @@ function PreferencesTab() {
   const saveHeightUnit = setHeightUnit;
 
   const saveWeeklyTarget = (val: number) => {
+    if (!demoGuard('Changing the weekly target')) return;
     setWeeklyTarget(val);
     updateProfile({ weekly_target: val });
   };
 
   const saveGoal = (val: TrainingGoal) => {
+    if (!demoGuard('Changing the training goal')) return;
     setGoal(val);
     updateProfile({ goal: val });
   };
@@ -777,6 +784,7 @@ function PreferencesTab() {
     setEditingWeight(false);
     const val = parseFloat(weightInput);
     if (!isNaN(val) && val > 0) {
+      if (!demoGuard('Changing the weight')) return;
       // H4 — gate save on consent.
       const ok = await requireBodyMetricsConsent();
       if (!ok) return;
@@ -798,6 +806,7 @@ function PreferencesTab() {
     setEditingHeight(false);
     const val = parseFloat(heightInput);
     if (!isNaN(val) && val > 0) {
+      if (!demoGuard('Changing the height')) return;
       // H4 — gate save on consent.
       const ok = await requireBodyMetricsConsent();
       if (!ok) return;

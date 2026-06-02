@@ -400,7 +400,13 @@ const ProfileScreen: React.FC = () => {
 
   const commitName = () => {
     setEditingName(false);
-    if (nameInput.trim()) updateProfile({ username: nameInput.trim() });
+    if (!nameInput.trim()) return;
+    // SECURITY (C1) — block rename in demo mode. The 30-day server-side
+    // rate-limit means one visitor could otherwise lock the demo handle
+    // to an arbitrary string for a month. The server trigger backstops
+    // this if the client guard is bypassed.
+    if (!demoGuard('Renaming the demo account')) return;
+    updateProfile({ username: nameInput.trim() });
   };
 
   // ─── derived stats ─────────────────────────────────────────────────────────
