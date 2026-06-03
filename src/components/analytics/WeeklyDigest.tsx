@@ -1,7 +1,7 @@
 // src/components/analytics/WeeklyDigest.tsx
 
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, ScrollView, Text, View, StyleSheet } from 'react-native';
+import { ActivityIndicator, Platform, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import { WorkoutData } from '../../types/exercise';
@@ -301,7 +301,10 @@ const WeekDots: React.FC<{ trainedDays: Set<string> }> = ({ trainedDays }) => {
 
 const WeeklyDigest: React.FC<Props> = ({ workouts }) => {
   const { accent } = useAccent();
-  const { isWide } = useResponsive();
+  const { isWide, isMobile } = useResponsive();
+  // Pair the stat cards two-per-row only on mobile web (narrow browser <768px);
+  // native phones keep their single-column layout.
+  const isMobileWeb = Platform.OS === 'web' && isMobile;
   const { profile } = useProfile();
   const { session: authSession } = useAuth();
   const userId = authSession?.user.id ?? '';
@@ -372,7 +375,9 @@ const WeeklyDigest: React.FC<Props> = ({ workouts }) => {
         style={
           isWide
             ? { flexDirection: 'row', flexWrap: 'wrap', gap: 14, alignItems: 'stretch', marginBottom: 14 }
-            : { gap: 12, marginBottom: 14 }
+            : isMobileWeb
+              ? { flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'stretch', marginBottom: 14 }
+              : { gap: 12, marginBottom: 14 }
         }
       >
         {/* 1. Sessions */}

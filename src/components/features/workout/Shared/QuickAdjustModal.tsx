@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   TextInput,
   StyleSheet,
+  Platform,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { colors } from '../../../../theme/colors';
@@ -63,7 +64,7 @@ export default function QuickAdjustModal({
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
         <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, local.content]}>
             <Text style={styles.modalTitle}>{title}</Text>
 
             <View style={local.stepRow}>
@@ -118,6 +119,11 @@ export default function QuickAdjustModal({
 }
 
 const local = StyleSheet.create({
+  // On web the shared modal's width:'80%' stretches across the viewport; cap it
+  // to the native app's compact size so web (desktop + mobile) matches the app.
+  content: {
+    maxWidth: Platform.OS === 'web' ? 320 : undefined,
+  },
   stepRow: {
     flexDirection: 'row',
     alignItems: 'center',

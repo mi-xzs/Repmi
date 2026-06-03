@@ -1,7 +1,7 @@
 // src/components/analytics/OverallStats.tsx
 
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { styles } from '../../screens/Analytics.Styles';
 import { colors } from '../../theme/colors';
@@ -74,7 +74,10 @@ interface Props {
 
 const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
   const { accent } = useAccent();
-  const { isWide } = useResponsive();
+  const { isWide, isMobile } = useResponsive();
+  // Pair the stat cards two-per-row only on mobile web (narrow browser <768px);
+  // native phones keep their single-column layout.
+  const isMobileWeb = Platform.OS === 'web' && isMobile;
   const { profile } = useProfile();
   const data = useMemo(() => computeOverall(workouts, allSessions), [workouts, allSessions]);
   const weeklyTarget = profile?.weekly_target ?? 3;
@@ -105,7 +108,9 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
         style={
           isWide
             ? { flexDirection: 'row', flexWrap: 'wrap', gap: 14, alignItems: 'stretch' }
-            : { gap: 12 }
+            : isMobileWeb
+              ? { flexDirection: 'row', flexWrap: 'wrap', gap: 12, alignItems: 'stretch' }
+              : { gap: 12 }
         }
       >
         <View
@@ -118,7 +123,9 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
                   minHeight: 220,
                   flexDirection: 'row',
                 }
-              : { flexDirection: 'row' }
+              : isMobileWeb
+                ? { flexGrow: 1, flexBasis: '47%', flexDirection: 'row' }
+                : { flexDirection: 'row' }
           }
         >
           <StatCard label="Sessions" value={`${data.totalSessions}`} icon="activity" />
@@ -133,7 +140,9 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
                   minHeight: 220,
                   flexDirection: 'row',
                 }
-              : { flexDirection: 'row' }
+              : isMobileWeb
+                ? { flexGrow: 1, flexBasis: '47%', flexDirection: 'row' }
+                : { flexDirection: 'row' }
           }
         >
           <StatCard label="Total Time" value={fmtDuration(data.totalDuration)} icon="clock" />
@@ -148,7 +157,9 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
                   minHeight: 220,
                   flexDirection: 'row',
                 }
-              : { flexDirection: 'row' }
+              : isMobileWeb
+                ? { flexGrow: 1, flexBasis: '47%', flexDirection: 'row' }
+                : { flexDirection: 'row' }
           }
         >
           <StatCard label="Per Week" value={`${data.weeklyFrequency}`} icon="calendar" />
@@ -163,7 +174,9 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
                   minHeight: 220,
                   flexDirection: 'row',
                 }
-              : { flexDirection: 'row' }
+              : isMobileWeb
+                ? { flexGrow: 1, flexBasis: '47%', flexDirection: 'row' }
+                : { flexDirection: 'row' }
           }
         >
           <StatCard label="Weight" value={fmtVolume(data.totalVolume)} icon="trending-up" />
@@ -178,7 +191,9 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
                   minHeight: 220,
                   flexDirection: 'row',
                 }
-              : { flexDirection: 'row' }
+              : isMobileWeb
+                ? { flexGrow: 1, flexBasis: '47%', flexDirection: 'row' }
+                : { flexDirection: 'row' }
           }
         >
           <StatCard label="Total Reps" value={`${data.totalReps.toLocaleString()}`} icon="repeat" />
@@ -193,7 +208,9 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
                   minHeight: 220,
                   flexDirection: 'row',
                 }
-              : { flexDirection: 'row' }
+              : isMobileWeb
+                ? { flexGrow: 1, flexBasis: '47%', flexDirection: 'row' }
+                : { flexDirection: 'row' }
           }
         >
           <StatCard label="Total Sets" value={`${data.totalSets.toLocaleString()}`} icon="layers" />

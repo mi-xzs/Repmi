@@ -67,7 +67,6 @@ function formatRelativeDate(date: Date): string {
   target.setHours(0, 0, 0, 0);
   const diffDays = Math.round((now.getTime() - target.getTime()) / (1000 * 60 * 60 * 24));
   if (diffDays <= 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
   if (diffDays < 7) return `${diffDays}d ago`;
   if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
   if (diffDays < 365) return `${Math.floor(diffDays / 30)}mo ago`;
