@@ -12,7 +12,6 @@ import {
 import * as Haptics from 'expo-haptics';
 import { colors } from '../../../../theme/colors';
 import { useAccent } from '../../../../services/SettingsContext';
-import { useResponsive } from '../../../../hooks/useResponsive';
 import { styles } from './SharedStyles';
 
 type Props = {
@@ -39,10 +38,6 @@ export default function QuickAdjustModal({
   onClose,
 }: Props) {
   const { accent } = useAccent();
-  const { isMobile } = useResponsive();
-  // On mobile web the on-screen keyboard is clumsy — adjust with the +/- pills
-  // only and show the value as static text (no editable input).
-  const isMobileWeb = Platform.OS === 'web' && isMobile;
   const [value, setValue] = useState(initialValue);
 
   useEffect(() => {
@@ -84,23 +79,19 @@ export default function QuickAdjustModal({
               ))}
 
               <View style={local.valueWrap}>
-                {isMobileWeb ? (
-                  <Text style={[local.valueInput, { color: accent }]}>{value.toString()}</Text>
-                ) : (
-                  <TextInput
-                    style={[local.valueInput, { color: accent }]}
-                    keyboardType="numeric"
-                    maxLength={4}
-                    value={value === 0 ? '' : value.toString()}
-                    placeholder="0"
-                    placeholderTextColor={colors.button1}
-                    onChangeText={(text) => {
-                      const n = parseInt(text, 10);
-                      setValue(clamp(Number.isFinite(n) ? n : 0));
-                    }}
-                    selectTextOnFocus
-                  />
-                )}
+                <TextInput
+                  style={[local.valueInput, { color: accent }]}
+                  keyboardType="numeric"
+                  maxLength={4}
+                  value={value === 0 ? '' : value.toString()}
+                  placeholder="0"
+                  placeholderTextColor={colors.button1}
+                  onChangeText={(text) => {
+                    const n = parseInt(text, 10);
+                    setValue(clamp(Number.isFinite(n) ? n : 0));
+                  }}
+                  selectTextOnFocus
+                />
                 {unit ? <Text style={local.unitText}>{unit}</Text> : null}
               </View>
 
@@ -115,11 +106,7 @@ export default function QuickAdjustModal({
               ))}
             </View>
 
-            <Text style={local.hint}>
-              {isMobileWeb
-                ? 'Use the + and − buttons to adjust'
-                : 'Tap the number to type a custom value'}
-            </Text>
+            <Text style={local.hint}>Tap the number to type a custom value</Text>
 
             <Pressable style={styles.doneButtonModal} onPress={handleSave}>
               <Text style={styles.doneButtonText}>Save</Text>
