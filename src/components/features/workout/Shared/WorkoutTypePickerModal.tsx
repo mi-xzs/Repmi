@@ -171,7 +171,12 @@ export default function WorkoutTypePickerModal({
         >
           <View style={pickerStyles.pickerHandle} />
 
-          <Text style={pickerStyles.pickerTitle}>Choose Workout Type</Text>
+          <Text
+            style={[pickerStyles.pickerTitle, Platform.OS === 'web' && pickerStyles.pickerTitleWeb]}
+            numberOfLines={1}
+          >
+            Choose Workout Type
+          </Text>
 
           {/* Selected chips */}
           {parts.length > 0 && (
@@ -393,6 +398,11 @@ const pickerStyles = StyleSheet.create({
     marginBottom: 12,
     opacity: 0.65,
     textAlign: 'center',
+  },
+  // Web: smaller font + tighter spacing so the full title fits without clipping.
+  pickerTitleWeb: {
+    fontSize: 12,
+    letterSpacing: 0.8,
   },
 
   chipRow: {
