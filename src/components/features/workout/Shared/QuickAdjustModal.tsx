@@ -133,9 +133,10 @@ export default function QuickAdjustModal({
 
 const local = StyleSheet.create({
   // On web the shared modal's width:'80%' stretches across the viewport; cap it
-  // to the native app's compact size so web (desktop + mobile) matches the app.
+  // to a compact size that still fits both step pills + value (e.g. "-5  0  +5").
   content: {
-    maxWidth: Platform.OS === 'web' ? 320 : undefined,
+    width: Platform.OS === 'web' ? '92%' : undefined,
+    maxWidth: Platform.OS === 'web' ? 360 : undefined,
   },
   stepRow: {
     flexDirection: 'row',
