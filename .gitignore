@@ -40,6 +40,9 @@ yarn-error.*
 # docs (local-only — not pushed)
 docs/
 
+# Markdown docs (local-only for now — app not published yet)
+*.md
+
 # local scratch / one-off files (kept local, never published)
 temp_prompt.txt
 make_qm_pdf.py
