@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Animated,
   Dimensions,
   KeyboardAvoidingView,
@@ -7,6 +8,7 @@ import {
   Modal,
   PanResponder,
   Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Switch,
@@ -15,6 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import Constants from 'expo-constants';
 import { useFocusEffect , useNavigation } from '@react-navigation/native';
 import {
   preventScreenCaptureAsync,
@@ -53,6 +56,12 @@ import { useProfile } from '../services/ProfileContext';
 import { useSettings, useAccent } from '../services/SettingsContext';
 import { useDemoGuard } from '../services/demoMode';
 import { deleteAccount, requireReAuth } from '../services/accountService';
+import {
+  submitFeedback,
+  FEEDBACK_CATEGORIES,
+  FeedbackCategory,
+  MAX_FEEDBACK_LENGTH,
+} from '../services/feedbackService';
 import { TrainingGoal } from '../types/user';
 
 // On wide web, cap the "screen width" that drives the segmented control
@@ -1102,12 +1111,56 @@ function PrivacyTab() {
 }
 
 function AboutTab() {
+  const { accent, accentSubtle } = useAccent();
+  const demoGuard = useDemoGuard();
+
+  // Feedback form state.
+  const [open, setOpen]         = useState(false);
+  const [category, setCategory] = useState<FeedbackCategory>('bug');
+  const [message, setMessage]   = useState('');
+  const [busy, setBusy]         = useState(false);
+  const [err, setErr]           = useState<string | null>(null);
+  const [done, setDone]         = useState(false);
+
+  const openForm = useCallback(() => {
+    // SECURITY (M1) — block the shared demo account from sending feedback.
+    if (!demoGuard('Sending feedback')) return;
+    // Reset on open (not on close) so the success view doesn't flash back to
+    // the empty form during the modal's fade-out animation.
+    setCategory('bug');
+    setMessage('');
+    setBusy(false);
+    setErr(null);
+    setDone(false);
+    setOpen(true);
+  }, [demoGuard]);
+
+  const submit = useCallback(async () => {
+    const trimmed = message.trim();
+    if (trimmed.length === 0) {
+      setErr('Please describe it first.');
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    try {
+      await submitFeedback(category, trimmed);
+      setDone(true);
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Could not send. Try again.');
+    } finally {
+      setBusy(false);
+    }
+  }, [category, message]);
+
+  const canSend = message.trim().length > 0 && !busy;
+
   return (
     <ScrollView contentContainerStyle={s.tabContent} showsVerticalScrollIndicator={false}>
       <SettingsSection title="App">
-        <Row icon="info"        label="Version"         value="1.0.0" />
-        <Row icon="star"        label="Rate the app"    onPress={() => {}} />
-        <Row icon="message-square" label="Send feedback" onPress={() => Linking.openURL('mailto:support@repmi.co.uk')} last />
+        <Row icon="info"        label="Version"      value={Constants.expoConfig?.version ?? '1.0.0'} />
+        <Row icon="star"        label="Rate the app" onPress={() => {}} />
+        <Row icon="message-square" label="Send feedback" onPress={openForm} last />
       </SettingsSection>
 
       <SettingsSection title="Legal">
@@ -1125,6 +1178,95 @@ function AboutTab() {
           last
         />
       </SettingsSection>
+
+      {/* Feedback / bug report form — submits to Supabase via submit_feedback(). */}
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={s.fbKav}
+        >
+          {/* Tap the dim backdrop to dismiss (matches the report modal). */}
+          <Pressable style={s.modalOverlay} onPress={() => setOpen(false)}>
+            <Pressable style={s.modalCard} onPress={() => {}}>
+            {done ? (
+              <>
+                <Text style={s.modalTitle}>Thanks!</Text>
+                <Text style={s.modalMessage}>
+                  We read every message and we&apos;ll look into it.
+                </Text>
+                <View style={s.modalButtons}>
+                  <TouchableOpacity
+                    onPress={() => setOpen(false)}
+                    style={[s.modalBtn, s.modalBtnConfirm, { backgroundColor: accent }]}
+                  >
+                    <Text style={s.modalBtnTextConfirm}>Done</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={s.modalTitle}>Send feedback</Text>
+                <Text style={s.modalMessage}>
+                  Found a bug or have an idea? Tell us — your app version and platform
+                  are attached automatically.
+                </Text>
+
+                <View style={s.fbCats}>
+                  {FEEDBACK_CATEGORIES.map(c => {
+                    const sel = category === c.key;
+                    return (
+                      <TouchableOpacity
+                        key={c.key}
+                        onPress={() => setCategory(c.key)}
+                        disabled={busy}
+                        style={[s.fbCat, sel && { borderColor: accent, backgroundColor: accentSubtle }]}
+                      >
+                        <Text style={[s.fbCatText, sel && { color: colors.highlight, fontWeight: '700' }]}>
+                          {c.label}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                <TextInput
+                  style={[s.modalInput, s.fbInput]}
+                  placeholder="Describe it…"
+                  placeholderTextColor={colors.button1}
+                  value={message}
+                  onChangeText={t => setMessage(t.slice(0, MAX_FEEDBACK_LENGTH))}
+                  editable={!busy}
+                  multiline
+                  textAlignVertical="top"
+                />
+                <Text style={s.fbCount}>{message.length}/{MAX_FEEDBACK_LENGTH}</Text>
+
+                {err ? <Text style={s.modalError}>{err}</Text> : null}
+
+                <View style={s.modalButtons}>
+                  <TouchableOpacity
+                    onPress={() => setOpen(false)}
+                    disabled={busy}
+                    style={[s.modalBtn, s.modalBtnCancel]}
+                  >
+                    <Text style={s.modalBtnTextCancel}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={submit}
+                    disabled={!canSend}
+                    style={[s.modalBtn, s.modalBtnConfirm, { backgroundColor: accent }, !canSend && s.modalBtnDisabled]}
+                  >
+                    {busy
+                      ? <ActivityIndicator color="#FFFFFF" />
+                      : <Text style={s.modalBtnTextConfirm}>Send</Text>}
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+            </Pressable>
+          </Pressable>
+        </KeyboardAvoidingView>
+      </Modal>
     </ScrollView>
   );
 }
@@ -1580,5 +1722,41 @@ const s = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#FFFFFF',
+  },
+
+  // ── feedback form ──
+  fbKav: {
+    flex: 1,
+  },
+  fbCats: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  fbCat: {
+    flex: 1,
+    paddingVertical: 9,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: colors.button3,
+    backgroundColor: colors.button3,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fbCatText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: colors.button1,
+    textAlign: 'center',
+  },
+  fbInput: {
+    minHeight: 96,
+    paddingTop: 10,
+  },
+  fbCount: {
+    fontSize: 11,
+    color: colors.button1,
+    textAlign: 'right',
+    marginTop: -6,
   },
 });
