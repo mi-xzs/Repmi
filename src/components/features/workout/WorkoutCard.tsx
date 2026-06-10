@@ -1,6 +1,7 @@
 // src/components/features/workout/WorkoutCard.tsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 import { colors } from '../../../theme/colors';
 import { useAccent } from '../../../services/SettingsContext';
 import { WorkoutData } from '../../../types/exercise';
@@ -65,9 +66,10 @@ export default function WorkoutCard({ workout, onPress, workoutIndex, refreshKey
   ].filter(Boolean) as string[];
 
   return (
-    <Pressable
-      style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+    <TouchableOpacity
+      style={styles.card}
       onPress={onPress}
+      activeOpacity={0.7}
     >
       <View style={styles.content}>
         <Text style={styles.title} numberOfLines={1}>
@@ -109,7 +111,7 @@ export default function WorkoutCard({ workout, onPress, workoutIndex, refreshKey
       </View>
 
       <Text style={styles.arrow}>›</Text>
-    </Pressable>
+    </TouchableOpacity>
   );
 }
 
@@ -125,10 +127,6 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: colors.button3,
     padding: 8,
-  },
-  cardPressed: {
-    opacity: 0.7,
-    borderColor: colors.highlight,
   },
   content: {
     flex: 1,

@@ -364,6 +364,146 @@ const WeeklyDigest: React.FC<Props> = ({ workouts }) => {
     prevWeekSessions,
   } = summary;
 
+  // Native keeps its original single-column phone layout. The responsive grid
+  // below (desktop columns + narrow-browser pairing) is web-only; on a phone
+  // the rewritten grid collapses to half-width cards, so we render the
+  // original stacked card layout instead.
+  if (Platform.OS !== 'web') {
+    return (
+      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* Week heading */}
+        <Text style={styles.weekTitle}>This Week</Text>
+        <WeekDots trainedDays={trainedDays} />
+
+        {/* Key stats grid */}
+        <View style={styles.grid}>
+          <View style={styles.gridCard}>
+            <Feather name="activity" size={16} color={accent} />
+            <Text style={styles.gridValue} numberOfLines={1} adjustsFontSizeToFit>{totalSessions}</Text>
+            <DeltaBadge current={totalSessions} prev={prevWeekSessions} />
+            <View style={styles.gridSpacer} />
+            <Text style={styles.gridLabel} numberOfLines={1} adjustsFontSizeToFit>Sessions</Text>
+          </View>
+          <View style={styles.gridCard}>
+            <Feather name="clock" size={16} color={accent} />
+            <Text style={styles.gridValue} numberOfLines={1} adjustsFontSizeToFit>{fmtDuration(totalDuration)}</Text>
+            <View style={styles.gridSpacer} />
+            <Text style={styles.gridLabel} numberOfLines={1} adjustsFontSizeToFit>Total Time</Text>
+          </View>
+          <View style={styles.gridCard}>
+            <Feather name="layers" size={16} color={accent} />
+            <Text style={styles.gridValue} numberOfLines={1} adjustsFontSizeToFit>{totalSets}</Text>
+            <View style={styles.gridSpacer} />
+            <Text style={styles.gridLabel} numberOfLines={1} adjustsFontSizeToFit>Total Sets</Text>
+          </View>
+          <View style={styles.gridCard}>
+            <Feather name="trending-up" size={16} color={accent} />
+            <Text style={styles.gridValue} numberOfLines={1} adjustsFontSizeToFit>
+              {`${Math.round(totalVolume).toLocaleString()}kg`}
+            </Text>
+            <DeltaBadge current={totalVolume} prev={prevWeekVolume} unit="kg" />
+            <View style={styles.gridSpacer} />
+            <Text style={styles.gridLabel} numberOfLines={1} adjustsFontSizeToFit>Volume</Text>
+          </View>
+        </View>
+
+        {/* Top exercise */}
+        {topExercise && (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Feather name="star" size={14} color={accent} />
+              <Text style={styles.cardTitle}>  Top Exercise</Text>
+            </View>
+            <Text style={styles.topExerciseName}>{topExercise}</Text>
+            <Text style={styles.topExerciseSub}>Most volume lifted this week</Text>
+          </View>
+        )}
+
+        {/* Breakdown */}
+        {workoutBreakdown.length > 0 && (() => {
+          const counts: Record<string, number> = {};
+          for (const w of workoutBreakdown) counts[w.name] = w.count;
+          return (
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Feather name="bar-chart-2" size={14} color={accent} />
+                <Text style={styles.cardTitle}>  Breakdown</Text>
+              </View>
+              <MuscleVolumeChart
+                volumeByGroup={counts}
+                unit="times"
+                modalTitle="Breakdown"
+              />
+            </View>
+          );
+        })()}
+
+        {/* Top muscles */}
+        {topMuscles.length > 0 && (() => {
+          const { name, sets, kg, reps } = topMuscles[0];
+          return (
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Feather name="target" size={14} color={accent} />
+                <Text style={styles.cardTitle}>  Top Muscle</Text>
+              </View>
+              <Text style={styles.topExerciseName}>{name}</Text>
+              <Text style={styles.topExerciseSub}>Most trained muscle this week</Text>
+              <View style={styles.muscleStatRow}>
+                <View style={styles.muscleStat}>
+                  <Text style={[styles.muscleStatValue, { color: accent }]}>{kg.toLocaleString()}</Text>
+                  <Text style={styles.muscleStatLabel}>kg</Text>
+                </View>
+                <View style={styles.muscleStatDivider} />
+                <View style={styles.muscleStat}>
+                  <Text style={[styles.muscleStatValue, { color: accent }]}>{sets}</Text>
+                  <Text style={styles.muscleStatLabel}>sets</Text>
+                </View>
+                <View style={styles.muscleStatDivider} />
+                <View style={styles.muscleStat}>
+                  <Text style={[styles.muscleStatValue, { color: accent }]}>{reps.toLocaleString()}</Text>
+                  <Text style={styles.muscleStatLabel}>reps</Text>
+                </View>
+              </View>
+            </View>
+          );
+        })()}
+
+        {/* Muscle Distribution */}
+        {Object.keys(muscleSets).length > 0 && (
+          <View style={styles.card}>
+            <View style={styles.cardHeader}>
+              <Feather name="bar-chart" size={14} color={accent} />
+              <Text style={styles.cardTitle}>  Muscle Distribution</Text>
+            </View>
+            <MuscleVolumeChart volumeByGroup={muscleSets} kgByGroup={muscleKg} />
+          </View>
+        )}
+
+        {/* Consistency message */}
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Feather name="zap" size={14} color={accent} />
+            <Text style={styles.cardTitle}>  Consistency</Text>
+          </View>
+          <Text style={styles.consistencyText}>
+            {totalSessions === 0
+              ? `No sessions yet — your goal is ${weeklyTarget}x this week.`
+              : totalSessions >= weeklyTarget * 1.5
+              ? `Exceptional — ${totalSessions} sessions, well above your ${weeklyTarget}x goal!`
+              : totalSessions >= weeklyTarget
+              ? `Goal hit! You've reached your ${weeklyTarget}x target for the week.`
+              : totalSessions === weeklyTarget - 1
+              ? `Almost there — 1 more session to hit your ${weeklyTarget}x goal.`
+              : `${weeklyTarget - totalSessions} more sessions to reach your ${weeklyTarget}x weekly goal.`}
+          </Text>
+        </View>
+
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    );
+  }
+
   return (
     <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
       {/* Week heading */}

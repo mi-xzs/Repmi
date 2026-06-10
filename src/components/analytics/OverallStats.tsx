@@ -101,6 +101,163 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
 
   const maxVol = data.topExercisesByVolume[0]?.volume ?? 1;
 
+  // Native keeps its original phone layout: stat cards paired two-per-row and
+  // the original section ordering. The responsive multi-column grid below is
+  // web-only; on a phone it collapses to full-width single-column cards.
+  if (Platform.OS !== 'web') {
+    return (
+      <View style={{ gap: 16 }}>
+
+        {/* Summary stat cards — 2 columns × 3 rows, weekly-style spacing */}
+        <View style={localStyles.statGrid}>
+          <View style={[styles.cardRow, localStyles.statRow]}>
+            <StatCard label="Sessions"   value={`${data.totalSessions}`}              icon="activity"    />
+            <StatCard label="Total Time" value={fmtDuration(data.totalDuration)}      icon="clock"       />
+          </View>
+          <View style={[styles.cardRow, localStyles.statRow]}>
+            <StatCard label="Per Week"   value={`${data.weeklyFrequency}`}            icon="calendar"    />
+            <StatCard label="Weight"     value={fmtVolume(data.totalVolume)}          icon="trending-up" />
+          </View>
+          <View style={[styles.cardRow, localStyles.statRow]}>
+            <StatCard label="Total Reps" value={`${data.totalReps.toLocaleString()}`} icon="repeat"      />
+            <StatCard label="Total Sets" value={`${data.totalSets.toLocaleString()}`} icon="layers"      />
+          </View>
+        </View>
+
+        {/* Top exercises by volume */}
+        {data.topExercisesByVolume.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Top Exercises by Volume</Text>
+            <View style={styles.weightLog}>
+              {data.topExercisesByVolume.map((ex, i) => (
+                <View key={`overall-${ex.name}`} style={styles.weightLogRow}>
+                  <View style={styles.weightLogNameRow}>
+                    <Text style={styles.weightLogDate} numberOfLines={2}>
+                      {ex.name}
+                    </Text>
+                    <Text style={styles.weightLogKg} numberOfLines={1}>
+                      {fmtVolume(ex.volume)}
+                    </Text>
+                  </View>
+                  <AnimatedBar
+                    percent={Math.round((ex.volume / maxVol) * 100)}
+                    delay={Math.min(i, 6) * 60}
+                    trackStyle={styles.weightLogBarTrack}
+                    fillStyle={[styles.weightLogBarFill, { backgroundColor: accent }]}
+                  />
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Radar chart */}
+        <View style={{ flex: 1 }}>
+          <RadarChart
+            data={data.topExercisesByFreq}
+            title="Exercises"
+            color="accent"
+            emptyMessage="No exercises logged"
+          />
+        </View>
+
+        {/* Top muscle trained */}
+        {topMuscles.length > 0 && (() => {
+          const { name, sets, kg, reps } = topMuscles[0];
+          return (
+            <View style={muscleStyles.card}>
+              <View style={muscleStyles.cardHeader}>
+                <Feather name="target" size={14} color={accent} />
+                <Text style={muscleStyles.cardTitle}>  Top Muscle</Text>
+              </View>
+              <Text style={muscleStyles.muscleName}>{name}</Text>
+              <Text style={muscleStyles.muscleSub}>Most trained muscle overall</Text>
+              <View style={muscleStyles.statStrip}>
+                {kg > 0 && (
+                  <>
+                    <View style={muscleStyles.statItem}>
+                      <Text style={[muscleStyles.statValue, { color: accent }]}>{kg.toLocaleString()}</Text>
+                      <Text style={muscleStyles.statLabel}>kg</Text>
+                    </View>
+                    <View style={muscleStyles.divider} />
+                  </>
+                )}
+                <View style={muscleStyles.statItem}>
+                  <Text style={[muscleStyles.statValue, { color: accent }]}>{sets}</Text>
+                  <Text style={muscleStyles.statLabel}>sets</Text>
+                </View>
+                {reps > 0 && (
+                  <>
+                    <View style={muscleStyles.divider} />
+                    <View style={muscleStyles.statItem}>
+                      <Text style={[muscleStyles.statValue, { color: accent }]}>{reps.toLocaleString()}</Text>
+                      <Text style={muscleStyles.statLabel}>reps</Text>
+                    </View>
+                  </>
+                )}
+              </View>
+            </View>
+          );
+        })()}
+
+        {/* Muscle distribution */}
+        {topMuscles.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Muscle Distribution</Text>
+            <MuscleVolumeChart
+              volumeByGroup={muscleVolume.sets}
+              kgByGroup={muscleVolume.kg}
+            />
+          </View>
+        )}
+
+        {/* Consistency */}
+        <View style={styles.section}>
+          <View style={localStyles.sectionTitleRow}>
+            <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Consistency</Text>
+            <TouchableOpacity
+              onPress={() => setShowConsistencyInfo(v => !v)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Feather name="info" size={14} color={colors.titleText} />
+            </TouchableOpacity>
+          </View>
+          {showConsistencyInfo && (
+            <View style={localStyles.infoBox}>
+              <Text style={localStyles.infoText}>
+                Based on your last 90 days. Expected sessions = your weekly target × (90 ÷ 7). Consistency = actual ÷ expected, capped at 100%.
+              </Text>
+            </View>
+          )}
+          <View style={styles.cardRow}>
+            <StatCard label="Streak" value={`${currentStreak}d`} icon="zap"      compact />
+            <StatCard label="Best"   value={`${longestStreak}d`} icon="award"    compact />
+            <StatCard label="90-day" value={`${consistency}%`}   icon="calendar" compact />
+          </View>
+          <AnimatedBar
+            percent={consistency}
+            delay={120}
+            trackStyle={consistencyStyles.barTrack}
+            fillStyle={[consistencyStyles.barFill, { backgroundColor: accent }]}
+          />
+          <Text style={consistencyStyles.hint}>
+            {consistency >= 80 ? 'Exceptional consistency'
+              : consistency >= 50 ? 'Keep building the habit'
+              : consistency > 0  ? 'Every session counts'
+              : 'Start your journey'}
+          </Text>
+        </View>
+
+        {/* Unified session history across all workouts */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Session History</Text>
+          <StreakCalendar sessions={allSessions} />
+        </View>
+
+      </View>
+    );
+  }
+
   return (
     <View style={{ gap: 16 }}>
       {/* Top row: 6 stat cards spread evenly (wraps 3+3 on web) */}

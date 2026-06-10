@@ -1,5 +1,5 @@
 import React, { useMemo, useRef, useState, useEffect } from 'react';
-import { Modal, View, Text, Pressable, FlatList, TextInput, ScrollView, StyleSheet, Platform, useWindowDimensions } from 'react-native';
+import { Modal, View, Text, Pressable, FlatList, TextInput, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../../../../theme/colors';
@@ -50,10 +50,11 @@ export default function ExercisePickerModal({
 }: Props) {
   const { accent } = useAccent();
   const { height: winH } = useWindowDimensions();
-  // On web the modal's overlay may not propagate a definite height to children,
-  // so a percentage `height: '85%'` on the sheet can resolve to 0. Use a
-  // concrete pixel height instead.
-  const webSheetHeight = Math.round(winH * 0.85);
+  // Give the sheet a definite pixel height so the inner flex:1 FlatList has a
+  // bounded container to scroll inside. On web, a percentage height can resolve
+  // to 0 inside the modal portal. On native, flex:1 children collapse when the
+  // parent has only maxHeight (no explicit height), so we need this everywhere.
+  const sheetHeight = Math.round(winH * 0.85);
   const flatListRef = useRef<FlatList>(null);
   const [muscleFilter, setMuscleFilter] = useState<MuscleGroup | null>(null);
   const [equipmentFilter, setEquipmentFilter] = useState<Equipment | null>(null);
@@ -189,10 +190,7 @@ export default function ExercisePickerModal({
         <View
           style={[
             pickerStyles.pickerSheet,
-            // On web, give the sheet a definite pixel height so the FlatList's
-            // flex:1 has a bounded container to scroll inside. Using a % height
-            // can resolve to 0 on web's modal portal.
-            Platform.OS === 'web' && { height: webSheetHeight, maxHeight: webSheetHeight },
+            { height: sheetHeight, maxHeight: sheetHeight },
           ]}
         >
           <View style={pickerStyles.pickerHandle} />

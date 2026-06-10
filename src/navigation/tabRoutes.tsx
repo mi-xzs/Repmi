@@ -53,7 +53,9 @@ export const SUB_TABS: Partial<Record<keyof RootTabParamList, readonly string[]>
 // Hide the tab bar / rail on the full-screen CreateWorkout flow so the
 // workout builder gets the whole viewport on every platform.
 export function getTabBarStyle(route: RouteProp<RootTabParamList, "Home">) {
-  const routeName = getFocusedRouteNameFromRoute(route) ?? "Home";
+  // Inner Home-stack landing route is "HomeMain"; the only name we branch on
+  // here is "CreateWorkout", so the fallback is cosmetic — kept in sync.
+  const routeName = getFocusedRouteNameFromRoute(route) ?? "HomeMain";
   if (routeName === "CreateWorkout") return { display: "none" as const };
   return { display: "flex" as const };
 }

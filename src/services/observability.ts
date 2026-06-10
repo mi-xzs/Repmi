@@ -301,8 +301,20 @@ export async function disableCrashReporting(): Promise<void> {
 export function wrapApp<P extends object>(
   Component: React.ComponentType<P>,
 ): React.ComponentType<P> {
-  // Sentry.wrap may be a no-op when DSN is missing; calling it
-  // unconditionally is safe and avoids two code paths.
+  // `Sentry.wrap` must run AFTER `Sentry.init`, otherwise the SDK logs
+  // "App Start Span could not be finished. Sentry.wrap was called before
+  // Sentry.init." Our init is privacy-gated and async — the opt-in flag is
+  // read from SecureStore on mount via initSentryIfEnabled() — so at
+  // module-eval time, when App.tsx runs `wrapApp(App)` for its default
+  // export, init has not happened yet. Wrapping here would always precede
+  // init and emit that warning.
+  //
+  // So we only wrap once Sentry is actually initialised. In practice that
+  // means the root render returns the component unwrapped; crashes are
+  // still captured by the global error handlers Sentry.init installs, and
+  // with tracesSampleRate 0 the wrap only added app-start/touch tracing we
+  // deliberately don't collect.
+  if (!initialised) return Component;
   try {
     return (Sentry.wrap as unknown as <T>(c: T) => T)(Component);
   } catch {

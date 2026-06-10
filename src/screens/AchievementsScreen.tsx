@@ -2449,8 +2449,13 @@ function PodiumPillar({
             alignment + rank-1's -8 marginBottom, rank 1's XP lands
             8px below ranks 2/3, which sit in line with each other. */}
           <Text
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.6}
             style={{
               marginTop: 'auto',
+              alignSelf: 'stretch',
+              textAlign: 'center',
               fontSize: isFirst ? 28 : 17,
               fontWeight: '900',
               color: accent,
@@ -3544,7 +3549,14 @@ function ChaseRow({
           </View>
 
           <View style={chaseStyles.xpCol}>
-            <Text style={[chaseStyles.xpNum, { color: r.color }]}>{formatXP(entry.xp)}</Text>
+            <Text
+              style={[chaseStyles.xpNum, { color: r.color }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              minimumFontScale={0.7}
+            >
+              {formatXP(entry.xp)}
+            </Text>
             <Text style={chaseStyles.xpLabel}>XP</Text>
           </View>
         </Reanimated.View>
@@ -5238,12 +5250,12 @@ function LeaderboardView() {
         delta: 0,
         isYou,
         totalEntries,
-        // Always navigates to the current user's Profile tab. Dummy
-        // leaderboard entries don't have their own profile screens
-        // yet, so the button gracefully lands on the only profile
-        // that exists. Swap to per-user routing once real user data
-        // and a per-user profile screen land.
-        onSeeProfile: () => navigation.navigate('Profile'),
+        // Self lands on the Profile tab; any other entry routes to that
+        // user's UserProfile screen by id (standings entries are real
+        // followed users keyed by their user id).
+        onSeeProfile: isYou
+          ? () => navigation.navigate('Profile')
+          : () => navigation.navigate('UserProfile', { userId: entry.key }),
       };
     },
     [xpByName, profile?.username, profile?.avatar_url, totalEntries, navigation],
@@ -5304,10 +5316,10 @@ function LeaderboardView() {
               onPillarLongPress={(rank) => {
                 const e = top3.find((t) => t.rank === rank);
                 if (!e) return;
-                // Self peek keeps the legacy XP/rank/percentile modal;
-                // everyone else gets the Instagram-style peek.
-                if (e.key === '__you__') showPreview(buildPreview(e));
-                else goToUserProfile(e);
+                // Long-press opens the preview modal (with its See Profile
+                // CTA) for everyone — same gesture whether it's you or a
+                // rival, matching the chase rows below.
+                showPreview(buildPreview(e));
               }}
             />
           </View>
@@ -5357,6 +5369,9 @@ function LeaderboardView() {
                 index={i}
                 isLast={i === chase.length - 1}
                 onPress={() => goToUserProfile(entry)}
+                // Long-press opens the same preview modal as the podium /
+                // your own entry, with its See Profile CTA.
+                onLongPress={() => showPreview(buildPreview(entry))}
               />
             ))
           )}

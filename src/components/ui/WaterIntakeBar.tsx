@@ -17,6 +17,7 @@ import Animated, {
   useAnimatedProps,
   withSequence,
   withSpring,
+  cancelAnimation,
 } from 'react-native-reanimated';
 import Svg, { Circle } from 'react-native-svg';
 import { useFocusEffect } from '@react-navigation/native';
@@ -60,6 +61,19 @@ export function WaterIntakeBar() {
 
   const pulse = useSharedValue(1);
   const fillFrac = useSharedValue(0);
+
+  // --- Cancel in-flight animations on unmount ---
+  // The tracker is toggled on/off from Settings (and its own modal), which
+  // mounts/unmounts this component. On Reanimated 4 + the New Architecture, a
+  // `withSpring`/`withSequence` still running when its host SVG/view node is
+  // torn down can fire onto a detached node and hard-crash on native. Cancel
+  // both shared values' animations on unmount so nothing outlives the node.
+  useEffect(() => {
+    return () => {
+      cancelAnimation(pulse);
+      cancelAnimation(fillFrac);
+    };
+  }, [pulse, fillFrac]);
 
   // --- ReduceMotion ---
   useEffect(() => {

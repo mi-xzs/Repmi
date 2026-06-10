@@ -35,6 +35,10 @@ export type RootStackParamList = {
   FollowRequests: undefined;
   MFAEnroll: undefined;
   HealthDataConsent: undefined;
+  // Hosted at the root (not just under Auth) so the inPasswordRecovery
+  // short-circuit in RootNavigator can render the reset form directly,
+  // before the Auth stack mounts. See RootNavigator's recovery branch.
+  PasswordResetConfirm: undefined;
 };
 
 // Makes useNavigation()/useRoute() typed app-wide without passing generics

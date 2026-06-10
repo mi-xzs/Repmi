@@ -46,7 +46,7 @@ import { useDemoGuard } from '../services/demoMode';
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-type HomeNavProp = NativeStackNavigationProp<HomeStackParamList, 'Home'>;
+type HomeNavProp = NativeStackNavigationProp<HomeStackParamList, 'HomeMain'>;
 
 const CARD_BORDER_RADIUS = 18;
 const ACTION_WIDTH = 90;

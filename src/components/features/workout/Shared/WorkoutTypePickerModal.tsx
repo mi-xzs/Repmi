@@ -71,10 +71,12 @@ export default function WorkoutTypePickerModal({
 }: Props) {
   const { accent } = useAccent();
   const { height: winH } = useWindowDimensions();
-  // On web the modal portal doesn't propagate a definite height to children,
-  // so a percentage `maxHeight: '85%'` on the sheet resolves to 0. Force a
-  // concrete pixel height instead.
-  const webSheetHeight = Math.round(winH * 0.85);
+  // Give the sheet a definite pixel height so the inner flex:1 FlatList has a
+  // bounded container to scroll inside. On web a percentage height resolves to
+  // 0 inside the modal portal; on native, a parent with only `maxHeight` (no
+  // explicit `height`) lets flex:1 children collapse to 0 — so the type list
+  // renders nothing. A concrete height fixes both. (Mirrors ExercisePickerModal.)
+  const sheetHeight = Math.round(winH * 0.85);
   const [categoryFilter, setCategoryFilter] = useState<Category | null>(null);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -165,8 +167,9 @@ export default function WorkoutTypePickerModal({
         <View
           style={[
             pickerStyles.pickerSheet,
-            // Web: definite pixel height so the FlatList's flex:1 gets bounds.
-            Platform.OS === 'web' && { height: webSheetHeight, maxHeight: webSheetHeight },
+            // Definite pixel height on every platform so the FlatList's flex:1
+            // gets bounds (native collapses it to 0 with only maxHeight).
+            { height: sheetHeight, maxHeight: sheetHeight },
           ]}
         >
           <View style={pickerStyles.pickerHandle} />
