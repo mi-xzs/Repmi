@@ -25,21 +25,77 @@
 
 ## 📸 Screenshots
 
-<!-- TODO: drop PNGs into assets/screenshots/ and update the paths below.
-     Suggested shots: login, home/workout, live workout logging, analytics
-     dashboard, achievements, profile. iOS + Android both look great. -->
+<!--
+  All screenshots live in assets/screenshots/ as PNG.
+  Mobile shots are tall portrait images, so they're sized with <img width="...">
+  (plain ![](...) markdown can't resize them). Rule of thumb:
+    • 3 phones per row → width="230"
+    • 2 phones per row → width="260"
+  The strip below is your 3 strongest shots; the feature tour further down
+  pairs each feature with its own screenshots. Just export PNGs with the
+  filenames referenced below and they'll appear automatically.
+-->
 
-| Workout logging | Analytics | Gamification | Profile |
-|:---:|:---:|:---:|:---:|
-| _coming soon_ | _coming soon_ | _coming soon_ | _coming soon_ |
+<p align="center">
+  <img src="assets/screenshots/home.png" width="230" alt="Home dashboard" />
+  &nbsp;
+  <img src="assets/screenshots/workout-live.png" width="230" alt="Live workout logging" />
+  &nbsp;
+  <img src="assets/screenshots/analytics-progression.png" width="230" alt="Progression analytics" />
+</p>
 
 ## ✨ Features
 
-- **Workout tracking** — Build structured sessions with warm-up / main / cooldown phases, log sets, reps, weight, distance, duration, and **RPE** (rate of perceived exertion); built-in rest timer and a searchable exercise catalogue.
-- **Analytics & progression** — Weight/distance/duration progression charts, muscle-volume breakdowns, radar charts, training heatmaps, streak calendars, and automatic **personal-record detection**.
-- **Gamification** — XP, levels, in-app coins, achievements, and streaks to drive retention, with an animated post-workout XP summary.
-- **Social** — User profiles, follow / follow-request flows with private-account support, and shareable workout cards (rendered to an image for sharing).
-- **Security & privacy first** — MFA, biometric unlock, encrypted session storage, opt-in crash reporting, explicit health-data consent, and self-service account deletion.
+### 🏋️ Workout tracking
+Build structured sessions with warm-up / main / cooldown phases — log sets, reps, weight, distance, duration, and **RPE** (rate of perceived exertion), with a built-in rest timer and a searchable exercise catalogue.
+
+<p align="center">
+  <img src="assets/screenshots/workout-builder.png" width="230" alt="Workout builder" />
+  &nbsp;
+  <img src="assets/screenshots/workout-live.png" width="230" alt="Live set logging" />
+  &nbsp;
+  <img src="assets/screenshots/workout-timer.png" width="230" alt="Rest timer" />
+</p>
+
+### 📊 Analytics & progression
+Weight / distance / duration progression charts, muscle-volume breakdowns, radar charts, training heatmaps, streak calendars, and automatic **personal-record detection**.
+
+<p align="center">
+  <img src="assets/screenshots/analytics-progression.png" width="230" alt="Progression charts" />
+  &nbsp;
+  <img src="assets/screenshots/analytics-volume.png" width="230" alt="Muscle-volume breakdown" />
+  &nbsp;
+  <img src="assets/screenshots/analytics-heatmap.png" width="230" alt="Training heatmap" />
+</p>
+
+### 🎮 Gamification
+XP, levels, in-app coins, achievements, and streaks to drive retention — including an animated post-workout XP summary.
+
+<p align="center">
+  <img src="assets/screenshots/gamification-levelup.png" width="230" alt="XP & level-up summary" />
+  &nbsp;
+  <img src="assets/screenshots/gamification-achievements.png" width="230" alt="Achievements" />
+  &nbsp;
+  <img src="assets/screenshots/gamification-streak.png" width="230" alt="Streak calendar" />
+</p>
+
+### 👥 Social
+User profiles, follow / follow-request flows with private-account support, and shareable workout cards (rendered to an image for sharing).
+
+<p align="center">
+  <img src="assets/screenshots/social-profile.png" width="260" alt="User profile" />
+  &nbsp;
+  <img src="assets/screenshots/social-sharecard.png" width="260" alt="Shareable workout card" />
+</p>
+
+### 🔐 Security & privacy first
+MFA, biometric unlock, encrypted session storage, opt-in crash reporting, explicit health-data consent, and self-service account deletion. _(See [Security & Engineering Highlights](#-security--engineering-highlights) for the full breakdown.)_
+
+<p align="center">
+  <img src="assets/screenshots/security-mfa.png" width="260" alt="Multi-factor auth setup" />
+  &nbsp;
+  <img src="assets/screenshots/security-biometric.png" width="260" alt="Biometric app lock" />
+</p>
 
 ## 🧰 Tech Stack
 
