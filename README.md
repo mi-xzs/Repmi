@@ -46,20 +46,19 @@
 
 ## ✨ Features
 
+### 🏠 Home Dashboard
+The Home Dashboard is centered around workout cards. These provide a quick visual summary of a workout as well as acting as the entry point to launch the workout screen. The cards are grouped in several sections: **My Workouts** — containing the workouts a user builds themselves; **Imported Workouts** — routines imported from other users via a shareable link; and a **Favourites** tab which can encompass both for easy access.
 
-### Home Dashboard 
-The Home Dashboard is centered around the use of workout cards. These provide a quick visual summary of a workout,  as well as acting as the entry point in navigation to launch the workout screen. The cards are grouped in several sections: My Workouts - containing the workouts a user builds themselves, Imported Workouts - routines imported from other users from a shareable link and a Favourites tab which can encompass both for easy access.
+The top header provides a quick profile summary highlighting the user's XP and level, alongside an optional water tracker which can be toggled off (or back on in settings).
 
-The Top Header provides a quick profile summary highlighting the user's XP and level, alongside an optional water tracker which can be toggled off(or back on in settings).
 Each workout card supports swipe actions — swipe left to delete, or right to generate a shareable link that anyone can use to import that workout into their Home Dashboard.
 
-
 <p align="center">
-  <img src="assets/screenshots/homescreen.png" width="230" alt="HomeScreen" />
+  <img src="assets/screenshots/homescreen.png" width="230" alt="Home dashboard" />
   &nbsp;
-  <img src="assets/screenshots/sharescreen.png" width="230" alt="Swipe action" />
+  <img src="assets/screenshots/sharescreen.png" width="230" alt="Workout card swipe actions" />
   &nbsp;
-  <img src="assets/screenshots/watertracker.png" width="230" alt="Water track" />
+  <img src="assets/screenshots/watertracker.png" width="230" alt="Profile header and water tracker" />
 </p>
 
 ### 🏋️ Workout tracking
