@@ -46,6 +46,22 @@
 
 ## ✨ Features
 
+
+### Home Dashboard 
+The Home Dashboard is centered around the use of workout cards. These provide a quick visual summary of a workout,  as well as acting as the entry point in navigation to launch the workout screen. The cards are grouped in several sections: My Workouts - containing the workouts a user builds themselves, Imported Workouts - routines imported from other users from a shareable link and a Favourites tab which can encompass both for easy access.
+
+The Top Header provides a quick profile summary highlighting the user's XP and level, alongside an optional water tracker which can be toggled off(or back on in settings).
+Each workout card supports swipe actions — swipe left to delete, or right to generate a shareable link that anyone can use to import that workout into their Home Dashboard.
+
+
+<p align="center">
+  <img src="assets/screenshots/homescreen.png" width="230" alt="HomeScreen" />
+  &nbsp;
+  <img src="assets/screenshots/sharescreen.png" width="230" alt="Swipe action" />
+  &nbsp;
+  <img src="assets/screenshots/watertracker.png" width="230" alt="Water track" />
+</p>
+
 ### 🏋️ Workout tracking
 Build structured sessions with warm-up / main / cooldown phases — log sets, reps, weight, distance, duration, and **RPE** (rate of perceived exertion), with a built-in rest timer and a searchable exercise catalogue.
 
