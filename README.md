@@ -44,11 +44,13 @@
   <img src="assets/screenshots/analytics-progression.png" width="230" alt="Progression analytics" />
 </p>
 
-## ✨ Features
+## Features
 
-### 🏠 Home Dashboard
+### Home Dashboard
 The Home Dashboard is centered around workout cards. These provide a quick visual summary of a workout as well as acting as the navigation point to launch the workout screen. The cards are grouped in several sections: **My Workouts** — containing the workouts a user creates themselves; **Imported Workouts** — routines imported from other users via a shareable link; and a **Favourites** tab which can encompass both for easy access.
+
 The top header provides a quick profile summary highlighting the user's XP and level, alongside an optional water tracker which can be toggled off (or back on in settings).
+
 Each workout card supports swipe actions — swipe left to delete, or right to generate a shareable link that anyone can use to import that workout into their Home Dashboard.
 
 <p align="center">
@@ -63,8 +65,11 @@ Each workout card supports swipe actions — swipe left to delete, or right to g
 
 Tapping the + button opens the create a workout screen, where users are able to structure sessions using dedicated Warm-up/Cooldown and Main sections, or simply just the main sections.
 Each section supports multiple tracking metrics to accommodate a wide range of exercises — including standard weight, bodyweight, timed, and distance-based movements.
+
 Once saved, the workout appears as a workout card on the Home Dashboard. Tapping the card opens a read-only summary of the routine alongside a Start Workout button to begin the workout. During an active workout, users can tick off completed sets — with superset compatibility — and receive haptic feedback on each completion. Weight and exercise selection can also be adjusted on the fly to account for equipment availability or last-minute improvement or scale back.
+
 Upon completion, users are prompted to log an **RPE (Rate of Perceived Exertion)** score. This feeds directly into analytics, giving users a visual record of their exertion over time — making it easy to identify when to push for progression or scale back intensity.
+
 Furthermore, This is followed by an XP summary that awards XP across several factors including progression, consistency, and total volume. This also generates a shareable stat card — a saveable PNG designed to be overlaid on a progress photo and shared to social media.
 
 <p align="center">
@@ -85,16 +90,17 @@ Furthermore, This is followed by an XP summary that awards XP across several fac
   <img src="assets/screenshots/Statcard.png" width="230" alt="Stats" />
 </p>
 
-### 📊 Analytics & progression
-Weight / distance / duration progression charts, muscle-volume breakdowns, radar charts, training heatmaps, streak calendars, and automatic **personal-record detection**.
+### Analytics & progression
 
-<p align="center">
-  <img src="assets/screenshots/analytics-progression.png" width="230" alt="Progression charts" />
-  &nbsp;
-  <img src="assets/screenshots/analytics-volume.png" width="230" alt="Muscle-volume breakdown" />
-  &nbsp;
-  <img src="assets/screenshots/analytics-heatmap.png" width="230" alt="Training heatmap" />
-</p>
+The Analytics section is split across three tabs — Workout, Weekly, and Overall. All of these give users a layered view of their training data from a per workout, weekly or an overall perspective.
+
+Workout tab — Includes session statistics (count, duration, averages), an exercise progression chart with automatic personal-record detection, as well as support for all exercise types: weighted, bodyweight, timed, and distance. Each type has a dedicated chart — line charts for weight progression, stacked bar charts for bodyweight reps, and duration/distance bar charts for cardio-style movements. An estimated 1RM is calculated automatically for weighted exercises using the Epley formula.
+An RPE chart visualises exertion over time, colour-coded by zones allowing users to visualise their exertion and when to scale up or down.
+
+Weekly tab — The Weekly Tab is a digest of the current week. This highlights total sessions, time, sets, volume, and consistency against a target — alongside a muscle distribution chart and a workout breakdown identifying the top exercise and most-trained muscle group for that week. Allowing users to visually see how their regimens might change week from week.
+
+Overall tab — all-time cumulative stats: total sessions, time, weight lifted, reps, and sets. Features a muscle distribution chart, a top-5 exercises by volume breakdown, an exercise frequency radar chart, as well as a streak calendar with full month navigation. Consistency is scored over a rolling 90-day window and users consistency goals.
+
 
 ### 🎮 Gamification
 XP, levels, in-app coins, achievements, and streaks to drive retention — including an animated post-workout XP summary.
