@@ -118,15 +118,36 @@ Overall tab — all-time cumulative stats: total sessions, time, weight lifted, 
 </p>
 
 
-### 🎮 Gamification
-XP, levels, in-app coins, achievements, and streaks to drive retention — including an animated post-workout XP summary.
+### Gamification - A game-like reward systemn to encourage motivation
+
+Repmi uses a gamification system designed to visually reward consistency and progression.
+
+XP & Levels — XP is earned at the end of every workout based on several factors: a base show-up bonus, total volume lifted, sets completed, session duration, and whether an RPE score was logged. This is furthered by an XP multiplier applied for maintaining streaks — ranging from 1.1x for a 2-day streak up to 2.0x for a 7-day streak. The XP system accumulates toward levels that are visually displayed on the users profile.
+
+Achievements — Several unlockable achievements covering different target areas. This includes session milestones (1, 10, 50, 100 sessions), streak milestones (3, 7, 30 days), volume milestones (10K, 100K, 500K kg), as well as behavioural achievements such as Early Birds and Exercise Variety. Each achievement carries an XP reward and a rarity tier — Common through to Legendary — as well as a coin reward.
+
+Coins — Are a secondary currency earned through workouts, achievements, level-ups, streak milestones, as well as weekly consistency bonuses. These are primarily spent to unlock cosmetic changes within the app.
+
+Leaderboard — In order to encourage motivation, users are able to follow other users which adds them to their leaderboard. The leaderboard ranks all users by total XP (all-time) or XP earned in the last 7 days (weekly) - With an animated podium for the Top 3.
+
+Roadmap — The app currently introduces a season-based progression system, allowing users to collect titles and badges that can be equipped on their profile. The icons are currently placeholders with plans to expand this to use custom-designed assets over time. The system is designed around rarity tiers, with the highest titles becoming increasingly difficult to obtain in order to drive competitiveness. The coin and cosmetics economy will also be expanded further to include custom themes, streak bonuses, XP boosters, and more.
 
 <p align="center">
-  <img src="assets/screenshots/gamification-levelup.png" width="230" alt="XP & level-up summary" />
+  <img src="assets/screenshots/achieve.png" width="230" alt="Achievements tab" />
   &nbsp;
-  <img src="assets/screenshots/gamification-achievements.png" width="230" alt="Achievements" />
+  <img src="assets/screenshots/season.png" width="230" alt="Season" />
   &nbsp;
-  <img src="assets/screenshots/gamification-streak.png" width="230" alt="Streak calendar" />
+  <img src="assets/screenshots/titles.png" width="230" alt="Titles" />
+  &nbsp;
+  <img src="assets/screenshots/obtained.png" width="230" alt="obtained" />
+  <img src="assets/screenshots/obtainedshow.png" width="230" alt="Obtained see more" />
+  <img src="assets/screenshots/obtainedzoom.png" width="230" alt="Obtained zoom" />
+  <img src="assets/screenshots/locked.png" width="230" alt="Locked" />
+  <img src="assets/screenshots/leaderboard.png" width="230" alt="Leaderbaord chart" />
+  <img src="assets/screenshots/profile.png" width="230" alt="Profile" />
+  <img src="assets/screenshots/add.png" width="230" alt="add" />
+  <img src="assets/screenshots/standings.png" width="230" alt="Standings" />
+  <img src="assets/screenshots/store.png" width="230" alt="store" />
 </p>
 
 ### 👥 Social
