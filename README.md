@@ -222,7 +222,7 @@ User profiles, follow / follow-request flows with private-account support.
 | **Navigation** | React Navigation (native-stack + bottom-tabs) |
 | **State** | 6 React Context providers with offline-aware Zod-validated local cache |
 | **Backend** | Supabase — Postgres, Auth (MFA/TOTP), Row-Level Security, versioned SQL migrations |
-| **Validation** | Zod — all API payloads and cached data |
+| **Validation** | Zod — workout & session payloads + cached data |
 | **Animation** | Reanimated + Worklets, react-native-svg, expo-linear-gradient |
 | **Security** | freerasp (RASP), expo-local-authentication, expo-secure-store, expo-screen-capture |
 | **Observability** | Sentry (opt-in, privacy-gated) |
