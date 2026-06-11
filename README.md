@@ -245,10 +245,10 @@ This is what sets Repmi apart from a typical portfolio app:
 - **Row-Level Security (RLS)** — every table is protected by Postgres RLS policies; access control lives in the database, not just the client.
 - **Multi-factor authentication (TOTP)** — enrolment with QR + manual secret, challenge on sign-in, and **screen-capture prevention** while the secret is visible.
 - **Biometric app lock** — Face ID / fingerprint gate on foreground via `expo-local-authentication`.
-- **Encrypted session storage** — auth tokens stored in the platform secure store (iOS Keychain / Android EncryptedSharedPreferences), never plain `AsyncStorage`.
-- **Runtime app self-protection (RASP)** — `freerasp` detects root/jailbreak and integrity tampering and blocks the app on compromised devices.
+- **Encrypted session storage** — auth tokens stored in the platform secure store (iOS Keychain / Android EncryptedSharedPreferences) on native, not plain `AsyncStorage`.
+- **Runtime app self-protection (RASP)** — `freerasp` detects root/jailbreak and blocks the app on compromised devices.
 - **Audit logging & rate limiting** — sensitive actions are logged; abuse-prone endpoints (e.g. username checks) are rate-limited at the DB layer.
-- **Input validation & moderation** — Zod schemas validate all payloads; profanity/content filtering on user-generated text.
+- **Input validation & moderation** — Zod schemas validate the workout & session payloads sent to Supabase; profanity/content filtering on user-generated text.
 - **Privacy by design** — crash reporting is **opt-in only**, explicit health-data consent screen, and a full account-deletion flow.
 - **Log redaction** — the logger/observability layer scrubs passwords, tokens, and auth headers before anything is recorded.
 
