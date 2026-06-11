@@ -47,10 +47,8 @@
 ## ✨ Features
 
 ### 🏠 Home Dashboard
-The Home Dashboard is centered around workout cards. These provide a quick visual summary of a workout as well as acting as the entry point to launch the workout screen. The cards are grouped in several sections: **My Workouts** — containing the workouts a user builds themselves; **Imported Workouts** — routines imported from other users via a shareable link; and a **Favourites** tab which can encompass both for easy access.
-
+The Home Dashboard is centered around workout cards. These provide a quick visual summary of a workout as well as acting as the navigation point to launch the workout screen. The cards are grouped in several sections: **My Workouts** — containing the workouts a user creates themselves; **Imported Workouts** — routines imported from other users via a shareable link; and a **Favourites** tab which can encompass both for easy access.
 The top header provides a quick profile summary highlighting the user's XP and level, alongside an optional water tracker which can be toggled off (or back on in settings).
-
 Each workout card supports swipe actions — swipe left to delete, or right to generate a shareable link that anyone can use to import that workout into their Home Dashboard.
 
 <p align="center">
@@ -61,15 +59,31 @@ Each workout card supports swipe actions — swipe left to delete, or right to g
   <img src="assets/screenshots/watertracker.png" width="230" alt="Profile header and water tracker" />
 </p>
 
-### 🏋️ Workout tracking
-Build structured sessions with warm-up / main / cooldown phases — log sets, reps, weight, distance, duration, and **RPE** (rate of perceived exertion), with a built-in rest timer and a searchable exercise catalogue.
+### Workout tracking - Create, Log and Track Workouts:
+
+Tapping the + button opens the create a workout screen, where users are able to structure sessions using dedicated Warm-up/Cooldown and Main sections, or simply just the main sections.
+Each section supports multiple tracking metrics to accommodate a wide range of exercises — including standard weight, bodyweight, timed, and distance-based movements.
+Once saved, the workout appears as a workout card on the Home Dashboard. Tapping the card opens a read-only summary of the routine alongside a Start Workout button to begin the workout. During an active workout, users can tick off completed sets — with superset compatibility — and receive haptic feedback on each completion. Weight and exercise selection can also be adjusted on the fly to account for equipment availability or last-minute improvement or scale back.
+Upon completion, users are prompted to log an **RPE (Rate of Perceived Exertion)** score. This feeds directly into analytics, giving users a visual record of their exertion over time — making it easy to identify when to push for progression or scale back intensity.
+Furthermore, This is followed by an XP summary that awards XP across several factors including progression, consistency, and total volume. This also generates a shareable stat card — a saveable PNG designed to be overlaid on a progress photo and shared to social media.
 
 <p align="center">
-  <img src="assets/screenshots/workout-builder.png" width="230" alt="Workout builder" />
+  <img src="assets/screenshots/emptyworkout.png" width="230" alt="Empty workout" />
   &nbsp;
-  <img src="assets/screenshots/workout-live.png" width="230" alt="Live set logging" />
+  <img src="assets/screenshots/workout.png" width="230" alt="Workout" />
   &nbsp;
-  <img src="assets/screenshots/workout-timer.png" width="230" alt="Rest timer" />
+  <img src="assets/screenshots/workoutbottom.png" width="230" alt="Workout bottom" />
+  &nbsp;
+  <img src="assets/screenshots/createsection.png" width="230" alt="Create" />
+  <img src="assets/screenshots/emptysection.png" width="230" alt="Create Section" />
+  <img src="assets/screenshots/warmup.png" width="230" alt="Warm-up" />
+  <img src="assets/screenshots/active.png" width="230" alt="Active workout" />
+  <img src="assets/screenshots/change.png" width="230" alt="Weight" />
+  <img src="assets/screenshots/rest.png" width="230" alt="Rest timer" />
+  <img src="assets/screenshots/RPE.png" width="230" alt="RPE" />
+  <img src="assets/screenshots/xpscreen.png" width="230" alt="xp screen" />
+  <img src="assets/screenshots/xpscreen.png" width="230" alt="xp screen" />
+  <img src="assets/screenshots/Statcard.png" width="230" alt="Stats" />
 </p>
 
 ### 📊 Analytics & progression
