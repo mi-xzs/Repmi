@@ -51,6 +51,9 @@ Upon completion, users are prompted to log an **RPE (Rate of Perceived Exertion)
 
 Furthermore, This is followed by an XP summary that awards XP across several factors including progression, consistency, and total volume. This also generates a shareable stat card — a saveable PNG designed to be overlaid on a progress photo and shared to social media.
 
+<details>
+<summary>Creating a Workout</summary>
+<br>
 <p align="center">
   <img src="assets/screenshots/emptyworkout.png" width="230" alt="Empty workout" />
   &nbsp;
@@ -58,16 +61,37 @@ Furthermore, This is followed by an XP summary that awards XP across several fac
   &nbsp;
   <img src="assets/screenshots/workoutbottom.png" width="230" alt="Workout bottom" />
   &nbsp;
-  <img src="assets/screenshots/createsection.png" width="230" alt="Create" />
-  <img src="assets/screenshots/emptysection.png" width="230" alt="Create Section" />
+  <img src="assets/screenshots/createsection.png" width="230" alt="Create section" />
+  &nbsp;
+  <img src="assets/screenshots/emptysection.png" width="230" alt="Empty section" />
+  &nbsp;
   <img src="assets/screenshots/warmup.png" width="230" alt="Warm-up" />
-  <img src="assets/screenshots/active.png" width="230" alt="Active workout" />
-  <img src="assets/screenshots/change.png" width="230" alt="Weight" />
-  <img src="assets/screenshots/rest.png" width="230" alt="Rest timer" />
-  <img src="assets/screenshots/RPE.png" width="230" alt="RPE" />
-  <img src="assets/screenshots/xpscreen.png" width="230" alt="xp screen" />
-  <img src="assets/screenshots/Statcard.png" width="230" alt="Stats" />
 </p>
+</details>
+
+<details>
+<summary>Active Workout</summary>
+<br>
+<p align="center">
+  <img src="assets/screenshots/active.png" width="230" alt="Active workout" />
+  &nbsp;
+  <img src="assets/screenshots/change.png" width="230" alt="Weight adjustment" />
+  &nbsp;
+  <img src="assets/screenshots/rest.png" width="230" alt="Rest timer" />
+</p>
+</details>
+
+<details>
+<summary>Post-Workout</summary>
+<br>
+<p align="center">
+  <img src="assets/screenshots/RPE.png" width="230" alt="RPE" />
+  &nbsp;
+  <img src="assets/screenshots/xpscreen.png" width="230" alt="XP summary" />
+  &nbsp;
+  <img src="assets/screenshots/Statcard.png" width="230" alt="Stat card" />
+</p>
+</details>
 
 ### Analytics & progression
 
