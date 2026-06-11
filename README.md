@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🏋️ Repmi
+# Repmi
 
 **A production-grade mobile fitness tracker — workout logging, deep analytics, gamification, and social features — built with React Native, Expo, TypeScript, and Supabase.**
 
@@ -10,18 +10,14 @@
 ![Supabase](https://img.shields.io/badge/Supabase-Postgres_+_RLS-3FCF8E?logo=supabase&logoColor=white)
 ![License](https://img.shields.io/badge/license-Source--Available-lightgrey)
 
-**[🌐 Live Web Demo](#)** &nbsp;·&nbsp; **[📱 Download APK](#)** &nbsp;·&nbsp; **[🎬 Demo Video](#)**
+
+Welcome! Repmi is intended as a motivational workout tracker which introduces game-like elements to help ensure a user maintains their consistency, and provides a visual representation of their metrics!
+
+**[Live Web Demo](#)** &nbsp;·&nbsp; 
+
+To similute accuracy - Please try the web demo on a mobile phone. While the web demo is fully functional on desktop, viewing it on a mobile device is recommended for an experience that accurately reflects the intended design.
 
 </div>
-
----
-
-> **Note for reviewers:** Repmi is a complete, real-world application — not a tutorial project.
-> It ships with Supabase Row-Level Security, multi-factor auth, biometric locking,
-> runtime app-shielding (RASP), audit logging, and rate limiting. The
-> [Security & Engineering Highlights](#-security--engineering-highlights) section is the
-> best place to gauge engineering depth.
-
 
 ## Features
 
@@ -252,7 +248,7 @@ This is what sets Repmi apart from a typical portfolio app:
 - **Privacy by design** — crash reporting is **opt-in only**, explicit health-data consent screen, and a full account-deletion flow.
 - **Log redaction** — the logger/observability layer scrubs passwords, tokens, and auth headers before anything is recorded.
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 src/
@@ -273,7 +269,7 @@ supabase/
 └── migrations/         Versioned SQL: schema, RLS policies, audit log, rate limits
 ```
 
-## 🚀 Running Locally
+## Running Locally
 
 **Prerequisites:** Node 18+, [Expo CLI](https://docs.expo.dev/), and a free [Supabase](https://supabase.com/) project.
 
@@ -287,12 +283,14 @@ npm run web               # or: npm run ios / npm run android
 
 > Native modules (secure store, biometrics, RASP) need a **dev build**, not Expo Go — the `ios`/`android` scripts handle that.
 
-## 🗺️ Roadmap
+## Roadmap
 
-- [ ] Public web demo + downloadable Android build
 - [ ] iOS release (TestFlight)
+- [ ] Custom Asset badges- Themes, icons covers
+- [ ] Futher earnable coin uses - Xp boosters, Streak Freeze..etc
 - [ ] Apple Health / Google Fit integration
 - [ ] Workout templates & program builder
+- [ ] Workout scan from other media conversion 
 - [ ] Expanded social feed
 
 ## 📄 License
@@ -301,9 +299,6 @@ This project is **source-available for viewing and evaluation only** — see [`L
 You're welcome to read and run it locally to assess it; it is not open-source and may not
 be reused or redistributed. For inquiries: `legal@repmi.co.uk`.
 
----
 
-<div align="center">
-Built by <strong>Repmi Studio</strong> · <a href="https://github.com/mi-xzs">GitHub</a>
-<!-- TODO: add LinkedIn + portfolio links -->
-</div>
+
+
