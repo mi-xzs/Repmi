@@ -105,20 +105,41 @@ Weekly tab — The Weekly Tab is a digest of the current week. This highlights t
 Overall tab — all-time cumulative stats: total sessions, time, weight lifted, reps, and sets. Features a muscle distribution chart, a top-5 exercises by volume breakdown, an exercise frequency radar chart, as well as a streak calendar with full month navigation. Consistency is scored over a rolling 90-day window and users consistency goals.
 
 
+<details>
+<summary>Workout Tab</summary>
+<br>
 <p align="center">
   <img src="assets/screenshots/workoutmain.png" width="230" alt="Workout tab" />
   &nbsp;
-  <img src="assets/screenshots/prprogression.png" width="230" alt="PR" />
+  <img src="assets/screenshots/prprogression.png" width="230" alt="PR progression" />
   &nbsp;
-  <img src="assets/screenshots/workoutan.png" width="230" alt="Workout Analytic" />
-  &nbsp;
+  <img src="assets/screenshots/workoutan.png" width="230" alt="Workout analytics" />
+</p>
+</details>
+
+<details>
+<summary>Weekly Tab</summary>
+<br>
+<p align="center">
   <img src="assets/screenshots/weekly.png" width="230" alt="Weekly tab" />
+  &nbsp;
   <img src="assets/screenshots/weeklym.png" width="230" alt="Weekly metrics" />
-  <img src="assets/screenshots/muscleweekly.png" width="230" alt="Muscle Dist" />
+  &nbsp;
+  <img src="assets/screenshots/muscleweekly.png" width="230" alt="Muscle distribution" />
+</p>
+</details>
+
+<details>
+<summary>Overall Tab</summary>
+<br>
+<p align="center">
   <img src="assets/screenshots/radar.png" width="230" alt="Overall" />
+  &nbsp;
   <img src="assets/screenshots/overallradar.png" width="230" alt="Overall chart" />
+  &nbsp;
   <img src="assets/screenshots/consitency.png" width="230" alt="Consistency" />
 </p>
+</details>
 
 
 ### Gamification - A game-like reward systemn to encourage motivation
@@ -135,32 +156,60 @@ Leaderboard — In order to encourage motivation, users are able to follow other
 
 Roadmap — The app currently introduces a season-based progression system, allowing users to collect titles and badges that can be equipped on their profile. The icons are currently placeholders with plans to expand this to use custom-designed assets over time. The system is designed around rarity tiers, with the highest titles becoming increasingly difficult to obtain in order to drive competitiveness. The coin and cosmetics economy will also be expanded further to include custom themes, streak bonuses, XP boosters, and more.
 
+<details>
+<summary>Achievements</summary>
+<br>
 <p align="center">
   <img src="assets/screenshots/achieve.png" width="230" alt="Achievements tab" />
   &nbsp;
+  <img src="assets/screenshots/obtained.png" width="230" alt="Obtained" />
+  &nbsp;
+  <img src="assets/screenshots/obtainedshow.png" width="230" alt="Obtained see more" />
+  &nbsp;
+  <img src="assets/screenshots/obtainedzoom.png" width="230" alt="Obtained zoom" />
+  &nbsp;
+  <img src="assets/screenshots/locked.png" width="230" alt="Locked" />
+</p>
+</details>
+
+<details>
+<summary>Season & Titles</summary>
+<br>
+<p align="center">
   <img src="assets/screenshots/season.png" width="230" alt="Season" />
   &nbsp;
   <img src="assets/screenshots/titles.png" width="230" alt="Titles" />
   &nbsp;
-  <img src="assets/screenshots/obtained.png" width="230" alt="obtained" />
-  <img src="assets/screenshots/obtainedshow.png" width="230" alt="Obtained see more" />
-  <img src="assets/screenshots/obtainedzoom.png" width="230" alt="Obtained zoom" />
-  <img src="assets/screenshots/locked.png" width="230" alt="Locked" />
-  <img src="assets/screenshots/leaderboard.png" width="230" alt="Leaderbaord chart" />
-  <img src="assets/screenshots/profile.png" width="230" alt="Profile" />
-  <img src="assets/screenshots/add.png" width="230" alt="add" />
-  <img src="assets/screenshots/standings.png" width="230" alt="Standings" />
-  <img src="assets/screenshots/store.png" width="230" alt="store" />
+  <img src="assets/screenshots/store.png" width="230" alt="Store" />
 </p>
+</details>
+
+<details>
+<summary>Leaderboard & Social</summary>
+<br>
+<p align="center">
+  <img src="assets/screenshots/leaderboard.png" width="230" alt="Leaderboard" />
+  &nbsp;
+  <img src="assets/screenshots/standings.png" width="230" alt="Standings" />
+  &nbsp;
+  <img src="assets/screenshots/add.png" width="230" alt="Add user" />
+  &nbsp;
+  <img src="assets/screenshots/profile.png" width="230" alt="Profile" />
+</p>
+</details>
 
 ### Profile
 User profiles, follow / follow-request flows with private-account support.
 
+<details>
+<summary>👤 Profile</summary>
+<br>
 <p align="center">
   <img src="assets/screenshots/profilexample.png" width="260" alt="User profile" />
   &nbsp;
-  <img src="assets/screenshots/profilebottom.png" width="260" alt="Shareable workout card" />
+  <img src="assets/screenshots/profilebottom.png" width="260" alt="Profile bottom" />
 </p>
+</details>
 
 
 ## 🧰 Tech Stack
