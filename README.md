@@ -275,37 +275,17 @@ supabase/
 
 ## 🚀 Running Locally
 
-**Prerequisites:** Node.js 18+, the [Expo CLI](https://docs.expo.dev/), and a free [Supabase](https://supabase.com/) project. For native builds: Android Studio (Android) and/or Xcode (iOS, macOS only).
+**Prerequisites:** Node 18+, [Expo CLI](https://docs.expo.dev/), and a free [Supabase](https://supabase.com/) project.
 
 ```bash
-# 1. Clone
-git clone https://github.com/mi-xzs/repmi.git
-cd repmi
-
-# 2. Install dependencies
+git clone https://github.com/mi-xzs/repmi.git && cd repmi
 npm install
-
-# 3. Configure environment
-cp .env.example .env
-#   then fill in your Supabase URL + anon key (and optional Sentry DSN)
-
-# 4. Apply the database schema to your Supabase project
-#    (uses the Supabase CLI; migrations live in supabase/migrations)
-supabase db push
-
-# 5. Run it
-npm start          # Expo dev server (scan QR with a dev build)
-# or target a platform:
-npm run ios        # iOS simulator (macOS)
-npm run android    # Android emulator/device
-npm run web        # web build in the browser
+cp .env.example .env      # add your Supabase URL + anon key
+supabase db push          # apply schema (migrations in supabase/migrations)
+npm run web               # or: npm run ios / npm run android
 ```
 
-> Repmi uses native modules (secure store, biometrics, RASP), so it requires a
-> **development build** rather than Expo Go. `npm run ios` / `npm run android`
-> handle this automatically.
-
-**Quality scripts:** `npm run typecheck` · `npm run lint` · `npm run format`
+> Native modules (secure store, biometrics, RASP) need a **dev build**, not Expo Go — the `ios`/`android` scripts handle that.
 
 ## 🗺️ Roadmap
 
