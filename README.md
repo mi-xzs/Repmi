@@ -203,7 +203,7 @@ Roadmap — The app currently introduces a season-based progression system, allo
 User profiles, follow / follow-request flows with private-account support.
 
 <details>
-<summary>👤 Profile</summary>
+<summary>Profile</summary>
 <br>
 <p align="center">
   <img src="assets/screenshots/profilexample.png" width="260" alt="User profile" />
