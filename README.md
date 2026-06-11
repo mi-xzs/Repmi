@@ -135,7 +135,7 @@ User profiles, follow / follow-request flows with private-account support.
 <p align="center">
   <img src="assets/screenshots/profilexample.png" width="260" alt="User profile" />
   &nbsp;
-  <img src="assets/screenshots/profilbottom.png" width="260" alt="Shareable workout card" />
+  <img src="assets/screenshots/profilebottom.png" width="260" alt="Shareable workout card" />
 </p>
 
 
