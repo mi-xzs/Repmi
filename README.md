@@ -10,7 +10,6 @@
 ![Supabase](https://img.shields.io/badge/Supabase-Postgres_+_RLS-3FCF8E?logo=supabase&logoColor=white)
 ![License](https://img.shields.io/badge/license-Source--Available-lightgrey)
 
-<!-- TODO: once deployed, turn these into real links -->
 **[🌐 Live Web Demo](#)** &nbsp;·&nbsp; **[📱 Download APK](#)** &nbsp;·&nbsp; **[🎬 Demo Video](#)**
 
 </div>
@@ -23,26 +22,6 @@
 > [Security & Engineering Highlights](#-security--engineering-highlights) section is the
 > best place to gauge engineering depth.
 
-## 📸 Screenshots
-
-<!--
-  All screenshots live in assets/screenshots/ as PNG.
-  Mobile shots are tall portrait images, so they're sized with <img width="...">
-  (plain ![](...) markdown can't resize them). Rule of thumb:
-    • 3 phones per row → width="230"
-    • 2 phones per row → width="260"
-  The strip below is your 3 strongest shots; the feature tour further down
-  pairs each feature with its own screenshots. Just export PNGs with the
-  filenames referenced below and they'll appear automatically.
--->
-
-<p align="center">
-  <img src="assets/screenshots/home.png" width="230" alt="Home dashboard" />
-  &nbsp;
-  <img src="assets/screenshots/workout-live.png" width="230" alt="Live workout logging" />
-  &nbsp;
-  <img src="assets/screenshots/analytics-progression.png" width="230" alt="Progression analytics" />
-</p>
 
 ## Features
 
@@ -150,23 +129,15 @@ Roadmap — The app currently introduces a season-based progression system, allo
   <img src="assets/screenshots/store.png" width="230" alt="store" />
 </p>
 
-### 👥 Social
-User profiles, follow / follow-request flows with private-account support, and shareable workout cards (rendered to an image for sharing).
+### Profile
+User profiles, follow / follow-request flows with private-account support.
 
 <p align="center">
-  <img src="assets/screenshots/social-profile.png" width="260" alt="User profile" />
+  <img src="assets/screenshots/profilexample.png" width="260" alt="User profile" />
   &nbsp;
-  <img src="assets/screenshots/social-sharecard.png" width="260" alt="Shareable workout card" />
+  <img src="assets/screenshots/profilbottom.png" width="260" alt="Shareable workout card" />
 </p>
 
-### 🔐 Security & privacy first
-MFA, biometric unlock, encrypted session storage, opt-in crash reporting, explicit health-data consent, and self-service account deletion. _(See [Security & Engineering Highlights](#-security--engineering-highlights) for the full breakdown.)_
-
-<p align="center">
-  <img src="assets/screenshots/security-mfa.png" width="260" alt="Multi-factor auth setup" />
-  &nbsp;
-  <img src="assets/screenshots/security-biometric.png" width="260" alt="Biometric app lock" />
-</p>
 
 ## 🧰 Tech Stack
 
