@@ -213,22 +213,22 @@ User profiles, follow / follow-request flows with private-account support.
 </details>
 
 
-## 🧰 Tech Stack
+## Tech Stack
 
 | Layer | Technology |
 |---|---|
-| **Language** | TypeScript |
-| **Framework** | React Native (0.81) + Expo (SDK 54) |
+| **Language** | TypeScript (strict mode) |
+| **Framework** | React Native 0.81 + Expo SDK 54 — iOS, Android & Web |
 | **Navigation** | React Navigation (native-stack + bottom-tabs) |
-| **State** | React Context providers (Auth, Profile, Settings, Workout, XP, Coins) |
-| **Backend** | Supabase — Postgres, Auth, Row-Level Security, SQL migrations |
-| **Validation** | Zod schemas (payloads + cached data) |
-| **Animation** | Reanimated + Worklets |
+| **State** | 6 React Context providers with offline-aware Zod-validated local cache |
+| **Backend** | Supabase — Postgres, Auth (MFA/TOTP), Row-Level Security, versioned SQL migrations |
+| **Validation** | Zod — all API payloads and cached data |
+| **Animation** | Reanimated + Worklets, react-native-svg, expo-linear-gradient |
 | **Security** | freerasp (RASP), expo-local-authentication, expo-secure-store, expo-screen-capture |
 | **Observability** | Sentry (opt-in, privacy-gated) |
-| **Tooling** | ESLint, Prettier, TypeScript strict, EAS Build |
+| **Tooling** | ESLint, Prettier, EAS Build (CI/CD) |
 
-## 🏛️ Architecture
+## Architecture
 
 <p align="center">
   <img src="assets/architecture.svg" alt="Repmi system architecture — a React Native (Expo) client with a native RASP gate, biometric/screen-capture device security, a Zod-validated service layer and an encrypted offline cache, talking to Supabase over HTTPS with the anon key only; Supabase enforces RLS, MFA/TOTP, audit logging, rate limiting, JSONB guards and versioned migrations." width="780" />
@@ -236,9 +236,9 @@ User profiles, follow / follow-request flows with private-account support.
 
 - **Service layer** isolates backend access; screens never call Supabase directly for data (only auth flows use the client SDK directly).
 - **Row-Level Security is the access boundary** — the app ships only the public *anon* key; the database enforces who can read/write each row.
-- **Offline-aware** — a secure local cache (validated with Zod) keeps the app responsive and resilient.
+- **Offline-aware** — a secure local cache (encrypted on native , validated with Zod) keeps the app responsive and resilient.
 
-## 🔐 Security & Engineering Highlights
+## Security Highlights
 
 This is what sets Repmi apart from a typical portfolio app:
 
