@@ -2,7 +2,7 @@
 
 # Repmi
 
-**Welcome to Repmi!**
+**Welcome to Repmi !**
 
 A motivational workout tracker that introduces game-like elements to help users stay consistent, with a clear visual representation of their metrics.
 
