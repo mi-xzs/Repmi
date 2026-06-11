@@ -1,0 +1,118 @@
+<svg viewBox="0 0 800 748" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="ttl desc">
+  <title id="ttl">Repmi system architecture (operational components only)</title>
+  <desc id="desc">A React Native Expo client with a native root/jailbreak RASP gate, biometric and screen-capture device security, a UI layer, a Zod-validated service layer, and an encrypted offline cache, talking to Supabase over HTTPS with the anon key only. Supabase enforces access control (RLS, MFA/TOTP, block-aware RLS, audit log), privacy (GDPR consent ledger, account-deletion RPC), and data integrity (JSONB size/range guards, DB rate limiting, versioned migrations, private signed-URL buckets).</desc>
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8a929c"/>
+    </marker>
+  </defs>
+  <style>
+    text{font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+    .t1{fill:#e7e9ec}
+    .t2{fill:#9aa3ad}
+    .box{fill:#1e2128;stroke:#343b46;stroke-width:1.4}
+    .cont{fill:none;stroke:#2f3540;stroke-width:1.6}
+    .acc{fill:rgba(52,220,173,.13);stroke:#2dd4a7;stroke-width:1.5}
+    .accT{fill:#34dcad;font-weight:600}
+    .ln{stroke:#8a929c;stroke-width:1.5;fill:none}
+    .hd{font-size:9.5px;font-weight:700;letter-spacing:.3px}
+  </style>
+
+  <rect x="0" y="0" width="800" height="748" fill="#14161b"/>
+
+  <text x="400" y="28" text-anchor="middle" font-size="19" font-weight="650" class="t1">Repmi — System Architecture</text>
+  <text x="400" y="48" text-anchor="middle" font-size="11" class="t2">Operational components only · native build shown in full (web build is a lighter variant)</text>
+
+  <!-- CLIENT CONTAINER -->
+  <rect class="cont" x="40" y="68" width="720" height="320" rx="14"/>
+  <text x="58" y="94" font-size="14.5" font-weight="600" class="t1">React Native client</text>
+  <text x="58" y="111" font-size="10.5" class="t2">Expo · iOS · Android · Web</text>
+
+  <!-- gate tier -->
+  <rect class="acc" x="58" y="126" width="400" height="54" rx="10"/>
+  <text x="74" y="149" font-size="12.5" font-weight="600" class="t1">ThreatGate · RASP</text>
+  <text x="74" y="166" font-size="9.5" class="t2">freerasp — root / jailbreak detection &amp; block</text>
+  <text x="445" y="143" text-anchor="end" font-size="8.5" class="accT">native</text>
+
+  <rect class="acc" x="478" y="126" width="264" height="54" rx="10"/>
+  <text x="494" y="149" font-size="12" font-weight="600" class="t1">Device security</text>
+  <text x="494" y="166" font-size="9.5" class="t2">biometric lock · screen-capture</text>
+  <text x="729" y="143" text-anchor="end" font-size="8" class="accT">native</text>
+
+  <line class="ln" x1="258" y1="180" x2="258" y2="202" marker-end="url(#ah)"/>
+
+  <!-- UI tier -->
+  <rect class="box" x="58" y="204" width="210" height="54" rx="10"/>
+  <text x="163" y="236" text-anchor="middle" font-size="12.5" font-weight="600" class="t1">Screens</text>
+  <rect class="box" x="288" y="204" width="200" height="54" rx="10"/>
+  <text x="388" y="236" text-anchor="middle" font-size="12.5" font-weight="600" class="t1">Navigation</text>
+  <rect class="box" x="508" y="204" width="234" height="54" rx="10"/>
+  <text x="625" y="230" text-anchor="middle" font-size="12" font-weight="600" class="t1">Context state</text>
+  <text x="625" y="246" text-anchor="middle" font-size="9" class="t2">Auth · Workout · XP …</text>
+  <line class="ln" x1="268" y1="231" x2="288" y2="231" marker-end="url(#ah)"/>
+  <line class="ln" x1="488" y1="231" x2="508" y2="231" marker-end="url(#ah)"/>
+
+  <line class="ln" x1="400" y1="258" x2="400" y2="286" marker-end="url(#ah)"/>
+
+  <!-- service tier -->
+  <rect class="box" x="58" y="288" width="200" height="78" rx="10"/>
+  <text x="158" y="316" text-anchor="middle" font-size="11.5" font-weight="600" class="t1">Encrypted cache</text>
+  <text x="158" y="333" text-anchor="middle" font-size="9" class="t2">secure-store</text>
+  <text x="158" y="347" text-anchor="middle" font-size="9" class="t2">offline queue</text>
+  <text x="158" y="361" text-anchor="middle" font-size="8.5" class="accT">native</text>
+
+  <rect class="box" x="288" y="288" width="454" height="78" rx="10" stroke-width="1.8"/>
+  <text x="304" y="314" font-size="13" font-weight="600" class="t1">Service layer</text>
+  <text x="304" y="334" font-size="9.5" class="t2">auth · workouts · profile · settings ·</text>
+  <text x="304" y="348" font-size="9.5" class="t2">moderation · observability</text>
+  <text x="726" y="308" text-anchor="end" font-size="9" class="accT">Zod-validated writes</text>
+
+  <line class="ln" x1="258" y1="327" x2="288" y2="327" marker-start="url(#ah)" marker-end="url(#ah)"/>
+  <text x="273" y="320" text-anchor="middle" font-size="8.5" class="t2">sync</text>
+
+  <!-- client -> supabase -->
+  <line class="ln" x1="400" y1="388" x2="400" y2="434" marker-end="url(#ah)"/>
+  <rect x="415" y="398" width="248" height="32" rx="6" fill="#1e2128"/>
+  <text x="427" y="411" font-size="10.5" font-weight="600" class="t1">HTTPS · anon key only</text>
+  <text x="427" y="424" font-size="8.5" class="t2">data → services · auth → supabase-js</text>
+
+  <!-- SUPABASE CONTAINER -->
+  <rect class="cont" x="40" y="438" width="720" height="268" rx="14"/>
+  <text x="58" y="464" font-size="14.5" font-weight="600" class="t1">Supabase</text>
+  <text x="58" y="481" font-size="10.5" class="t2">Postgres · access control &amp; data integrity enforced server-side</text>
+
+  <text x="58" y="503" class="hd t2">ACCESS CONTROL</text>
+  <text x="290" y="503" class="hd t2">AUDIT &amp; PRIVACY</text>
+  <text x="522" y="503" class="hd t2">DATA &amp; OPS</text>
+
+  <!-- col A: access control -->
+  <rect class="acc" x="58" y="510" width="212" height="38" rx="9"/>
+  <text x="164" y="534" text-anchor="middle" font-size="11.5" font-weight="600" class="t1">Postgres + RLS</text>
+  <rect class="acc" x="58" y="556" width="212" height="38" rx="9"/>
+  <text x="164" y="580" text-anchor="middle" font-size="11.5" font-weight="600" class="t1">Auth · MFA / TOTP</text>
+  <rect class="acc" x="58" y="602" width="212" height="38" rx="9"/>
+  <text x="164" y="626" text-anchor="middle" font-size="11.5" font-weight="600" class="t1">Block-aware RLS</text>
+
+  <!-- col B: audit & privacy -->
+  <rect class="acc" x="290" y="510" width="212" height="38" rx="9"/>
+  <text x="396" y="534" text-anchor="middle" font-size="11.5" font-weight="600" class="t1">Audit log</text>
+  <rect class="box" x="290" y="556" width="212" height="38" rx="9"/>
+  <text x="396" y="580" text-anchor="middle" font-size="11" font-weight="600" class="t1">Consent ledger · GDPR</text>
+  <rect class="box" x="290" y="602" width="212" height="38" rx="9"/>
+  <text x="396" y="626" text-anchor="middle" font-size="11" font-weight="600" class="t1">Account-deletion RPC</text>
+
+  <!-- col C: data & ops -->
+  <rect class="box" x="522" y="510" width="212" height="38" rx="9"/>
+  <text x="628" y="534" text-anchor="middle" font-size="10.5" font-weight="600" class="t1">JSONB size / range guards</text>
+  <rect class="box" x="522" y="556" width="212" height="38" rx="9"/>
+  <text x="628" y="580" text-anchor="middle" font-size="11.5" font-weight="600" class="t1">Rate limiting · DB</text>
+  <rect class="box" x="522" y="602" width="212" height="38" rx="9"/>
+  <text x="628" y="626" text-anchor="middle" font-size="11.5" font-weight="600" class="t1">Versioned migrations</text>
+  <rect class="box" x="522" y="648" width="212" height="38" rx="9"/>
+  <text x="628" y="672" text-anchor="middle" font-size="10.5" font-weight="600" class="t1">Private buckets · signed URLs</text>
+
+  <!-- legend -->
+  <rect class="acc" x="40" y="718" width="14" height="14" rx="3"/>
+  <text x="60" y="729" font-size="10" class="t2">security / access-control boundary</text>
+  <text x="760" y="729" text-anchor="end" font-size="9" class="t2">native = iOS / Android only · web build is lighter</text>
+</svg>

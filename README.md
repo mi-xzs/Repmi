@@ -230,27 +230,11 @@ User profiles, follow / follow-request flows with private-account support.
 
 ## 🏛️ Architecture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│  React Native client (Expo)                              │
-│                                                          │
-│  Screens ── Navigation ── Context providers (state)      │
-│      │                          │                        │
-│      └──────── Services ────────┘                        │
-│         (auth, workouts, profile, settings, moderation,  │
-│          observability …) — Zod-validated payloads       │
-└───────────────────────────┬─────────────────────────────┘
-                            │  HTTPS (anon key)
-                            ▼
-┌─────────────────────────────────────────────────────────┐
-│  Supabase                                                │
-│  Postgres + Row-Level Security  ·  Auth (+ MFA/TOTP)     │
-│  Audit log  ·  Rate limiting  ·  JSONB constraints       │
-│  Versioned SQL migrations (supabase/migrations/)         │
-└─────────────────────────────────────────────────────────┘
-```
+<p align="center">
+  <img src="assets/architecture.svg" alt="Repmi system architecture — a React Native (Expo) client with a native RASP gate, biometric/screen-capture device security, a Zod-validated service layer and an encrypted offline cache, talking to Supabase over HTTPS with the anon key only; Supabase enforces RLS, MFA/TOTP, audit logging, rate limiting, JSONB guards and versioned migrations." width="780" />
+</p>
 
-- **Service layer** isolates all backend access; screens never call Supabase directly.
+- **Service layer** isolates backend access; screens never call Supabase directly for data (only auth flows use the client SDK directly).
 - **Row-Level Security is the access boundary** — the app ships only the public *anon* key; the database enforces who can read/write each row.
 - **Offline-aware** — a secure local cache (validated with Zod) keeps the app responsive and resilient.
 
