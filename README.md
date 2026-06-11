@@ -102,6 +102,22 @@ Weekly tab — The Weekly Tab is a digest of the current week. This highlights t
 Overall tab — all-time cumulative stats: total sessions, time, weight lifted, reps, and sets. Features a muscle distribution chart, a top-5 exercises by volume breakdown, an exercise frequency radar chart, as well as a streak calendar with full month navigation. Consistency is scored over a rolling 90-day window and users consistency goals.
 
 
+<p align="center">
+  <img src="assets/screenshots/workoutmain.png" width="230" alt="Workout tab" />
+  &nbsp;
+  <img src="assets/screenshots/prprogression.png" width="230" alt="PR" />
+  &nbsp;
+  <img src="assets/screenshots/workoutan.png" width="230" alt="Workout Analytic" />
+  &nbsp;
+  <img src="assets/screenshots/weekly.png" width="230" alt="Weekly tab" />
+  <img src="assets/screenshots/weeklym.png" width="230" alt="Weekly metrics" />
+  <img src="assets/screenshots/muscleweekly.png" width="230" alt="Muscle Dist" />
+  <img src="assets/screenshots/radar.png" width="230" alt="Overall" />
+  <img src="assets/screenshots/overallradar.png" width="230" alt="Overall chart" />
+  <img src="assets/screenshots/consistency.png" width="230" alt="Consistency" />
+</p>
+
+
 ### 🎮 Gamification
 XP, levels, in-app coins, achievements, and streaks to drive retention — including an animated post-workout XP summary.
 
