@@ -114,7 +114,7 @@ Overall tab — all-time cumulative stats: total sessions, time, weight lifted, 
   <img src="assets/screenshots/muscleweekly.png" width="230" alt="Muscle Dist" />
   <img src="assets/screenshots/radar.png" width="230" alt="Overall" />
   <img src="assets/screenshots/overallradar.png" width="230" alt="Overall chart" />
-  <img src="assets/screenshots/consistency.png" width="230" alt="Consistency" />
+  <img src="assets/screenshots/consitency.png" width="230" alt="Consistency" />
 </p>
 
 
