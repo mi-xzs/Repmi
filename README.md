@@ -57,15 +57,16 @@ Furthermore, This is followed by an XP summary that awards XP across several fac
 <p align="center">
   <img src="assets/screenshots/emptyworkout.png" width="230" alt="Empty workout" />
   &nbsp;
-  <img src="assets/screenshots/workout.png" width="230" alt="Workout" />
-  &nbsp;
-  <img src="assets/screenshots/workoutbottom.png" width="230" alt="Workout bottom" />
+  <img src="assets/screenshots/create.png" width="230" alt="Empty workout" />
   &nbsp;
   <img src="assets/screenshots/createsection.png" width="230" alt="Create section" />
   &nbsp;
   <img src="assets/screenshots/emptysection.png" width="230" alt="Empty section" />
   &nbsp;
   <img src="assets/screenshots/warmup.png" width="230" alt="Warm-up" />
+  <img src="assets/screenshots/workout.png" width="230" alt="Workout" />
+  &nbsp;
+  <img src="assets/screenshots/workoutbottom.png" width="230" alt="Workout bottom" />
 </p>
 </details>
 
