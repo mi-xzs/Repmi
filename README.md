@@ -2,6 +2,10 @@
 
 # Repmi
 
+**Welcome to Repmi!**
+
+A motivational workout tracker that introduces game-like elements to help users stay consistent, with a clear visual representation of their metrics.
+
 **A production-grade mobile fitness tracker — workout logging, deep analytics, gamification, and social features — built with React Native, Expo, TypeScript, and Supabase.**
 
 ![React Native](https://img.shields.io/badge/React_Native-0.81-20232A?logo=react&logoColor=61DAFB)
@@ -11,7 +15,7 @@
 ![License](https://img.shields.io/badge/license-Source--Available-lightgrey)
 
 
-Welcome! Repmi is intended as a motivational workout tracker which introduces game-like elements to help ensure a user maintains their consistency, and provides a visual representation of their metrics!
+
 
 **[Live Web Demo](#)** &nbsp;·&nbsp; 
 
