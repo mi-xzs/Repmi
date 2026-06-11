@@ -82,7 +82,6 @@ Furthermore, This is followed by an XP summary that awards XP across several fac
   <img src="assets/screenshots/rest.png" width="230" alt="Rest timer" />
   <img src="assets/screenshots/RPE.png" width="230" alt="RPE" />
   <img src="assets/screenshots/xpscreen.png" width="230" alt="xp screen" />
-  <img src="assets/screenshots/xpscreen.png" width="230" alt="xp screen" />
   <img src="assets/screenshots/Statcard.png" width="230" alt="Stats" />
 </p>
 
