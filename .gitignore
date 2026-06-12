@@ -61,5 +61,6 @@ gradle.log
 # generated native folders
 /ios
 /android
+/scripts
 .vercel
 .env*
