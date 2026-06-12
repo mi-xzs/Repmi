@@ -1,30 +1,10 @@
-// scripts/seedDemoAccount.ts
-//
-// Pre-seeds the shared demo account so portfolio visitors land on a
-// fully-populated app — workouts, sessions, profile fields. Run with:
-//
-//   npx tsx scripts/seedDemoAccount.ts
-//
-// Required env (read from .env via dotenv if present, otherwise the
-// process env):
-//   EXPO_PUBLIC_SUPABASE_URL      — the project URL
-//   SUPABASE_SERVICE_ROLE_KEY     — the service-role key (SECRET — server only)
-//   EXPO_PUBLIC_DEMO_EMAIL        — demo user email (must already exist)
-//
-// Idempotent: deletes the demo user's existing workouts + sessions first,
-// then re-inserts the canonical seed data. Safe to run on a cron.
-
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID } from 'node:crypto';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-// ─── helpers ────────────────────────────────────────────────────────────────
+//  helpers
 
-// Reads the app icon and uploads it to the avatars bucket as the demo
-// account's profile picture. Idempotent — overwrites the same path on
-// every re-run via { upsert: true }. Returns the storage path on success.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function uploadDemoAvatar(
   supabase: any,
   userId: string,
@@ -35,8 +15,6 @@ async function uploadDemoAvatar(
     return null;
   }
   const file = readFileSync(iconPath);
-  // Deterministic path so re-runs overwrite the same object instead of
-  // accumulating new uploads.
   const path = `${userId}/demo-logo.png`;
   const { error } = await supabase.storage.from('avatars').upload(path, file, {
     contentType: 'image/png',
@@ -49,8 +27,7 @@ async function uploadDemoAvatar(
   return path;
 }
 
-// ─── env loading ────────────────────────────────────────────────────────────
-// Tiny dotenv shim so the script works without an extra dependency.
+// env loading 
 const envPath = resolve(__dirname, '..', '.env');
 if (existsSync(envPath)) {
   for (const line of readFileSync(envPath, 'utf8').split(/\r?\n/)) {
@@ -74,7 +51,7 @@ const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 
-// ─── seed data ──────────────────────────────────────────────────────────────
+// seed data 
 
 type Row = {
   sets: number;
@@ -174,10 +151,8 @@ const PUSH_LIGHT: Workout = {
 
 const WORKOUTS: Workout[] = [PUSH_DAY, PULL_DAY, LEG_DAY, PUSH_LIGHT];
 
-// ─── fake leaderboard users ─────────────────────────────────────────────────
-// 10 fake accounts the demo user "follows" so the leaderboard isn't empty.
-// Emails follow the pattern `fake.N@repmi.test` so we can find + reuse them
-// across re-runs (idempotent — never create duplicates).
+// fake leaderboard users
+
 
 interface FakeUser {
   email: string;
@@ -207,11 +182,8 @@ const FAKE_USERS: FakeUser[] = [
   { email: 'fake.10@repmi.test', username: 'danielw',     total_xp: 3400,  weekly_xp: 480,  total_sessions: 15,  total_volume_kg:   95_000,  total_duration_sec: 32_400,  current_streak: 7,  longest_streak: 7,  total_reps: 1_500,  total_sets: 525,   pr_count: 3 },
 ];
 
-// ─── session set shape ─────────────────────────────────────────────────────
-// Recorded session sets are NOT the same shape as the workout-template rows.
-// Each set has a `label` ('1','2','3'... for working sets) and only the
-// relevant metric fields. Matches SessionSet in src/screens/WorkoutScreen.tsx
-// and the WorkoutSessionPayloadSchema.
+// session set shape
+
 type SessionSet = {
   label: string;
   kg?: number;
@@ -224,74 +196,56 @@ type SessionSet = {
 interface BuiltSession {
   workout_id: string;
   workout_name: string;
-  date: string; // ISO
+  date: string; 
   duration: number;
   exercises: { name: string; sets: SessionSet[] }[];
-  rpe: number; // 1–10, one per session
-}
+  rpe: number; 
 
-// Slightly deterministic "noise" so the data feels human without looking
-// random. Returns a value in [-1, 1] derived from two integer seeds.
+
 function noise(a: number, b: number): number {
   const s = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453;
   return (s - Math.floor(s)) * 2 - 1; // [-1, 1)
 }
 
-// Build sessions across the past 7 weeks with realistic per-exercise
-// progression and an RPE per session. Exercises start at ~65% of their
-// "current" template kg seven weeks ago and ramp linearly to 100% today,
-// with small per-session noise. RPE rises gently as loads get heavier and
-// dips on the deload-style PUSH_LIGHT sessions.
-//
-// Sessions are placed on Mon / Wed / Fri / Sat of each week so the
-// Weekly tab is always populated with current-week data (regardless of
-// what day the seed runs).
+
+opulated with current-week data (regardless of
 function buildSessions(): BuiltSession[] {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  // Weekday → which workout that day of the week uses.
-  // 0 = Sunday … 6 = Saturday in JS.
-  const weekdaySchedule: Record<number, Workout> = {
-    1: PUSH_DAY,     // Monday
-    3: PULL_DAY,     // Wednesday
-    5: LEG_DAY,      // Friday
-    6: PUSH_LIGHT,   // Saturday
-  };
-  const sessionWeekdays = [1, 3, 5, 6]; // ordered earliest → latest in a week
 
-  // Start of THIS week (Monday). We anchor on Monday so weeks line up
-  // with how WeeklyDigest computes "this week".
+  const weekdaySchedule: Record<number, Workout> = {
+    1: PUSH_DAY,     /
+    3: PULL_DAY,     
+    5: LEG_DAY,      
+    6: PUSH_LIGHT,   
+  };
+  const sessionWeekdays = [1, 3, 5, 6];
+
   const startOfThisWeek = new Date(today);
   const dow = today.getDay();
-  const offsetToMon = dow === 0 ? -6 : 1 - dow; // Sun => -6, Mon => 0, Tue => -1, …
+  const offsetToMon = dow === 0 ? -6 : 1 - dow; 
   startOfThisWeek.setDate(today.getDate() + offsetToMon);
 
-  // Walk back 7 weeks (current week + 6 prior). For each week, emit a
-  // session for each weekday in `sessionWeekdays` — but skip dates in the
-  // future (current week's not-yet-arrived days).
+
   const plan: { workout: Workout; date: Date }[] = [];
   for (let weeksBack = 6; weeksBack >= 0; weeksBack--) {
     const weekStart = new Date(startOfThisWeek);
     weekStart.setDate(startOfThisWeek.getDate() - weeksBack * 7);
     for (const wd of sessionWeekdays) {
       const d = new Date(weekStart);
-      d.setDate(weekStart.getDate() + (wd - 1)); // wd: Mon=1, so offset = wd-1 from Monday
-      if (d > today) continue; // future day — skip
+      d.setDate(weekStart.getDate() + (wd - 1)); 
+      if (d > today) continue;
       plan.push({ workout: weekdaySchedule[wd], date: d });
     }
   }
-  // plan is already oldest → newest order, perfect for progression.
 
   const total = plan.length;
   const sessions: BuiltSession[] = [];
 
   for (let idx = 0; idx < plan.length; idx++) {
     const { workout, date: planDate } = plan[idx];
-    const t = idx / Math.max(1, total - 1); // 0 (oldest) → 1 (newest)
-    // Progression: 65% of current weights at start, 100% today.
-    const baseFactor = 0.65 + t * 0.35;
-    // PUSH_LIGHT is a deload-style day — keep it at ~70% of current.
+    const t = idx / Math.max(1, total - 1); 
     const isLight = workout === PUSH_LIGHT;
     const progressionFactor = isLight ? 0.65 + t * 0.10 : baseFactor;
 
@@ -300,13 +254,10 @@ function buildSessions(): BuiltSession[] {
       sets: sec.rows.map((row, setIdx) => {
         const set: SessionSet = { label: String(setIdx + 1) };
         if (row.kg > 0) {
-          // Per-set noise ± ~2%
           const wobble = 1 + noise(idx, setIdx) * 0.02;
-          // Round to nearest 2.5 kg for realism.
           set.kg = Math.max(5, Math.round((row.kg * progressionFactor * wobble) / 2.5) * 2.5);
         }
         if (row.reps > 0) {
-          // Occasionally drop the final rep on the heaviest set on heavy days.
           const dropLast = !isLight && setIdx >= row.sets - 1 && noise(idx, setIdx + 99) > 0.5;
           set.reps = Math.max(1, row.reps - (dropLast ? 1 : 0));
         }
@@ -317,19 +268,17 @@ function buildSessions(): BuiltSession[] {
       }),
     }));
 
-    // RPE: scales from ~6 → ~9 with progression, dips ~1 on Light days,
-    // plus per-session jitter. Stored as integer 1–10 per schema.
     const rpeBase = 6.5 + t * 2.0 + (isLight ? -1.0 : 0);
     const rpe = Math.max(5, Math.min(10, Math.round(rpeBase + noise(idx, 7) * 0.8)));
 
     const d = new Date(planDate);
-    d.setHours(18, 30, 0, 0); // 6:30pm gym
+    d.setHours(18, 30, 0, 0);
 
     sessions.push({
       workout_id: workout.id,
       workout_name: workout.workoutName,
       date: d.toISOString(),
-      duration: 3600 + (idx % 3) * 600, // 60–80 min
+      duration: 3600 + (idx % 3) * 600,
       exercises,
       rpe,
     });
@@ -338,10 +287,7 @@ function buildSessions(): BuiltSession[] {
   return sessions;
 }
 
-// ─── runner ─────────────────────────────────────────────────────────────────
-
 async function main() {
-  // 1. Look up demo user
   const { data: list, error: listErr } = await supabase.auth.admin.listUsers();
   if (listErr) {
     console.error('Failed to list users:', listErr.message);
@@ -355,13 +301,12 @@ async function main() {
   const userId = demoUser.id;
   console.log(`Demo user: ${DEMO_EMAIL} (${userId})`);
 
-  // 2. Wipe existing demo data (idempotent)
   console.log('Clearing existing workouts + sessions...');
   await supabase.from('workout_rpe').delete().eq('user_id', userId);
   await supabase.from('workout_sessions').delete().eq('user_id', userId);
   await supabase.from('workouts').delete().eq('user_id', userId);
 
-  // 3. Insert workouts
+
   console.log(`Inserting ${WORKOUTS.length} workouts...`);
   const workoutRows = WORKOUTS.map((w) => ({
     id: w.id,
@@ -376,7 +321,6 @@ async function main() {
     process.exit(1);
   }
 
-  // 4. Insert sessions with realistic progression + RPE per session
   const sessions = buildSessions();
   console.log(`Inserting ${sessions.length} sessions...`);
   const sessionRows = sessions.map((s) => ({
@@ -392,7 +336,6 @@ async function main() {
     process.exit(1);
   }
 
-  // 4b. RPE entries — one per session, recorded at the session date.
   console.log(`Inserting ${sessions.length} RPE entries...`);
   const rpeRows = sessions.map((s) => ({
     user_id: userId,
@@ -403,13 +346,11 @@ async function main() {
   const { error: rErr } = await supabase.from('workout_rpe').insert(rpeRows);
   if (rErr) console.warn('RPE insert warning:', rErr.message);
 
-  // 4c. Upload the app logo as the demo's avatar (idempotent — overwrites
-  // the same storage path on every run).
+
   console.log('Uploading demo avatar (app logo)...');
   const avatarPath = await uploadDemoAvatar(supabase, userId);
 
-  // 5. Demo's own profile fields + stats — computed from the sessions
-  // we just inserted so they stay in sync with the actual data.
+
   console.log('Updating demo profile + stats...');
   let totalVolume = 0;
   let totalReps = 0;
@@ -430,7 +371,6 @@ async function main() {
     username: 'repmi.demo',
     weekly_target: 4,
     is_public_profile: true,
-    // Hand-picked total_xp / weekly_xp so demo sits mid-leaderboard.
     total_xp: 21500,
     weekly_xp: 2200,
     total_sessions: sessions.length,
@@ -442,14 +382,11 @@ async function main() {
     total_sets: totalSets,
     pr_count: 14,
   };
-  // Only set the avatar path if the logo upload succeeded — the client
-  // mints a fresh signed URL from `avatar_path` on every profile load.
+
   if (avatarPath) profilePatch.avatar_path = avatarPath;
   const { error: pErr } = await supabase.from('profiles').upsert(profilePatch);
   if (pErr) console.warn('Demo profile upsert warning:', pErr.message);
 
-  // 6. Fake leaderboard users — created (or reused) via auth.admin, then
-  // their profile + a follow edge from demo are upserted. Idempotent.
   console.log(`Seeding ${FAKE_USERS.length} fake leaderboard users...`);
   const fakeIds: string[] = [];
   for (const fake of FAKE_USERS) {
@@ -488,8 +425,6 @@ async function main() {
     if (fpErr) console.warn(`  Profile upsert failed for ${fake.username}:`, fpErr.message);
   }
 
-  // 7. Follow edges: demo → each fake user (status='accepted' so they show
-  // up in the leaderboard immediately). Clear stale edges first.
   console.log('Refreshing follow edges...');
   await supabase
     .from('follows')
