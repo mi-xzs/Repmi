@@ -2,7 +2,7 @@
 
 # Repmi
 
-**Welcome to Repmi !**
+**Welcome to Repmi!**
 
 A motivational workout tracker that introduces game-like elements to help users stay consistent, with a clear visual representation of their metrics.
 
@@ -17,9 +17,9 @@ A motivational workout tracker that introduces game-like elements to help users 
 
 
 
-**Please visit this link to try the live demo: [Repmi](https://repmi.co.uk/)** &nbsp;·&nbsp;
+**Please visit this link to try the live demo: [Repmi](https://repmi.co.uk/)**
 
-To similute accuracy - Please try the web demo on a mobile phone. While the web demo is fully functional on desktop, viewing it on a mobile device is recommended for an experience that accurately reflects the intended design.
+To simulate accuracy - Please try the web demo on a mobile phone. While the web demo is fully functional on desktop, viewing it on a mobile device is recommended for an experience that accurately reflects the intended design.
 
 </div>
 
@@ -40,7 +40,7 @@ Each workout card supports swipe actions — swipe left to delete, or right to g
   <img src="assets/screenshots/watertracker.png" width="230" alt="Profile header and water tracker" />
 </p>
 
-### Workout tracking - Create, Log and Track Workouts:
+### Workout tracking - Create, Log and Track Workouts
 
 Tapping the + button opens the create a workout screen, where users are able to structure sessions using dedicated Warm-up/Cooldown and Main sections, or simply just the main sections.
 Each section supports multiple tracking metrics to accommodate a wide range of exercises — including standard weight, bodyweight, timed, and distance-based movements.
@@ -49,7 +49,7 @@ Once saved, the workout appears as a workout card on the Home Dashboard. Tapping
 
 Upon completion, users are prompted to log an **RPE (Rate of Perceived Exertion)** score. This feeds directly into analytics, giving users a visual record of their exertion over time — making it easy to identify when to push for progression or scale back intensity.
 
-Furthermore, This is followed by an XP summary that awards XP across several factors including progression, consistency, and total volume. This also generates a shareable stat card — a saveable PNG designed to be overlaid on a progress photo and shared to social media.
+This is followed by an XP summary that awards XP across several factors including progression, consistency, and total volume. This also generates a shareable stat card — a saveable PNG designed to be overlaid on a progress photo and shared to social media.
 
 <details>
 <summary>Creating a Workout</summary>
@@ -57,7 +57,7 @@ Furthermore, This is followed by an XP summary that awards XP across several fac
 <p align="center">
   <img src="assets/screenshots/emptyworkout.png" width="230" alt="Empty workout" />
   &nbsp;
-  <img src="assets/screenshots/create.png" width="230" alt="Empty workout" />
+  <img src="assets/screenshots/create.png" width="230" alt="Create workout" />
   &nbsp;
   <img src="assets/screenshots/createsection.png" width="230" alt="Create section" />
   &nbsp;
@@ -143,17 +143,17 @@ Overall tab — all-time cumulative stats: total sessions, time, weight lifted, 
 </details>
 
 
-### Gamification - A game-like reward systemn to encourage motivation
+### Gamification - A game-like reward system to encourage motivation
 
 Repmi uses a gamification system designed to visually reward consistency and progression.
 
-XP & Levels — XP is earned at the end of every workout based on several factors: a base show-up bonus, total volume lifted, sets completed, session duration, and whether an RPE score was logged. This is furthered by an XP multiplier applied for maintaining streaks — ranging from 1.1x for a 2-day streak up to 2.0x for a 7-day streak. The XP system accumulates toward levels that are visually displayed on the users profile.
+XP & Levels — XP is earned at the end of every workout based on several factors: a base show-up bonus, total volume lifted, sets completed, session duration, and whether an RPE score was logged. This is furthered by an XP multiplier applied for maintaining streaks — ranging from 1.1x for a 2-day streak up to 2.0x for a 7-day streak. The XP system accumulates toward levels that are visually displayed on the user's profile.
 
 Achievements — Several unlockable achievements covering different target areas. This includes session milestones (1, 10, 50, 100 sessions), streak milestones (3, 7, 30 days), volume milestones (10K, 100K, 500K kg), as well as behavioural achievements such as Early Birds and Exercise Variety. Each achievement carries an XP reward and a rarity tier — Common through to Legendary — as well as a coin reward.
 
 Coins — Are a secondary currency earned through workouts, achievements, level-ups, streak milestones, as well as weekly consistency bonuses. These are primarily spent to unlock cosmetic changes within the app.
 
-Leaderboard — In order to encourage motivation, users are able to follow other users which adds them to their leaderboard. The leaderboard ranks all users by total XP (all-time) or XP earned in the last 7 days (weekly) - With an animated podium for the Top 3.
+Leaderboard — In order to encourage motivation, users are able to follow other users which adds them to their leaderboard. The leaderboard ranks all users by total XP (all-time) or XP earned in the last 7 days (weekly), with an animated podium for the Top 3.
 
 Roadmap — The app currently introduces a season-based progression system, allowing users to collect titles and badges that can be equipped on their profile. The icons are currently placeholders with plans to expand this to use custom-designed assets over time. The system is designed around rarity tiers, with the highest titles becoming increasingly difficult to obtain in order to drive competitiveness. The coin and cosmetics economy will also be expanded further to include custom themes, streak bonuses, XP boosters, and more.
 
@@ -236,7 +236,7 @@ User profiles, follow / follow-request flows with private-account support.
 
 - **Service layer** isolates backend access; screens never call Supabase directly for data (only auth flows use the client SDK directly).
 - **Row-Level Security is the access boundary** — the app ships only the public *anon* key; the database enforces who can read/write each row.
-- **Offline-aware** — a secure local cache (encrypted on native , validated with Zod) keeps the app responsive and resilient.
+- **Offline-aware** — a secure local cache (encrypted on native, validated with Zod) keeps the app responsive and resilient.
 
 ## Security Highlights
 
@@ -275,7 +275,7 @@ supabase/
 
 ## Running Locally
 
-**Prerequisites:** Node 18+, [Expo CLI](https://docs.expo.dev/), and a free [Supabase](https://supabase.com/) project.
+**Prerequisites:** Node 20+, [Expo CLI](https://docs.expo.dev/), and a free [Supabase](https://supabase.com/) project.
 
 ```bash
 git clone https://github.com/mi-xzs/repmi.git && cd repmi
@@ -290,11 +290,11 @@ npm run web               # or: npm run ios / npm run android
 ## Roadmap
 
 - [ ] iOS release (TestFlight)
-- [ ] Custom Asset badges- Themes, icons covers
-- [ ] Futher earnable coin uses - Xp boosters, Streak Freeze..etc
+- [ ] Custom asset badges — themes, icons, covers
+- [ ] Further earnable coin uses — XP boosters, Streak Freeze, etc.
 - [ ] Apple Health / Google Fit integration
 - [ ] Workout templates & program builder
-- [ ] Workout scan from other media conversion 
+- [ ] Import workouts by scanning from other media
 - [ ] Expanded social feed
 
 ## 📄 License
