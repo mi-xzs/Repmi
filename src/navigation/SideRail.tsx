@@ -1,10 +1,3 @@
-// src/navigation/SideRail.tsx
-//
-// The desktop side rail — a vertical left nav used by the web shell on
-// wide viewports (`tabBarPosition: 'left'` lays the navigator out as a
-// row: rail | scene). Imported only by TabNavigator.web.tsx, so it never
-// ships in the native bundle.
-
 import React from "react";
 import { View, Text, Image, Pressable, StyleSheet } from "react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
@@ -93,9 +86,6 @@ export default function SideRail({
       <View style={railStyles.items}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
-          // Sub-tabs (hoisted into the rail) — shown indented under the
-          // active main tab. The current sub-tab is read from the route's
-          // `tab` param so the highlight stays in sync with the screen.
           const subTabs = SUB_TABS[route.name as keyof RootTabParamList];
           const activeSub =
             (route.params as { tab?: number } | undefined)?.tab ?? 0;
@@ -107,8 +97,6 @@ export default function SideRail({
             });
             if (event.defaultPrevented) return;
             if (subTabs) {
-              // Clicking a section header always lands on its first
-              // sub-tab (e.g. Analytics → Workout, Awards → Achievements).
               navigation.navigate(route.name, { tab: 0 });
             } else if (!isFocused) {
               navigation.navigate(route.name);
@@ -167,7 +155,6 @@ const railStyles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "800",
     letterSpacing: 0.5,
-    // Match the "MY WORKOUTS" section label on HomeScreen.
     color: colors.titleText,
   },
   items: {
