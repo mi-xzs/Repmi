@@ -11,10 +11,6 @@ import FollowRequestsScreen from '../screens/FollowRequestsScreen';
 import { colors } from '../theme/colors';
 import { Skeleton, useStableLoading } from '../components/ui/Skeleton';
 import type { RootStackParamList } from './types';
-
-// H2 — MFA-required gate. When the user is signed in at AAL1 with a
-// verified TOTP factor, we render ONLY the MFA challenge stack — no
-// access to TabNavigator until the challenge is satisfied.
 import MFAChallengeScreen from '../screens/MFAChallengeScreen';
 import MFAEnrollScreen from '../screens/MFAEnrollScreen';
 import HealthDataConsentScreen from '../screens/HealthDataConsentScreen';
@@ -49,11 +45,6 @@ export default function RootNavigator() {
   const { session, isLoading: authLoading, mfaRequired, inPasswordRecovery } = useAuth();
   const { hasProfile, isLoading: profileLoading } = useProfile();
 
-  // Recovery wins over the boot skeleton — the BootSkeleton waits for
-  // ProfileContext to settle, but ProfileContext for the recovery
-  // session triggers needless network work and (worse) can briefly
-  // render the home tab between the skeleton clearing and our flag
-  // check below. Short-circuit to the reset form immediately.
   if (inPasswordRecovery) {
     return (
       <Root.Navigator screenOptions={{ headerShown: false, animation: 'fade' }}>
@@ -75,18 +66,12 @@ export default function RootNavigator() {
       {!session ? (
         <Root.Screen name="Auth" component={AuthNavigator} />
       ) : mfaRequired ? (
-        // H2 — AAL2 required. Lock the navigator to the challenge
-        // screen until refreshAAL flips mfaRequired back to false.
         <Root.Screen name="MFAChallenge" component={MFAChallengeScreen} />
       ) : !hasProfile ? (
         <Root.Screen name="Onboarding" component={OnboardingScreen} />
       ) : (
         <>
-          <Root.Screen name="Main" component={TabNavigator} />
-          {/* View-profile screen for any non-self user. Lives at the
-              root so it can be navigated to from any tab. Slide-from-
-              right reads as a stack push regardless of which tab the
-              user was on when they tapped through. */}
+          <Root.Screen name="Main" component={TabNavigator} /
           <Root.Screen
             name="UserProfile"
             component={UserProfileScreen}
