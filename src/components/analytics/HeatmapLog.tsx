@@ -1,4 +1,4 @@
-// src/components/analytics/HeatmapLog.tsx
+
 
 import React, { useMemo, useState } from "react";
 import { Pressable, Text, View } from "react-native";
@@ -11,7 +11,7 @@ import { fmtSetTooltip } from "../../utils/analyticsHelpers";
 const CELL   = 36;
 const DATE_W = 52;
 
-/** Format YYYY-MM-DD to short display like "9 Apr" */
+
 const fmtDate = (dateStr: string): string => {
   const [y, m, d] = dateStr.split("-").map(Number);
   if (!y || !m || !d) return dateStr;
@@ -42,14 +42,13 @@ const sortLabels = (a: string, b: string): number => {
 const HeatmapLog: React.FC<Props> = ({ progressionData }) => {
   const [tooltip, setTooltip] = useState<TooltipState | null>(null);
 
-  // All unique set labels across all sessions, sorted W → 1 → 2 → 3…
   const allLabels = useMemo(() => {
     const labelSet = new Set<string>();
     progressionData.forEach((e) => e.allSets.forEach((s) => labelSet.add(s.label)));
     return Array.from(labelSet).sort(sortLabels);
   }, [progressionData]);
 
-  // Global max kg across all sets — used to calculate relative cell intensity
+// kg 
   const globalMax = useMemo(() => {
     let max = 1;
     progressionData.forEach((e) =>
@@ -68,7 +67,7 @@ const HeatmapLog: React.FC<Props> = ({ progressionData }) => {
     return { filled: true, intensity, set };
   };
 
-  // Most recent session first, max 5 per day
+
   const rows = useMemo(() => {
     const reversed = [...progressionData].reverse();
     const dateCount: Record<string, number> = {};
@@ -87,7 +86,7 @@ const HeatmapLog: React.FC<Props> = ({ progressionData }) => {
   return (
     <View style={styles.heatmapContainer}>
 
-      {/* Column headers */}
+      {/* Headers */}
       <View style={styles.heatmapHeaderRow}>
         <View style={{ width: DATE_W }} />
         {allLabels.map((label) => (
@@ -104,7 +103,7 @@ const HeatmapLog: React.FC<Props> = ({ progressionData }) => {
         ))}
       </View>
 
-      {/* Session rows */}
+      {/* session rows */}
       {rows.map((entry, rowI) => (
         <View key={rowI} style={styles.heatmapRow}>
           <Text style={[styles.heatmapDate, { width: DATE_W }]}>
@@ -152,7 +151,7 @@ const HeatmapLog: React.FC<Props> = ({ progressionData }) => {
         </View>
       ))}
 
-      {/* Tooltip */}
+      
       {tooltip !== null && (() => {
         const entry = rows[tooltip.rowI];
         const label = allLabels[tooltip.colI];
@@ -170,7 +169,7 @@ const HeatmapLog: React.FC<Props> = ({ progressionData }) => {
         );
       })()}
 
-      {/* Intensity legend */}
+      {/* intensity*/}
       <View style={styles.heatmapLegend}>
         <Text style={styles.heatmapLegendLabel}>Low</Text>
         {[0.15, 0.35, 0.55, 0.75, 1].map((op, i) => (
