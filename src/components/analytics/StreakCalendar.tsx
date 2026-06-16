@@ -1,5 +1,3 @@
-// src/components/analytics/StreakCalendar.tsx
-
 import React, { useMemo, useState } from "react";
 import { Dimensions, Platform, Text, TouchableOpacity, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -10,7 +8,7 @@ import { getContentWidth } from "../../hooks/useResponsive";
 import { WorkoutSession } from "../../screens/WorkoutScreen";
 import { dayKey } from "../../utils/analyticsHelpers";
 
-// ─── constants ────────────────────────────────────────────────────────────────
+//consts
 
 const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
 
@@ -24,7 +22,7 @@ const NOW_YEAR  = NOW.getFullYear();
 const NOW_MONTH = NOW.getMonth();
 const TODAY_KEY = dayKey(NOW);
 
-// ─── types ────────────────────────────────────────────────────────────────────
+//types
 
 interface Props {
   sessions: WorkoutSession[];
@@ -38,7 +36,7 @@ interface CalendarDay {
   isOutside: boolean;
 }
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
+//helpers
 
 const buildMonthGrid = (year: number, month: number): CalendarDay[] => {
   const now          = new Date();
@@ -64,21 +62,17 @@ const buildMonthGrid = (year: number, month: number): CalendarDay[] => {
   });
 };
 
-// ─── component ────────────────────────────────────────────────────────────────
+//component
 
 const StreakCalendar: React.FC<Props> = ({ sessions }) => {
   const { accent } = useAccent();
-  // On wide web the calendar sits inside a half-row card, so its working width
-  // is roughly half the content area (minus card padding), NOT the full screen.
   const screenW  = getContentWidth(Dimensions.get("window").width);
   const isWebWide = Platform.OS === "web" && Dimensions.get("window").width >= 768;
   const workingW = isWebWide
-    ? Math.floor((screenW - 14) / 2) - 24  // half-row cell minus card padding
+    ? Math.floor((screenW - 14) / 2) - 24 
     : screenW - 48 - 28;
   const cellSize = Math.floor((workingW - 6 * 6) / 7);
-
   const [monthOffset, setMonthOffset] = useState(0);
-
   const { viewYear, viewMonth } = useMemo(() => {
     const d = new Date(NOW_YEAR, NOW_MONTH + monthOffset, 1);
     return { viewYear: d.getFullYear(), viewMonth: d.getMonth() };
@@ -117,7 +111,6 @@ const StreakCalendar: React.FC<Props> = ({ sessions }) => {
   return (
     <View style={[styles.calendarContainer, Platform.OS === "web" && { backgroundColor: "transparent", padding: 0, flex: 1, width: "100%" }]}>
 
-      {/* Month / year navigation */}
       <View style={{
         flexDirection:  "row",
         alignItems:     "center",
@@ -145,7 +138,6 @@ const StreakCalendar: React.FC<Props> = ({ sessions }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Day-of-week headers */}
       <View style={styles.calendarRow}>
         {DAY_LABELS.map((l, i) => (
           <View key={`day-header-${i}`} style={[styles.calendarCell, { width: cellSize, height: 16 }]}>
@@ -153,14 +145,12 @@ const StreakCalendar: React.FC<Props> = ({ sessions }) => {
           </View>
         ))}
       </View>
-
-      {/* Week rows */}
+      
       {weeks.map((week, weekIdx) => (
         <View key={weekIdx} style={styles.calendarRow}>
           {week.map((day) => {
             const trained = trainedDays.has(day.key);
 
-            // Outside padding cells (before first / after last of month) stay invisible
             if (day.isOutside) {
               return (
                 <View
@@ -170,7 +160,6 @@ const StreakCalendar: React.FC<Props> = ({ sessions }) => {
               );
             }
 
-            // Streak day = trained AND adjacent to another trained day (yesterday or tomorrow)
             const prevKey  = dayKey(new Date(day.date.getTime() - 86400000));
             const nextKey  = dayKey(new Date(day.date.getTime() + 86400000));
             const inStreak = trained && (trainedDays.has(prevKey) || trainedDays.has(nextKey));
@@ -184,14 +173,11 @@ const StreakCalendar: React.FC<Props> = ({ sessions }) => {
                     width:           cellSize,
                     height:          cellSize,
                     borderRadius:    cellSize / 4,
-                    // Trained days: bright if part of a streak, dim otherwise
                     backgroundColor: trained
                       ? (inStreak ? accent : accent + '50')
                       : colors.button3,
-                    // Today gets a subtle border instead of a filled color change
                     borderWidth:     day.isToday && !trained ? 1 : 0,
-                    borderColor:     colors.titleText,
-                    // Future days are dimmed but still visible
+                    borderColor:     colors.titleTextz
                     opacity:         day.isFuture ? 0.3 : 1,
                   },
                 ]}
@@ -201,7 +187,6 @@ const StreakCalendar: React.FC<Props> = ({ sessions }) => {
         </View>
       ))}
 
-      {/* Streak footer */}
       <View style={styles.streakRow}>
         <Feather name="zap" size={13} color={colors.highlight} />
         <Text style={styles.streakText}>
