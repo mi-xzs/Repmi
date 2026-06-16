@@ -1,4 +1,4 @@
-// src/components/analytics/MuscleVolumeChart.tsx
+
 
 import React, { useState } from 'react';
 import {
@@ -18,8 +18,8 @@ import AnimatedBar from './AnimatedBar';
 interface Props {
   volumeByGroup: Record<string, number>;
   kgByGroup?: Record<string, number>;
-  unit?: string;            // label after the value, e.g. "sets" (default) or "times"
-  modalTitle?: string;      // default "Muscle Distribution"
+  unit?: string;            
+  modalTitle?: string;      
 }
 
 const VISIBLE_COUNT = 3;
