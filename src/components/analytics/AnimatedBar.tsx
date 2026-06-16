@@ -1,4 +1,4 @@
-// Reusable bar fill that animates from 0 to its target width on mount and on percent changes.
+
 import React, { useEffect } from 'react';
 import { StyleProp, View, ViewStyle } from 'react-native';
 import Animated, {
@@ -10,11 +10,11 @@ import Animated, {
 } from 'react-native-reanimated';
 
 interface Props {
-  percent: number;                       // 0..100
-  delay?: number;                        // ms before the fill starts
-  duration?: number;                     // ms for the fill animation
-  trackStyle?: StyleProp<ViewStyle>;     // outer rail
-  fillStyle?: StyleProp<ViewStyle>;      // inner fill (color, height, radius...)
+  percent: number;                       
+  delay?: number;                       
+  duration?: number;                     
+  trackStyle?: StyleProp<ViewStyle>;     
+  fillStyle?: StyleProp<ViewStyle>;      
 }
 
 export const AnimatedBar: React.FC<Props> = ({
