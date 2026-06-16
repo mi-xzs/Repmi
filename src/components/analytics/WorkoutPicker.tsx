@@ -1,5 +1,3 @@
-// src/components/analytics/WorkoutPicker.tsx
-
 import React, { useEffect, useRef } from "react";
 import {
   Modal,
@@ -62,7 +60,6 @@ const WorkoutPicker: React.FC<WorkoutPickerProps> = ({
           ]}
         >
 
-          {/* Prevent closing when tapping inside */}
           <Pressable>
 
             <View style={styles.pickerHandle} />
@@ -116,13 +113,9 @@ const WorkoutPicker: React.FC<WorkoutPickerProps> = ({
               ))}
 
             </ScrollView>
-
           </Pressable>
-
         </Animated.View>
-
       </Pressable>
-
     </Modal>
   );
 };
