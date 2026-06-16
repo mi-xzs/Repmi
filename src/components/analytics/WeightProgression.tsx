@@ -1,5 +1,3 @@
-// src/components/analytics/WeightProgression.tsx
-
 import React, { useState } from "react";
 import {
   Modal,
@@ -110,7 +108,6 @@ const WeightProgression: React.FC<Props> = ({ sessions, exerciseNames }) => {
 
   return (
     <View>
-      {/* Exercise picker trigger */}
       <TouchableOpacity
         style={styles.exerciseSelector}
         onPress={() => setPickerOpen(true)}
@@ -122,7 +119,6 @@ const WeightProgression: React.FC<Props> = ({ sessions, exerciseNames }) => {
         <Feather name="chevron-down" size={14} color={colors.highlight} />
       </TouchableOpacity>
 
-      {/* Exercise picker modal */}
       <Modal
         visible={pickerOpen}
         transparent
@@ -152,7 +148,7 @@ const WeightProgression: React.FC<Props> = ({ sessions, exerciseNames }) => {
         </Pressable>
       </Modal>
 
-      {/* Summary badges */}
+
       {latest && (
         <>
           <Text style={styles.weightSectionTitle}>
@@ -195,7 +191,7 @@ const WeightProgression: React.FC<Props> = ({ sessions, exerciseNames }) => {
         </>
       )}
 
-      {/* Stats row */}
+
       {latest && (
         <View style={styles.weightSummaryRow}>
           <View style={styles.weightSummaryCard}>
@@ -215,7 +211,7 @@ const WeightProgression: React.FC<Props> = ({ sessions, exerciseNames }) => {
         </View>
       )}
 
-      {/* Chart — only when there's mode-appropriate data */}
+  
       {(() => {
         if (progressionData.length === 0) {
           return (
