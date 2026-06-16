@@ -1,5 +1,3 @@
-// src/components/analytics/ProgressionLineChart.tsx
-
 import React, { useMemo, useState } from "react";
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Modal, Pressable } from "react-native";
 import { getContentWidth } from "../../hooks/useResponsive";
@@ -26,7 +24,7 @@ interface Props {
   title?: string;
 }
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
+//helpers
 
 const estimate1RM = (kg: number, reps: number): number =>
   reps === 1 ? kg : Math.round(kg * (1 + reps / 30));
@@ -54,7 +52,6 @@ const fmtGain = (gain: number, mode: AnalyticsMode): string => {
   return `${pre}${Math.round(gain)} kg`;
 };
 
-// Compact label for y-axis (tight space)
 const fmtAxis = (val: number, mode: AnalyticsMode): string => {
   if (mode === "timed") {
     const m = Math.floor(val / 60);
@@ -77,7 +74,7 @@ const filterByPeriod = (data: HeatmapEntry[], period: Period): HeatmapEntry[] =>
 const PERIODS: Period[] = ["W", "M", "Y"];
 const PERIOD_LABELS: Record<Period, string> = { W: "W", M: "M", Y: "Y" };
 
-// ─── component ────────────────────────────────────────────────────────────────
+//component
 
 const ProgressionLineChart: React.FC<Props> = ({
   data,
@@ -89,10 +86,6 @@ const ProgressionLineChart: React.FC<Props> = ({
   const { accent } = useAccent();
   const [period,   setPeriod]   = useState<Period>("M");
   const [infoOpen, setInfoOpen] = useState(false);
-
-  // Size to the actual container width (measured) so the chart fits whatever
-  // cell it sits in — full-width on mobile, a grid cell on wide web. Falls
-  // back to the window-derived width for the first render before layout.
   const [boxW, setBoxW] = useState(0);
   const screenWidth = getContentWidth(Dimensions.get("window").width);
   const width = boxW > 0 ? boxW : screenWidth - 80;
@@ -198,7 +191,7 @@ const ProgressionLineChart: React.FC<Props> = ({
       style={styles.container}
       onLayout={(e) => setBoxW(e.nativeEvent.layout.width)}
     >
-      {/* Header */}
+      {/* header */}
       <View style={styles.header}>
         <View>
           {title && <Text style={styles.chartTitle}>{title}</Text>}
@@ -221,7 +214,7 @@ const ProgressionLineChart: React.FC<Props> = ({
         </View>
       </View>
 
-      {/* Stat cards */}
+      {/* stat cards */}
       {hasData ? (
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
@@ -268,7 +261,7 @@ const ProgressionLineChart: React.FC<Props> = ({
         </View>
       )}
 
-      {/* Chart */}
+      {/* chart */}
       {chartData ? (
         <View style={styles.chartWrapper}>
           <Svg width={width} height={height + 20}>
@@ -279,7 +272,7 @@ const ProgressionLineChart: React.FC<Props> = ({
               </LinearGradient>
             </Defs>
 
-            {/* Grid lines */}
+            {/* grid lines */}
             {chartData.gridLines.map((line, i) => (
               <React.Fragment key={`g-${i}`}>
                 <Line
@@ -296,14 +289,14 @@ const ProgressionLineChart: React.FC<Props> = ({
               </React.Fragment>
             ))}
 
-            {/* X baseline */}
+            {/* X */}
             <Line
               x1={chartData.PAD_LEFT} y1={chartData.PAD_TOP + chartData.chartH}
               x2={chartData.PAD_LEFT + chartData.chartW} y2={chartData.PAD_TOP + chartData.chartH}
               stroke={colors.button2} strokeWidth={0.5}
             />
 
-            {/* X date labels */}
+            {/*X*/}
             {chartData.xLabels.map((xl, i) => (
               <SvgText
                 key={`xl-${i}`}
@@ -314,17 +307,17 @@ const ProgressionLineChart: React.FC<Props> = ({
               </SvgText>
             ))}
 
-            {/* Area fill */}
+        
             <Path d={chartData.areaPath} fill="url(#areaGrad)" />
 
-            {/* Line */}
+            {/* line */}
             <Path
               d={chartData.linePath}
               fill="none" stroke={colors.highlight}
               strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"
             />
 
-            {/* Dots — PR points get a gold ring */}
+            {/* dots*/}
             {chartData.points.map((p, i) => {
               const isLast = i === chartData.points.length - 1;
               return (
@@ -344,7 +337,7 @@ const ProgressionLineChart: React.FC<Props> = ({
               );
             })}
 
-            {/* Latest value label */}
+            {/* value label*/}
             {(() => {
               const last = chartData.points[chartData.points.length - 1];
               return (
@@ -359,7 +352,7 @@ const ProgressionLineChart: React.FC<Props> = ({
             })()}
           </Svg>
 
-          {/* PR legend */}
+          {/* PR */}
           <View style={styles.prHint}>
             <View style={[styles.prDot, { backgroundColor: accent }]} />
             <Text style={styles.prHintText}>Personal record</Text>
