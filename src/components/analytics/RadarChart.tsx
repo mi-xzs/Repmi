@@ -1,5 +1,3 @@
-// src/components/analytics/RadarChart.tsx
-
 import React from "react";
 import { Dimensions, Platform, Text, View } from "react-native";
 import { getContentWidth } from "../../hooks/useResponsive";
@@ -16,30 +14,20 @@ import { colors } from "../../theme/colors";
 import { useAccent } from "../../services/SettingsContext";
 import { RadarPoint } from "../../types/analytics";
 
-// Chart sits inside scroll (24) + card (16) padding = 80px chrome on each side total.
-// Cap at 360 so it doesn't get absurd on tablets.
 const SCREEN_W = getContentWidth(Dimensions.get("window").width);
 const SIZE     = Math.min(SCREEN_W - 80, 360);
-// Bleed past radarContainer's 12px padding AND into the screen's 16px gutter
-// (12 + 16 = 28) so the SVG canvas reaches the screen edge on small phones,
-// giving long labels like SHOULDERS / HAMSTRINGS room before they clip.
-// Applied via marginHorizontal on the chart's wrapper View below.
 const BLEED    = 28;
 const CHART    = SIZE + BLEED * 2;
-// ViewBox is larger than the rendered canvas so SvgText doesn't get clipped at
-// the edges. Polygon radius is scaled up by the same factor so the chart still
-// renders at its absolute target px size after the viewBox is fitted into CHART.
 const PAD_X    = 64;
-const PAD_Y    = 64;                     // symmetric with PAD_X so the square viewBox fits the square SVG canvas without letterboxing
+const PAD_Y    = 64;                     
 const VB_W     = CHART + PAD_X * 2;
 const VB_H     = CHART + PAD_Y * 2;
-const SCALE    = VB_W / CHART;           // viewBox shrink factor when fit into CHART
+const SCALE    = VB_W / CHART;        
 const CX       = VB_W / 2;
 const CY       = VB_H / 2;
-const RADIUS   = 100 * SCALE;            // polygon — 100px rendered radius (max that fits long labels on small phones after the BLEED)
-const LABEL_R  = RADIUS + 8 * SCALE;     // 8px gap between polygon and label
+const RADIUS   = 100 * SCALE;            
+const LABEL_R  = RADIUS + 8 * SCALE;     
 const LEVELS   = 4;
-
 
 
 interface Props {
@@ -66,26 +54,23 @@ const levelPolygon = (level: number, n: number): string =>
     (_, i) => `${px(i, (RADIUS * level) / LEVELS, n)},${py(i, (RADIUS * level) / LEVELS, n)}`
   ).join(" ");
 
-/** Uppercases the label and wraps long text across two lines so it fits inside the chart. */
+
 const wrapLabel = (text: string): string[] => {
   const upper = text.toUpperCase();
   const words = upper.split(" ").filter(Boolean);
-  // Short single word — keep on one line
   if (words.length === 1 && upper.length <= 11) return [upper];
-  // Long single word — split mid-word with hyphen
   if (words.length === 1) {
     const mid = Math.ceil(upper.length / 2);
     return [upper.slice(0, mid) + "-", upper.slice(mid)];
   }
-  // Multi-word — find the split point that balances the two lines by char length
-  // (rather than by word count). Keeps 3-4 word names like
-  // "BENT OVER BARBELL ROW" from going lopsided.
+ 
+  
   const total = upper.length;
   let bestSplit = 1;
   let bestDelta = Infinity;
   let running = 0;
   for (let i = 0; i < words.length - 1; i++) {
-    running += words[i].length + 1; // +1 for the space
+    running += words[i].length + 1;
     const delta = Math.abs(running * 2 - total);
     if (delta < bestDelta) {
       bestDelta = delta;
@@ -147,8 +132,6 @@ const RadarChart: React.FC<Props> = ({ data, title, color, emptyMessage }) => {
 
   const n         = data.length;
   const maxVal    = Math.max(...data.map((d) => d.value), 1);
-  // Font size is in viewBox units; scale up so the rendered pixel size matches
-  // the original (the viewBox is larger than the pixel canvas by SCALE).
   const fontSize  = (n > 5 ? 10 : 11) * SCALE;
   const lineGap   = 12 * SCALE;
 
@@ -164,12 +147,8 @@ const RadarChart: React.FC<Props> = ({ data, title, color, emptyMessage }) => {
       <Text style={styles.radarTitle}>{title}</Text>
 
       <View style={{ alignItems: "center", marginHorizontal: -BLEED }}>
-        {/* Canvas is CHART = SIZE + 2*BLEED so labels have room past the polygon.
-            Negative marginHorizontal on the wrapper pulls the chart out past the
-            radarContainer's 12px padding so the chart fills the card edge-to-edge. */}
         <Svg width={CHART} height={CHART} viewBox={`0 0 ${VB_W} ${VB_H}`}>
 
-          {/* Grid levels */}
           {Array.from({ length: LEVELS }, (_, lvl) => (
             <Polygon
               key={`level-${lvl}`}
@@ -181,7 +160,7 @@ const RadarChart: React.FC<Props> = ({ data, title, color, emptyMessage }) => {
             />
           ))}
 
-          {/* Axis lines */}
+
           {data.map((_, i) => (
             <Line
               key={`axis-${i}`}
@@ -201,7 +180,7 @@ const RadarChart: React.FC<Props> = ({ data, title, color, emptyMessage }) => {
             stroke={accentDim}
             strokeWidth={2 * SCALE}
             />
-                     {/* Data points */}
+                     {/* data points */}
           {data.map((d, i) => {
             const r = (d.value / maxVal) * RADIUS;
             return (
@@ -215,7 +194,7 @@ const RadarChart: React.FC<Props> = ({ data, title, color, emptyMessage }) => {
             );
           })}
 
-          {/* Labels */}
+          {/* labels */}
           {data.map((d, i) => {
             const lx     = px(i, LABEL_R, n);
             const ly     = py(i, LABEL_R, n);
@@ -223,12 +202,7 @@ const RadarChart: React.FC<Props> = ({ data, title, color, emptyMessage }) => {
               lx < CX - 4 * SCALE ? "end" :
               lx > CX + 4 * SCALE ? "start" :
               "middle";
-            // Bias each label outward from the polygon's vertical center based on
-            // its vertex angle. Top-region labels drift up into the canvas-top
-            // space; bottom-region labels drift down into the canvas-bottom space.
-            // Bottom shift is larger so lower-diagonal labels (e.g. n=5 / n=7
-            // bottom corners) get enough breathing room from the polygon.
-            const verticalBias = (ly - CY) / LABEL_R;   // -1 (top vertex) … +1 (bottom vertex)
+            const verticalBias = (ly - CY) / LABEL_R;   
             const TOP_SHIFT    = 12 * SCALE;
             const BOTTOM_SHIFT = 20 * SCALE;
             const adjustedLy   = ly + verticalBias * (verticalBias < 0 ? TOP_SHIFT : BOTTOM_SHIFT);
