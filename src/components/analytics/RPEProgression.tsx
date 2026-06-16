@@ -1,4 +1,4 @@
-// src/components/analytics/RPEProgression.tsx
+
 
 import React, { useMemo, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Dimensions, Platform } from 'react-native';
@@ -22,8 +22,6 @@ interface Props {
   workoutId?: string;
 }
 
-// Zones + per-rpe color are derived from the active accent at render time
-// so equipping a cosmetic theme (Crimson / Pink) re-tints the bands.
 const makeZones = (accent: string) => [
   { min: 1, max: 4, color: accent, label: 'Easy', fill: accent + '28' },
   { min: 4, max: 6, color: accent + 'BB', label: 'Moderate', fill: accent + '1C' },
@@ -73,14 +71,11 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
     loadRPEData();
   }, [userId, workoutId]);
 
-  // Size to the actual container width (measured) so the chart fits whatever
-  // cell it sits in. Falls back to the window-derived width before layout.
   const isWeb = Platform.OS === 'web';
   const [boxW, setBoxW] = useState(0);
   const [availH, setAvailH] = useState(0);
   const screenWidth = getContentWidth(Dimensions.get('window').width);
   const WIDTH = boxW > 0 ? boxW : screenWidth - 80;
-  // On web, fill the available height of the cell (measured); otherwise fixed.
   const HEIGHT = isWeb ? Math.max(availH, 160) : 160;
 
   const PAD_LEFT = 32;
@@ -145,7 +140,7 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
         onLayout={(e) => setAvailH(e.nativeEvent.layout.height)}
       >
         <Svg width={WIDTH} height={HEIGHT}>
-          {/* Zone bands */}
+          {/* zone bands */}
           {ZONES.map((zone) => {
             const y1 = yScale(zone.max);
             const y2 = yScale(zone.min);
@@ -161,7 +156,7 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
             );
           })}
 
-          {/* Y-axis grid lines + labels */}
+          {/*grid lines + labels */}
           {yAxisValues.map((v) => {
             const y = yScale(v);
             return (
@@ -187,7 +182,7 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
             );
           })}
 
-          {/* X baseline */}
+        
           <Line
             x1={PAD_LEFT}
             y1={PAD_TOP + chartH}
@@ -197,7 +192,6 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
             strokeWidth={0.75}
           />
 
-          {/* X-axis labels: first + last */}
           <SvgText
             x={PAD_LEFT}
             y={HEIGHT - 6}
@@ -217,7 +211,6 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
             {String(rpeData[rpeData.length - 1].date).toUpperCase()}
           </SvgText>
 
-          {/* Connecting line */}
           {points.length > 1 && (
             <Path
               d={linePath}
@@ -230,7 +223,6 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
             />
           )}
 
-          {/* Data point dots */}
           {points.map((p, i) => {
             const isLast = i === points.length - 1;
             return (
@@ -245,7 +237,6 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
             );
           })}
 
-          {/* Latest RPE label */}
           <SvgText
             x={lastPoint.x}
             y={lastPoint.y - 11}
@@ -259,7 +250,6 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
         </Svg>
       </View>
 
-      {/* Zone legend */}
       <View style={styles.zoneLegend}>
         {ZONES.map((zone) => (
           <View key={zone.label} style={styles.zonePill}>
@@ -269,7 +259,6 @@ const RPEProgression: React.FC<Props> = ({ workouts, sessions, workoutId }) => {
         ))}
       </View>
 
-      {/* Stats row */}
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
           <Text style={styles.statValue}>{avg.toFixed(1)}</Text>
