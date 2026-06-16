@@ -44,7 +44,6 @@ const formatDate = (dateStr: string | undefined, period: Period): string => {
   return date.toLocaleDateString("en-GB", { month: "short" });
 };
 
-// First set brightest (most effort), later sets fade to show fatigue
 const segmentOpacity = (idx: number, total: number): number => {
   if (total === 1) return 0.88;
   const max = 0.88;
