@@ -28,7 +28,7 @@ export function useCreateWorkout() {
 
   const { workouts, saveWorkout, updateWorkout, deleteWorkout } = useWorkouts();
 
-  // --- State ---
+  // state
   const [workoutName, setWorkoutName] = useState<string | null>(existingWorkout?.workoutName ?? null);
   const [showWarmUp, setShowWarmUp] = useState(existingWorkout?.showWarmUp ?? false);
   const [showCooldown, setShowCooldown] = useState(existingWorkout?.showCooldown ?? false);
@@ -51,7 +51,7 @@ export function useCreateWorkout() {
     }
   }, []);
 
-  // --- Section handlers ---
+  // section handlers
   const addSection = () => {
     const newSection: WorkoutSectionData = {
       id: Date.now().toString(),
@@ -86,7 +86,6 @@ export function useCreateWorkout() {
       const idx = prev.findIndex((sec) => sec.id === id);
       if (idx === -1) return prev;
       const next = prev.filter((sec) => sec.id !== id);
-      // If a previous section was linked to the deleted one, break that link.
       if (idx > 0 && next[idx - 1]?.linkedToNext) {
         next[idx - 1] = { ...next[idx - 1], linkedToNext: false };
       }
@@ -100,7 +99,7 @@ export function useCreateWorkout() {
     );
   };
 
-  // --- Save / Delete ---
+  //save / delete
   const toRoman = (num: number): string => {
     const numerals: [number, string][] = [
       [10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I'],
@@ -212,7 +211,6 @@ export function useCreateWorkout() {
   };
 
   return {
-    // State
     workoutName,
     showWarmUp,
     showCooldown,
@@ -220,13 +218,11 @@ export function useCreateWorkout() {
     warmUpRows,
     cooldownRows,
     isEditing,
-    // Setters
     setWorkoutName,
     setShowWarmUp,
     setShowCooldown,
     setWarmUpRows,
     setCooldownRows,
-    // Handlers
     addSection,
     updateSectionRows,
     updateSectionName,
