@@ -1,17 +1,3 @@
-// src/hooks/useResponsive.ts
-//
-// Responsive breakpoint hook for the web layout. Native (iOS/Android) is
-// always treated as `mobile` — the phone UI is the baseline and these
-// breakpoints only widen the layout on larger web viewports.
-//
-// Breakpoints (viewport width, px):
-//   mobile   < 768            phone UI, bottom tab bar
-//   tablet   768 – 1023       wider content, still bottom tab bar
-//   desktop  >= 1024          side rail nav, centered max-width content
-//
-// Usage:
-//   const { isDesktop, isTablet, contentMaxWidth } = useResponsive();
-
 import { Platform, useWindowDimensions } from 'react-native';
 
 export const BREAKPOINTS = {
@@ -19,14 +5,8 @@ export const BREAKPOINTS = {
   desktop: 1024,
 } as const;
 
-// Width of the desktop side rail.
-export const SIDE_RAIL_WIDTH = 232;
 
-// Usable content width. The web layout is full-width: content fills the area
-// beside the side rail. On wide web that's the viewport minus the rail; on
-// mobile/native (no rail) it's the full viewport. Pagers/charts that size off
-// the window width should use this so they fill the area without overflowing
-// past the rail.
+export const SIDE_RAIL_WIDTH = 232;
 export function getContentWidth(windowWidth: number): number {
   const wideWeb = Platform.OS === 'web' && windowWidth >= BREAKPOINTS.tablet;
   return wideWeb ? Math.max(0, windowWidth - SIDE_RAIL_WIDTH) : windowWidth;
@@ -41,19 +21,13 @@ export interface Responsive {
   isMobile: boolean;
   isTablet: boolean;
   isDesktop: boolean;
-  /** true on tablet+ — i.e. anything wider than a phone */
   isWide: boolean;
-  /** content is full-width now, so this is always undefined (no cap) */
   contentMaxWidth: number | undefined;
 }
 
 export function useResponsive(): Responsive {
   const { width, height } = useWindowDimensions();
-
-  // Native is always the phone baseline regardless of tablet width — we
-  // ship a phone UI there and don't want desktop chrome on an iPad app.
   const isWeb = Platform.OS === 'web';
-
   let breakpoint: Breakpoint = 'mobile';
   if (isWeb && width >= BREAKPOINTS.desktop) breakpoint = 'desktop';
   else if (isWeb && width >= BREAKPOINTS.tablet) breakpoint = 'tablet';
