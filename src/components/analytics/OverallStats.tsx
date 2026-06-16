@@ -1,4 +1,4 @@
-// src/components/analytics/OverallStats.tsx
+
 
 import React, { useMemo, useState } from 'react';
 import { Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -63,20 +63,18 @@ function getConsistencyScore(sessions: WorkoutSession[], weeklyTarget: number): 
   return Math.min(100, Math.round((recent.length / expected) * 100));
 }
 
-// ─── types ────────────────────────────────────────────────────────────────────
+// types 
 
 interface Props {
   workouts: WorkoutData[];
   allSessions: WorkoutSession[];
 }
 
-// ─── component ────────────────────────────────────────────────────────────────
+// component
 
 const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
   const { accent } = useAccent();
   const { isWide, isMobile } = useResponsive();
-  // Pair the stat cards two-per-row only on mobile web (narrow browser <768px);
-  // native phones keep their single-column layout.
   const isMobileWeb = Platform.OS === 'web' && isMobile;
   const { profile } = useProfile();
   const data = useMemo(() => computeOverall(workouts, allSessions), [workouts, allSessions]);
@@ -101,14 +99,11 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
 
   const maxVol = data.topExercisesByVolume[0]?.volume ?? 1;
 
-  // Native keeps its original phone layout: stat cards paired two-per-row and
-  // the original section ordering. The responsive multi-column grid below is
-  // web-only; on a phone it collapses to full-width single-column cards.
   if (Platform.OS !== 'web') {
     return (
       <View style={{ gap: 16 }}>
 
-        {/* Summary stat cards — 2 columns × 3 rows, weekly-style spacing */}
+        {/* summary stat cards*/}
         <View style={localStyles.statGrid}>
           <View style={[styles.cardRow, localStyles.statRow]}>
             <StatCard label="Sessions"   value={`${data.totalSessions}`}              icon="activity"    />
@@ -124,7 +119,7 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
           </View>
         </View>
 
-        {/* Top exercises by volume */}
+        {/* top - volume */}
         {data.topExercisesByVolume.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Top Exercises by Volume</Text>
@@ -151,7 +146,7 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
           </View>
         )}
 
-        {/* Radar chart */}
+        {/* radar chart */}
         <View style={{ flex: 1 }}>
           <RadarChart
             data={data.topExercisesByFreq}
@@ -161,7 +156,7 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
           />
         </View>
 
-        {/* Top muscle trained */}
+        {/* top muscle trained */}
         {topMuscles.length > 0 && (() => {
           const { name, sets, kg, reps } = topMuscles[0];
           return (
@@ -200,7 +195,7 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
           );
         })()}
 
-        {/* Muscle distribution */}
+        {/*muscle distribution*/}
         {topMuscles.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Muscle Distribution</Text>
@@ -211,7 +206,7 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
           </View>
         )}
 
-        {/* Consistency */}
+        {/*consistency*/}
         <View style={styles.section}>
           <View style={localStyles.sectionTitleRow}>
             <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Consistency</Text>
@@ -248,7 +243,6 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
           </Text>
         </View>
 
-        {/* Unified session history across all workouts */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Session History</Text>
           <StreakCalendar sessions={allSessions} />
@@ -260,7 +254,6 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
 
   return (
     <View style={{ gap: 16 }}>
-      {/* Top row: 6 stat cards spread evenly (wraps 3+3 on web) */}
       <View
         style={
           isWide
@@ -462,7 +455,7 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
           );
         })()}
 
-      {/* Consistency */}
+      {/* consistency */}
       <View style={styles.section}>
         <View style={localStyles.sectionTitleRow}>
           <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Consistency</Text>
@@ -503,10 +496,6 @@ const OverallStats: React.FC<Props> = ({ workouts, allSessions }) => {
         </Text>
       </View>
 
-      {/* Bottom row: Exercises (Radar) + Session History — identical card size.
-          On web, the outer section IS the visible card (chrome + overflow:hidden);
-          the inner components' own card chrome is neutralised on web (see
-          RadarChart / StreakCalendar) so the visible boundary is just the shell. */}
       <View style={isWide ? { flexDirection: 'row', gap: 14, alignItems: 'stretch' } : { gap: 16 }}>
         <View style={isWide ? { flex: 1 } : undefined}>
           <View
@@ -562,10 +551,10 @@ export default OverallStats;
 
 const localStyles = StyleSheet.create({
   statGrid: {
-    gap: 10, // matches Weekly grid's 10px gap between rows
+    gap: 10, 
   },
   statRow: {
-    marginBottom: 0, // override the shared cardRow's 20px so spacing comes from statGrid.gap
+    marginBottom: 0, 
   },
   sectionTitleRow: {
     flexDirection: 'row',
