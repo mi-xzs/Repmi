@@ -1,19 +1,9 @@
-// src/navigation/tabRoutes.tsx
-//
-// Single source of truth for the main tab navigation — shared by the
-// native shell (TabNavigator.tsx, bottom tabs) and the web shell
-// (TabNavigator.web.tsx, desktop side rail / responsive). Add or reorder
-// tabs HERE and both platforms pick it up. Only the *presentation* of the
-// nav (bottom bar vs. side rail) differs per platform; the route list,
-// icons, and labels live here.
-
 import React from "react";
 import {
   getFocusedRouteNameFromRoute,
   type RouteProp,
 } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
-
 import HomeStackNavigator from "./HomeStackNavigator";
 import AnalyticsScreen from "../screens/AnalyticsScreen";
 import AchievementsScreen from "../screens/AchievementsScreen";
@@ -41,20 +31,13 @@ export const TAB_ROUTES: TabRoute[] = [
   { name: "Profile", component: ProfileStackNavigator },
 ];
 
-// Screens whose in-screen sub-tabs are hoisted into the desktop side rail
-// as nested items (web only). The index order matches each screen's own
-// tab order, so the rail passes `{ tab: index }` and the screen drives its
-// pager from it. Keep in sync with the screens' tab lists.
 export const SUB_TABS: Partial<Record<keyof RootTabParamList, readonly string[]>> = {
   Analytics: ["Workout", "Weekly", "Overall"],
   Achievements: ["Achievements", "Leaderboard", "Store"],
 };
 
-// Hide the tab bar / rail on the full-screen CreateWorkout flow so the
-// workout builder gets the whole viewport on every platform.
+
 export function getTabBarStyle(route: RouteProp<RootTabParamList, "Home">) {
-  // Inner Home-stack landing route is "HomeMain"; the only name we branch on
-  // here is "CreateWorkout", so the fallback is cosmetic — kept in sync.
   const routeName = getFocusedRouteNameFromRoute(route) ?? "HomeMain";
   if (routeName === "CreateWorkout") return { display: "none" as const };
   return { display: "flex" as const };
