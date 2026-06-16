@@ -9,9 +9,7 @@ export const ITEM_HEIGHT = 60;
 export const DEFAULT_WARMUP_ROW: WarmUpRowData = { name: '', minutes: 2, seconds: 0, reps: 0, meters: 0, done: false, mode: 'timed' };
 export const DEFAULT_COOLDOWN_ROW: CooldownRowData = { name: '', minutes: 2, seconds: 0, reps: 0, meters: 0, done: false, mode: 'timed' };
 
-// Per-category row defaults tuned to the modality. The 2-minute fallback in
-// DEFAULT_WARMUP_ROW is fine for cardio, way too long for a 0:30 hip CAR or a
-// 12-rep glute bridge. Keyed by `PhaseExercisePickerModal.PHASE_CATEGORIES.label`.
+// per-category 
 type CategoryDefault = {
   mode: PhaseRowMode;
   minutes: number;
