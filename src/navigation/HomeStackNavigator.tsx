@@ -3,12 +3,9 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from '../screens/HomeScreen';
 import CreateWorkoutScreen from '../screens/CreateWorkoutScreen';
 import WorkoutScreen from '../screens/WorkoutScreen';
-import { WorkoutData } from '../types/exercise'; // <-- import correct type
+import { WorkoutData } from '../types/exercise'; 
 
 export type HomeStackParamList = {
-  // Renamed from "Home" to avoid colliding with the "Home" *tab* in
-  // RootTabParamList — React Navigation warns about same-named screens
-  // nested inside one another (Main > Home > Home).
   HomeMain: undefined;
   CreateWorkout: { existingWorkout?: WorkoutData; workoutIndex?: number } | undefined;
   WorkoutScreen: { workoutData: WorkoutData; workoutIndex: number };
