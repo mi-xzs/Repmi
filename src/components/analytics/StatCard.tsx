@@ -1,5 +1,3 @@
-// src/components/analytics/StatCard.tsx
-
 import React from "react";
 import { Pressable, Text, View } from "react-native";
 import Animated, {
