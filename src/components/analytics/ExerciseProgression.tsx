@@ -1,4 +1,3 @@
-// src/components/analytics/ExerciseProgression.tsx
 
 import React, { useState } from "react";
 import {
@@ -160,7 +159,7 @@ const ExerciseProgression: React.FC<Props> = ({ sessions, weightExercises, bodyw
 
   return (
     <View>
-      {/* Exercise picker trigger */}
+      {/*trigger */}
       <Text style={styles.exerciseSelectorLabel}>SELECT EXERCISE</Text>
       <TouchableOpacity
         style={styles.exerciseSelector}
@@ -173,7 +172,7 @@ const ExerciseProgression: React.FC<Props> = ({ sessions, weightExercises, bodyw
         <Feather name="chevron-down" size={14} color={accent} />
       </TouchableOpacity>
 
-      {/* Exercise picker modal */}
+      {/* picker modal */}
       <Modal
         visible={pickerOpen}
         transparent
@@ -203,7 +202,7 @@ const ExerciseProgression: React.FC<Props> = ({ sessions, weightExercises, bodyw
         </Pressable>
       </Modal>
 
-      {/* Summary badges — weight & bodyweight only */}
+      {/* weight & bodyweight only */}
       {latest && (exerciseMode === "weight" || exerciseMode === "bodyweight") && (
         <View style={[styles.statStrip, { marginBottom: 10 }]}>
           {exerciseMode === "weight" && (latest.topKg ?? 0) > 0 && (
@@ -243,7 +242,7 @@ const ExerciseProgression: React.FC<Props> = ({ sessions, weightExercises, bodyw
         </View>
       )}
 
-      {/* Timed summary badges */}
+      {/*summary badges */}
       {latest && exerciseMode === "timed" && (
         <View style={[styles.statStrip, { marginBottom: 10 }]}>
           {(latest.topSeconds ?? 0) > 0 && (
@@ -295,7 +294,7 @@ const ExerciseProgression: React.FC<Props> = ({ sessions, weightExercises, bodyw
         </View>
       )}
 
-      {/* Distance summary badges */}
+      {/* summary badges */}
       {latest && exerciseMode === "distance" && (
         <View style={[styles.statStrip, { marginBottom: 10 }]}>
           {(latest.topMeters ?? 0) > 0 && (
@@ -347,7 +346,7 @@ const ExerciseProgression: React.FC<Props> = ({ sessions, weightExercises, bodyw
         </View>
       )}
 
-      {/* Stats row */}
+      {/* stats row */}
       {latest && (
         <View style={[styles.statStrip, { marginBottom: 20 }]}>
           <View style={styles.statStripItem}>
@@ -371,7 +370,7 @@ const ExerciseProgression: React.FC<Props> = ({ sessions, weightExercises, bodyw
         </View>
       )}
 
-      {/* Chart — auto-selected based on exercise mode */}
+      {/* Chart*/}
       {(() => {
         if (progressionData.length === 0) {
           return (
