@@ -1,10 +1,3 @@
-// src/navigation/BottomTabBar.tsx
-//
-// The mobile bottom tab bar — used by the native shell and by the web
-// shell when the browser window is narrow (mobile web). The desktop side
-// rail lives separately in SideRail.tsx. Animated sliding pill indicator
-// follows the focused tab.
-
 import React, { useEffect, useRef, useState } from "react";
 import {
   View,
@@ -40,9 +33,7 @@ function TabItem({
     label: routeName,
   };
   const { accent } = useAccent();
-
   const focus = useRef(new Animated.Value(isFocused ? 1 : 0)).current;
-
   useEffect(() => {
     Animated.timing(focus, {
       toValue: isFocused ? 1 : 0,
@@ -104,12 +95,10 @@ export default function BottomTabBar({
   const insets = useSafeAreaInsets();
   const { accentSubtle } = useAccent();
   const [barWidth, setBarWidth] = useState(0);
-
   const focusedDescriptor = descriptors[state.routes[state.index].key];
   const tabBarStyle = focusedDescriptor?.options?.tabBarStyle;
   const flatStyle = StyleSheet.flatten(tabBarStyle) as { display?: string } | undefined;
   const hidden = flatStyle?.display === "none";
-
   const tabCount = state.routes.length;
   const tabWidth = barWidth > 0 ? barWidth / tabCount : 0;
   const pillWidth = Math.max(tabWidth - 16, 0);
