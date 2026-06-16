@@ -1,12 +1,3 @@
-// src/constants/exerciseCatalog.ts
-//
-// Canonical exercise catalog — 600+ entries spanning all major muscle groups,
-// equipment types, and movement patterns.
-//
-// Used by ExercisePickerModal (mid-workout exercise selection / swap),
-// and indirectly by anything that needs to look up an exercise's default
-// `mode` or muscle assignment.
-
 import { ExerciseMode } from '../types/exercise';
 
 export type MuscleGroup =
@@ -42,9 +33,6 @@ export type Equipment =
 
 export type ExerciseTag = 'compound' | 'isolation' | 'unilateral';
 
-// Training style — separates *what* the exercise is from *what muscle* it
-// trains. Undefined defaults to general strength (most lifting entries).
-// Used by the picker to optionally filter by training style.
 export type ExerciseStyle =
   | 'plyometric'
   | 'calisthenics'
@@ -62,13 +50,11 @@ export type Exercise = {
   style?: ExerciseStyle;
 };
 
-// ─── Catalog ──────────────────────────────────────────────────────────────────
-// Grouped by muscle for readability. Order within a muscle is rough movement /
-// equipment progression — not alphabetical — so callers that render the catalog
-// directly get a sensible default ordering.
+//catalog 
+
 
 export const EXERCISE_CATALOG: Exercise[] = [
-  // ── Chest ───────────────────────────────────────────────────────────────────
+  //chest 
   { name: 'Barbell Bench Press', muscle: 'Chest', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'Incline Barbell Bench Press', muscle: 'Chest', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'Decline Barbell Bench Press', muscle: 'Chest', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
@@ -203,7 +189,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Cable Pullover', muscle: 'Back', equipment: 'Cable', mode: 'weight', tags: ['isolation'] },
   { name: 'Machine Pullover', muscle: 'Back', equipment: 'Machine', mode: 'weight', tags: ['isolation'] },
 
-  // ── Shoulders ───────────────────────────────────────────────────────────────
+  // shoulders
   { name: 'Overhead Press', muscle: 'Shoulders', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'Military Press', muscle: 'Shoulders', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'Push Press', muscle: 'Shoulders', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
@@ -267,7 +253,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Band Reverse Fly', muscle: 'Shoulders', equipment: 'Bands', mode: 'weight', tags: ['isolation'] },
   { name: 'Band Overhead Press', muscle: 'Shoulders', equipment: 'Bands', mode: 'weight', tags: ['compound'] },
 
-  // ── Biceps ──────────────────────────────────────────────────────────────────
+  //biceps
   { name: 'Barbell Curl', muscle: 'Biceps', equipment: 'Barbell', mode: 'weight', tags: ['isolation'] },
   { name: 'EZ Bar Curl', muscle: 'Biceps', equipment: 'EZ Bar', mode: 'weight', tags: ['isolation'] },
   { name: 'Reverse Barbell Curl', muscle: 'Biceps', equipment: 'Barbell', mode: 'weight', tags: ['isolation'] },
@@ -299,7 +285,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Reverse Curl', muscle: 'Biceps', equipment: 'EZ Bar', mode: 'weight', tags: ['isolation'] },
   { name: 'Resistance Band Curl', muscle: 'Biceps', equipment: 'Bands', mode: 'weight', tags: ['isolation'] },
 
-  // ── Triceps ─────────────────────────────────────────────────────────────────
+  //triceps
   { name: 'Dips', muscle: 'Triceps', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'] },
   { name: 'Weighted Dips', muscle: 'Triceps', equipment: 'Bodyweight', mode: 'weight', tags: ['compound'] },
   { name: 'Bench Dips', muscle: 'Triceps', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'] },
@@ -329,7 +315,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Tricep Extension Machine', muscle: 'Triceps', equipment: 'Machine', mode: 'weight', tags: ['isolation'] },
   { name: 'Resistance Band Pushdown', muscle: 'Triceps', equipment: 'Bands', mode: 'weight', tags: ['isolation'] },
 
-  // ── Forearms ────────────────────────────────────────────────────────────────
+  //forearms
   { name: 'Wrist Curl', muscle: 'Forearms', equipment: 'Dumbbell', mode: 'weight', tags: ['isolation'] },
   { name: 'Barbell Wrist Curl', muscle: 'Forearms', equipment: 'Barbell', mode: 'weight', tags: ['isolation'] },
   { name: 'Reverse Wrist Curl', muscle: 'Forearms', equipment: 'Dumbbell', mode: 'weight', tags: ['isolation'] },
@@ -350,7 +336,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Captains of Crush', muscle: 'Forearms', equipment: 'Other', mode: 'weight', tags: ['isolation'] },
   { name: 'Rice Bucket', muscle: 'Forearms', equipment: 'Other', mode: 'timed', tags: ['isolation'] },
 
-  // ── Quads ───────────────────────────────────────────────────────────────────
+  // quads
   { name: 'Barbell Back Squat', muscle: 'Quads', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'High-Bar Back Squat', muscle: 'Quads', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'Low-Bar Back Squat', muscle: 'Quads', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
@@ -394,7 +380,9 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Reverse Nordic Curl', muscle: 'Quads', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'] },
   { name: 'Wall Sit', muscle: 'Quads', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'] },
   { name: 'Banded Squat', muscle: 'Quads', equipment: 'Bands', mode: 'weight', tags: ['compound'] },
-  // Bilateral squat-pattern jumps (loaded + unloaded) → Quads
+  
+  //squat-pattern jumps
+  
   { name: 'Jump Squat', muscle: 'Quads', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'] },
   { name: 'Jumping Lunge', muscle: 'Quads', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'] },
   { name: 'Standing Vertical Jump', muscle: 'Quads', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'] },
@@ -412,7 +400,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Barbell Jump Squat', muscle: 'Quads', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'Dumbbell Jump Squat', muscle: 'Quads', equipment: 'Dumbbell', mode: 'weight', tags: ['compound'] },
 
-  // ── Hamstrings ──────────────────────────────────────────────────────────────
+  //hamstrings
   { name: 'Romanian Deadlift', muscle: 'Hamstrings', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'Deficit Romanian Deadlift', muscle: 'Hamstrings', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'Stiff-Leg Deadlift', muscle: 'Hamstrings', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
@@ -437,7 +425,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Stability Ball Leg Curl', muscle: 'Hamstrings', equipment: 'Other', mode: 'bodyweight', tags: ['isolation'] },
   { name: 'Banded Leg Curl', muscle: 'Hamstrings', equipment: 'Bands', mode: 'weight', tags: ['isolation'] },
 
-  // ── Glutes ──────────────────────────────────────────────────────────────────
+  // glutes 
   { name: 'Barbell Hip Thrust', muscle: 'Glutes', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'B-Stance Hip Thrust', muscle: 'Glutes', equipment: 'Barbell', mode: 'weight', tags: ['compound', 'unilateral'] },
   { name: 'Dumbbell Hip Thrust', muscle: 'Glutes', equipment: 'Dumbbell', mode: 'weight', tags: ['compound'] },
@@ -461,7 +449,9 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Fire Hydrant', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation', 'unilateral'] },
   { name: 'Banded Lateral Walk', muscle: 'Glutes', equipment: 'Bands', mode: 'weight', tags: ['isolation'] },
   { name: 'Banded Hip Thrust', muscle: 'Glutes', equipment: 'Bands', mode: 'weight', tags: ['compound'] },
-  // Unilateral plyometrics → Glutes (frontal/lateral plane glute-med dominant)
+  
+  // unilateral plyometrics 
+  
   { name: 'Skater Jumps', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'] },
   { name: 'Lateral Bound', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'distance', tags: ['compound', 'unilateral'] },
   { name: 'Single-Leg Bound', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'distance', tags: ['compound', 'unilateral'] },
@@ -470,7 +460,8 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Split Squat Jump', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'] },
   { name: 'Kettlebell Swing to Jump', muscle: 'Glutes', equipment: 'Kettlebell', mode: 'weight', tags: ['compound'] },
 
-  // ── Calves ──────────────────────────────────────────────────────────────────
+  //calves
+  
   { name: 'Standing Calf Raise (Machine)', muscle: 'Calves', equipment: 'Machine', mode: 'weight', tags: ['isolation'] },
   { name: 'Barbell Standing Calf Raise', muscle: 'Calves', equipment: 'Barbell', mode: 'weight', tags: ['isolation'] },
   { name: 'Dumbbell Standing Calf Raise', muscle: 'Calves', equipment: 'Dumbbell', mode: 'weight', tags: ['isolation'] },
@@ -489,14 +480,16 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Tibialis Raise (Machine)', muscle: 'Calves', equipment: 'Machine', mode: 'weight', tags: ['isolation'] },
   { name: 'Farmer Walk on Toes', muscle: 'Calves', equipment: 'Dumbbell', mode: 'distance', tags: ['isolation'] },
   { name: 'Banded Calf Raise', muscle: 'Calves', equipment: 'Bands', mode: 'weight', tags: ['isolation'] },
-  // Reactive low-amplitude hops (ankle-stiffness dominant) → Calves
+ 
+  //low-amplitude hops (ankle-stiffness dominant)
+  
   { name: 'Pogo Hops', muscle: 'Calves', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'] },
   { name: 'Single-Leg Pogo Hops', muscle: 'Calves', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation', 'unilateral'] },
   { name: 'Ankle Hops', muscle: 'Calves', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'] },
   { name: 'Hurdle Hops', muscle: 'Calves', equipment: 'Other', mode: 'bodyweight', tags: ['compound'] },
   { name: 'Lateral Hurdle Hops', muscle: 'Calves', equipment: 'Other', mode: 'bodyweight', tags: ['compound'] },
 
-  // ── Core ────────────────────────────────────────────────────────────────────
+  //core 
   { name: 'Plank', muscle: 'Core', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'] },
   { name: 'Weighted Plank', muscle: 'Core', equipment: 'Other', mode: 'timed', tags: ['isolation'] },
   { name: 'Plank Shoulder Tap', muscle: 'Core', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'] },
@@ -533,7 +526,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Overhead Carry', muscle: 'Core', equipment: 'Dumbbell', mode: 'distance', tags: ['compound'] },
   { name: 'Front-Rack Carry', muscle: 'Core', equipment: 'Kettlebell', mode: 'distance', tags: ['compound'] },
 
-  // ── Obliques ────────────────────────────────────────────────────────────────
+  // obliques
   { name: 'Side Plank', muscle: 'Obliques', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation', 'unilateral'] },
   { name: 'Side Plank with Hip Dip', muscle: 'Obliques', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation', 'unilateral'] },
   { name: 'Side Plank with Reach Through', muscle: 'Obliques', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation', 'unilateral'] },
@@ -552,7 +545,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Lying Windshield Wiper', muscle: 'Obliques', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'] },
   { name: 'Windmill', muscle: 'Obliques', equipment: 'Dumbbell', mode: 'weight', tags: ['isolation', 'unilateral'] },
 
-  // ── Lower Back ──────────────────────────────────────────────────────────────
+  //lower back 
   { name: '45-Degree Hyperextension', muscle: 'Lower Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'] },
   { name: 'Horizontal Hyperextension', muscle: 'Lower Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'] },
   { name: 'Weighted Hyperextension', muscle: 'Lower Back', equipment: 'Dumbbell', mode: 'weight', tags: ['isolation'] },
@@ -564,7 +557,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Cat-Cow', muscle: 'Lower Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'] },
   { name: 'Jefferson Curl', muscle: 'Lower Back', equipment: 'Barbell', mode: 'weight', tags: ['isolation'] },
 
-  // ── Cardio ──────────────────────────────────────────────────────────────────
+  // cardio 
   { name: 'Treadmill Walk', muscle: 'Cardio', equipment: 'Cardio Machine', mode: 'distance' },
   { name: 'Treadmill Incline Walk', muscle: 'Cardio', equipment: 'Cardio Machine', mode: 'distance' },
   { name: 'Treadmill Run', muscle: 'Cardio', equipment: 'Cardio Machine', mode: 'distance' },
@@ -639,8 +632,9 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Sandbag Carry', muscle: 'Cardio', equipment: 'Other', mode: 'distance', tags: ['compound'] },
   { name: 'Tire Flip', muscle: 'Cardio', equipment: 'Other', mode: 'weight', tags: ['compound'] },
 
-  // ── Full Body (Olympic, KB, plyo, explosive, strongman) ─────────────────────
-  // Olympic & variants
+  //Full Body 
+  
+  // olympic & variants
   { name: 'Snatch', muscle: 'Full Body', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'Power Snatch', muscle: 'Full Body', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'Hang Snatch', muscle: 'Full Body', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
@@ -665,12 +659,15 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Jerk Recovery', muscle: 'Full Body', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'Halting Deadlift', muscle: 'Full Body', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'Barbell Thruster', muscle: 'Full Body', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
-  // Dynamic-effort / speed work
+  
+  // dynamic-effort / speed work
+  
   { name: 'Speed Squat', muscle: 'Full Body', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'Speed Bench', muscle: 'Full Body', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'Speed Pull (Deadlift)', muscle: 'Full Body', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
   { name: 'Banded Box Squat', muscle: 'Full Body', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
-  // Kettlebell flow
+  
+  //kettlebell flow
   { name: 'Kettlebell Swing (Russian)', muscle: 'Full Body', equipment: 'Kettlebell', mode: 'weight', tags: ['compound'] },
   { name: 'Kettlebell Swing (American)', muscle: 'Full Body', equipment: 'Kettlebell', mode: 'weight', tags: ['compound'] },
   { name: 'Single-Arm Kettlebell Swing', muscle: 'Full Body', equipment: 'Kettlebell', mode: 'weight', tags: ['compound', 'unilateral'] },
@@ -684,12 +681,17 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Goblet Clean', muscle: 'Full Body', equipment: 'Kettlebell', mode: 'weight', tags: ['compound'] },
   { name: 'Double Kettlebell Clean', muscle: 'Full Body', equipment: 'Kettlebell', mode: 'weight', tags: ['compound'] },
   { name: 'Double Kettlebell Front Squat', muscle: 'Full Body', equipment: 'Kettlebell', mode: 'weight', tags: ['compound'] },
-  // Dumbbell complexes
+  
+  // dumbbell complexes
+  
   { name: 'Dumbbell Snatch', muscle: 'Full Body', equipment: 'Dumbbell', mode: 'weight', tags: ['compound', 'unilateral'] },
   { name: 'Dumbbell Clean', muscle: 'Full Body', equipment: 'Dumbbell', mode: 'weight', tags: ['compound', 'unilateral'] },
   { name: 'Dumbbell Thruster', muscle: 'Full Body', equipment: 'Dumbbell', mode: 'weight', tags: ['compound'] },
   { name: 'Man-Maker', muscle: 'Full Body', equipment: 'Dumbbell', mode: 'weight', tags: ['compound'] },
-  // Jump tests + multi-joint plyos (whole-body coordination, arm swing) → Full Body
+
+  
+  //jump tests
+  
   { name: 'Vertical Jump Test', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'distance', tags: ['compound'] },
   { name: 'Standing Long Jump Test', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'distance', tags: ['compound'] },
   { name: 'Broad Jump', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'distance', tags: ['compound'] },
@@ -708,7 +710,10 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Approach Jump Drill', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'] },
   { name: 'Plyo Push-Up', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'] },
   { name: 'Clap Push-Up', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'] },
-  // Med ball throws → Full Body
+  
+  // med ball throws → full body
+
+  
   { name: 'Medicine Ball Slam', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
   { name: 'Medicine Ball Chest Pass', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
   { name: 'Medicine Ball Rotational Throw', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
@@ -718,7 +723,9 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Vertical Medicine Ball Toss', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
   { name: 'Medicine Ball Squat-to-Press Throw', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
   { name: 'Single-Arm Medicine Ball Push Press', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound', 'unilateral'] },
-  // Strongman
+  
+  //strongman
+  
   { name: 'Atlas Stone Lift', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
   { name: 'Log Press', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
   { name: 'Axle Clean and Press', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
@@ -727,7 +734,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Sandbag Clean', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
   { name: 'Sandbag-Over-Bar', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
 
-  // ── Plyometrics — additional upper-body & loaded variants ─────────────────
+  // plyometrics  
   { name: 'Depth Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'plyometric' },
   { name: 'Hand-Release Plyo Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'plyometric' },
   { name: 'Single-Arm Plyo Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'], style: 'plyometric' },
@@ -744,62 +751,66 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Reactive Broad Jump', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'distance', tags: ['compound'], style: 'plyometric' },
   { name: 'Altitude Drop', muscle: 'Full Body', equipment: 'Other', mode: 'bodyweight', tags: ['compound'], style: 'plyometric' },
 
-  // ── Calisthenics — skill progressions ─────────────────────────────────────
-  // Front Lever family
+  // calisthenics
+  
+  // front 
+  
   { name: 'Tuck Front Lever Hold', muscle: 'Back', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Advanced Tuck Front Lever Hold', muscle: 'Back', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Straddle Front Lever Hold', muscle: 'Back', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Full Front Lever Hold', muscle: 'Back', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Front Lever Raise', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
   { name: 'Front Lever Pull-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
-  // Back Lever family
+  
+  //back lever family
+  
   { name: 'Tuck Back Lever Hold', muscle: 'Back', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Straddle Back Lever Hold', muscle: 'Back', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Full Back Lever Hold', muscle: 'Back', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Skin the Cat', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
-  // Pull variants
+  
+  //pull variants
+  
   { name: 'Archer Pull-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'], style: 'calisthenics' },
   { name: 'Typewriter Pull-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'], style: 'calisthenics' },
   { name: 'Commando Pull-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
   { name: 'One-Arm Pull-Up Negative', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'], style: 'calisthenics' },
   { name: 'One-Arm Pull-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'], style: 'calisthenics' },
   { name: 'L-Sit Pull-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
-  // Muscle-Up family
+  
+  // muscle-Up family
+  
   { name: 'Bar Muscle-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
   { name: 'Strict Bar Muscle-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
   { name: 'Kipping Muscle-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
   { name: 'Ring Muscle-Up', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
   { name: 'Muscle-Up Negative', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
-  // Planche family
+  
+  // planche
+  
   { name: 'Planche Lean', muscle: 'Chest', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Tuck Planche Hold', muscle: 'Chest', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Advanced Tuck Planche Hold', muscle: 'Chest', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Straddle Planche Hold', muscle: 'Chest', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Full Planche Hold', muscle: 'Chest', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
-  // Push variants
   { name: 'One-Arm Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'], style: 'calisthenics' },
   { name: 'Aztec Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
   { name: 'Superman Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
   { name: 'Hindu Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
-  // Handstand work
   { name: 'Wall Handstand Hold', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'timed', tags: ['compound'], style: 'calisthenics' },
   { name: 'Free Handstand Hold', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'timed', tags: ['compound'], style: 'calisthenics' },
   { name: 'Press to Handstand', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
   { name: 'Handstand Walk', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'distance', tags: ['compound'], style: 'calisthenics' },
   { name: 'Deficit Handstand Push-Up', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
   { name: 'Freestanding Handstand Push-Up', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'calisthenics' },
-  // Human Flag + Side Lever
   { name: 'Tuck Human Flag Hold', muscle: 'Obliques', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Straddle Human Flag Hold', muscle: 'Obliques', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Full Human Flag Hold', muscle: 'Obliques', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Side Lever Hold', muscle: 'Obliques', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
-  // Core skills (V-Sit, Manna)
   { name: 'V-Sit Hold', muscle: 'Core', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Manna Hold', muscle: 'Core', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
 ];
 
-// Display order for the muscle filter pills. Roughly mirrors the catalog
-// section order so the picker feels predictable.
 export const MUSCLE_GROUPS: MuscleGroup[] = [
   'Chest',
   'Back',
@@ -833,8 +844,7 @@ export const EQUIPMENT_TYPES: Equipment[] = [
   'Other',
 ];
 
-// Fast O(1) lookup keyed by case-insensitive name. Used to retrieve an
-// exercise's default mode/muscle when the user picks it from the catalog.
+
 const EXERCISE_BY_NAME = new Map<string, Exercise>();
 for (const ex of EXERCISE_CATALOG) {
   EXERCISE_BY_NAME.set(ex.name.toLowerCase(), ex);
@@ -844,23 +854,15 @@ export function findExercise(name: string): Exercise | undefined {
   return EXERCISE_BY_NAME.get(name.toLowerCase());
 }
 
-// Quick mode lookup for callers that only need the exercise mode (e.g. PR
-// detection needs to know whether a set's "best metric" is kg, seconds, or
-// meters). Returns undefined for unknown / custom exercises so callers can
-// fall back to heuristics.
 export function getExerciseMode(name: string): ExerciseMode | undefined {
   return EXERCISE_BY_NAME.get(name.toLowerCase())?.mode;
 }
 
-// Given a workout name (e.g. "Leg Day", "Push", "Lower Body"), return the
-// muscle groups that should be prioritised in the exercise picker so the
-// relevant exercises appear at the top. Empty set = no prioritisation.
 export function getPriorityMuscles(workoutName: string | undefined): Set<MuscleGroup> {
   const m = new Set<MuscleGroup>();
   if (!workoutName) return m;
   const n = workoutName.toLowerCase();
 
-  // Splits (compound names first so they don't collide with single-word checks)
   if (/lower\s*body|leg\s*day|\blegs?\b/.test(n)) {
     m.add('Quads');
     m.add('Hamstrings');
@@ -892,7 +894,6 @@ export function getPriorityMuscles(workoutName: string | undefined): Set<MuscleG
     m.add('Forearms');
   }
 
-  // Direct muscle calls
   if (/\bchest\b|pec/.test(n)) m.add('Chest');
   if (/\bback\b|lats?/.test(n)) m.add('Back');
   if (/shoulders?|delts?/.test(n)) m.add('Shoulders');
@@ -917,22 +918,16 @@ export function getPriorityMuscles(workoutName: string | undefined): Set<MuscleG
   return m;
 }
 
-// Determine a brief sub-region label (e.g. "Glute Max", "Upper", "Lats") for
-// the primary muscle based on the exercise's name. Used to give the top
-// muscle pill a precise hint without burdening the secondary pills.
-// Returns undefined if the exercise doesn't clearly target one sub-region.
 function getPrimaryDetail(primary: MuscleGroup, name: string): string | undefined {
   switch (primary) {
     case 'Chest':
       if (/incline/.test(name)) return 'Upper';
       if (/decline/.test(name)) return 'Lower';
-      return undefined; // flat / generic chest
+      return undefined; 
     case 'Back':
       if (/pull-?up|chin-?up|pulldown|pullover/.test(name)) return 'Lats';
       if (/shrug|upright row/.test(name)) return 'Traps';
       if (/face pull/.test(name)) return 'Rear Delts';
-      // Hyperextension / back extension isolate the erectors; deadlift family
-      // is whole-posterior-chain, so don't claim a sub-region for those.
       if (/hyperextension|back extension/.test(name)) return 'Erectors';
       if (/row/.test(name)) return 'Lats';
       return undefined;
@@ -954,7 +949,6 @@ function getPrimaryDetail(primary: MuscleGroup, name: string): string | undefine
       return undefined;
     case 'Calves':
       if (/seated/.test(name)) return 'Soleus';
-      // Default standing-position calf raises to gastroc.
       if (/calf|donkey|leg press/.test(name)) return 'Gastroc';
       return undefined;
     case 'Triceps':
@@ -976,9 +970,6 @@ function getPrimaryDetail(primary: MuscleGroup, name: string): string | undefine
   }
 }
 
-// Returns the primary muscle (from the catalog), an optional sub-region hint
-// for the primary (e.g. "Glute Max", "Upper", "Lats"), and up to 2 likely
-// secondary muscles. Used by the exercise picker's long-press info popup.
 export function getExerciseMuscles(
   exercise: Exercise,
 ): { primary: MuscleGroup; primaryDetail?: string; secondary: MuscleGroup[] } {
@@ -1001,11 +992,9 @@ export function getExerciseMuscles(
       }
       break;
     case 'Shoulders':
-      // Pressing variants recruit triceps — covers OHP, push press, pike & handstand push-ups, wall walks.
       if (/press|push-?up|handstand|wall walk/.test(name)) sec.push('Triceps');
       break;
     case 'Triceps':
-      // Includes diamond/close-grip push-ups (bodyweight compounds).
       if (/dip|bench|press|push-?up/.test(name)) sec.push('Chest', 'Shoulders');
       break;
     case 'Quads':
@@ -1015,7 +1004,6 @@ export function getExerciseMuscles(
       sec.push('Glutes', 'Lower Back');
       break;
     case 'Glutes':
-      // Hip-hinge variants (RDL/B-Stance RDL): glutes + hamstrings + lower back.
       if (/rdl|romanian|deadlift|good morning/.test(name)) sec.push('Hamstrings', 'Lower Back');
       else if (/hip thrust|bridge|kickback/.test(name)) sec.push('Hamstrings');
       else sec.push('Hamstrings', 'Quads');
