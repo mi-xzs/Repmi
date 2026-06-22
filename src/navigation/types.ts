@@ -11,7 +11,6 @@ export type AuthStackParamList = {
   MFAChallenge: undefined;
 };
 
-
 export type RootTabParamList = {
   Home: NavigatorScreenParams<HomeStackParamList> | undefined;
   Analytics: { tab?: number } | undefined;
@@ -33,6 +32,7 @@ export type RootStackParamList = {
 
 declare global {
   namespace ReactNavigation {
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
     interface RootParamList extends RootStackParamList {}
   }
 }

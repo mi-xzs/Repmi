@@ -11,7 +11,7 @@ export default function AddSectionButton({ onPress }: AddSectionButtonProps) {
     <Pressable
       style={({ pressed }) => [
         styles.button,
-        pressed && { opacity: 0.6 }, // <-- opacity effect
+        pressed && { opacity: 0.6 },
       ]}
       onPress={onPress}
     >

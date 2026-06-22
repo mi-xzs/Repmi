@@ -21,12 +21,6 @@ import {
 } from '../services/passwordPolicy';
 import { logError } from '../services/logger';
 
-// The "Confirm email" link in the signup welcome email points here. MUST
-// be in Supabase Dashboard → Auth → URL Configuration → Redirect URLs,
-// otherwise Supabase silently falls back to the Site URL and strips the
-// tokens. Native uses Universal Links (iOS) / App Links (Android) — both
-// route this https URL to the app when installed, and fall back to the
-// web flow when not.
 const EMAIL_CONFIRM_URL = 'https://repmi.co.uk/auth/confirm';
 
 export default function SignUpScreen({ navigation }: any) {
@@ -38,15 +32,8 @@ export default function SignUpScreen({ navigation }: any) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
-  // SECURITY / COMPLIANCE: minimum age gate. The app collects body
-  // metrics (weight, height, training data) which most jurisdictions
-  // treat as health-adjacent personal data, so we require an attested
-  // age of 16+ before signup is enabled. The submit button stays
-  // disabled until the checkbox is checked; we re-validate in the
-  // handler as a defence-in-depth measure.
   const [ageConfirmed, setAgeConfirmed] = useState(false);
 
-  // H1: live per-rule validation so the checklist updates as the user types.
   const { rules: passwordRules, isValid: passwordValid } = validatePassword(password);
 
   async function handleSignUp() {
@@ -63,16 +50,12 @@ export default function SignUpScreen({ navigation }: any) {
       return;
     }
     if (!passwordValid) {
-      // The live checklist is the primary affordance; this is a
-      // defence-in-depth guard for the submit handler.
       setError('Password does not meet the requirements below.');
       return;
     }
     setError('');
     setLoading(true);
 
-    // A7 / M5 — block known-breached passwords. Fails open (proceeds) if
-    // HIBP is unreachable so an outage can't stop all signups.
     const breach = await checkPasswordBreached(password);
     if (breach.status === 'breached') {
       setLoading(false);
@@ -116,9 +99,6 @@ export default function SignUpScreen({ navigation }: any) {
       <Text style={[styles.title, { color: accent }]}>Create account</Text>
       <Text style={styles.subtitle}>Start tracking your gains</Text>
 
-      {/* Age gate — must be acknowledged BEFORE the email/password fields
-          per spec, so users see the requirement up front rather than
-          discovering it after typing credentials. */}
       <TouchableOpacity
         style={styles.checkboxRow}
         activeOpacity={0.7}
@@ -156,8 +136,6 @@ export default function SignUpScreen({ navigation }: any) {
         onChangeText={setPassword}
         secureTextEntry
       />
-      {/* H1: live password-rule checklist. Renders once the user starts
-          typing so it doesn't clutter the empty state. */}
       {password.length > 0 ? (
         <PasswordChecklist rules={passwordRules} accent={accent} />
       ) : null}
@@ -194,9 +172,6 @@ export default function SignUpScreen({ navigation }: any) {
   );
 }
 
-// H1 — per-rule checklist. Each row is a check/x glyph + label; passes are
-// rendered in the accent colour, fails in muted grey. Live updates as the
-// user types via the parent's validatePassword() output.
 function PasswordChecklist({
   rules,
   accent,

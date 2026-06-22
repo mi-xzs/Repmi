@@ -22,13 +22,6 @@ import {
   wrapApp,
 } from './services/observability';
 
-// Web: paint the body background BEFORE React mounts so the user
-// never sees a flash of white between bundle load and the first
-// render. Runs at module-load time (before any component), which is
-// the earliest hook we have without modifying the static index.html.
-// Doing this inside a useEffect leaves a gap of one paint frame where
-// the default white body shows through — visible especially on slow
-// devices and when navigating into deep-linked screens like /auth/reset.
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
   document.documentElement.style.backgroundColor = colors.background;
   if (document.body) {
@@ -36,19 +29,6 @@ if (Platform.OS === 'web' && typeof document !== 'undefined') {
   }
 }
 
-/**
- * H2 — Biometric foreground gate.
- *
- * When the user has enabled "Unlock with Face ID / fingerprint" in
- * Settings, the AppState handler below prompts on every transition
- * back to `active`. The biometric prompt is a LOCAL re-auth — it does
- * not derive any key, it does not decrypt the Supabase session. The
- * session token continues to live in SecureStore independently of this
- * gate.
- *
- * If biometric authentication fails (user cancels), we sign out so a
- * lost / borrowed phone can't bypass the prompt by killing the app.
- */
 function BiometricGate({ children }: { children: React.ReactNode }) {
   const { session, signOut } = useAuth();
   const [locked, setLocked] = useState(false);
@@ -69,7 +49,6 @@ function BiometricGate({ children }: { children: React.ReactNode }) {
   }, [session, signOut]);
 
   useEffect(() => {
-    // Prompt once on mount if a session already exists (cold start).
     requireBiometric();
   }, [requireBiometric]);
 
@@ -86,29 +65,11 @@ function BiometricGate({ children }: { children: React.ReactNode }) {
   }, [requireBiometric]);
 
   if (locked) {
-    // Render an empty black screen while the biometric prompt is up
-    // so the previously-displayed UI isn't visible behind a dismissed
-    // prompt.
     return <View style={{ flex: 1, backgroundColor: '#000' }} />;
   }
   return <>{children}</>;
 }
 
-// H2 / H7 — Deep-link routing config.
-//   - `repmi://auth/reset` → PasswordResetConfirmScreen (Supabase reset email)
-//   - The legacy `exp+gym-tracking-app://` prefix is included so already-issued
-//     links from before the rename keep resolving. Drop after one release.
-//   - `https://repmi.co.uk` is included so Universal Links / App Links route
-//     the same screens once the .well-known files ship.
-// Supabase implicit-flow email URLs come back as
-// `…/auth/<path>#access_token=…&refresh_token=…&type=<recovery|signup>`.
-// React Navigation's linking parser only decodes query strings into
-// `route.params`, NOT hash fragments. Rewrite the hash to a query string
-// for both /auth/reset (password recovery) and /auth/confirm (signup
-// confirmation) so the screens receive the tokens via route.params.
-//
-// Web is unaffected — Supabase's `detectSessionInUrl` consumes the hash
-// directly and our pathname-based recovery flag bypasses route params.
 function normaliseAuthCallbackUrl(url: string | null): string | null {
   if (!url) return null;
   if (url.includes('/auth/reset#')) {
@@ -150,10 +111,6 @@ const LINKING: LinkingOptions<any> = {
   },
 };
 
-// Dark navigation theme so the scene background behind centered web
-// layouts is the app's dark background, not React Navigation's default
-// white. Without this, screens that center their content in a max-width
-// column (web) show white gutters on either side.
 const NAV_THEME: Theme = {
   ...DarkTheme,
   colors: {
@@ -164,16 +121,9 @@ const NAV_THEME: Theme = {
 };
 
 function App() {
-  // One-time setup of the Android notification channel used by the rest
-  // timer.  Cheap, idempotent, no-op on iOS.
-  // M1: also initialise Sentry IFF the user has previously opted in.
-  // The function is a no-op when the consent flag isn't set, so this
-  // is safe to call at the top of every launch.
   useEffect(() => {
     ensureRestTimerChannel();
     initSentryIfEnabled();
-    // Hide scrollbars on web — scrolling still works via wheel / trackpad /
-    // drag, it's just the visible bar that's removed for an app-like look.
     if (Platform.OS === 'web' && typeof document !== 'undefined' && !document.getElementById('hide-scrollbars')) {
       const style = document.createElement('style');
       style.id = 'hide-scrollbars';
@@ -183,18 +133,6 @@ function App() {
       document.head.appendChild(style);
     }
 
-    // Mobile-browser chrome theming — kill the white bars at the top/bottom
-    // of the viewport on phone browsers (the address bar area + the iOS
-    // bottom toolbar overscroll region).
-    //   - `theme-color` colours the address bar on Chrome/Edge/Samsung
-    //     Internet on Android and on iOS 15+ Safari.
-    //   - `apple-mobile-web-app-*` meta tags handle the case where the user
-    //     adds the site to their home screen (PWA full-screen mode).
-    //   - Updating the viewport with `viewport-fit=cover` lets the page
-    //     extend behind the iOS notch / home indicator so the dark body
-    //     bg fills the safe-area instead of showing white.
-    //   - Setting `<body>` background colour covers rubber-band overscroll
-    //     and any frame the browser paints behind the React root.
     if (Platform.OS === 'web' && typeof document !== 'undefined' && !document.getElementById('repmi-mobile-theme')) {
       const marker = document.createElement('meta');
       marker.id = 'repmi-mobile-theme';
@@ -229,10 +167,6 @@ function App() {
       <NavigationContainer
         theme={NAV_THEME}
         linking={LINKING}
-        // On web, React Navigation auto-sets document.title from the focused
-        // route's name. For nested navigators that can resolve to `undefined`,
-        // which shows up in the browser tab. Force the title to "Repmi" — or
-        // "<Screen> · Repmi" when a screen explicitly sets its own title.
         documentTitle={{
           formatter: (options, route) => {
             const screen = options?.title ?? route?.name;
@@ -262,8 +196,4 @@ function App() {
   );
 }
 
-// M1 — Wrap the root with Sentry's tracing wrapper so screen
-// breadcrumbs (navigation transitions, etc.) are captured when crash
-// reporting is enabled. The wrapper is an identity function when
-// Sentry isn't initialised, so this is always safe.
 export default wrapApp(App);

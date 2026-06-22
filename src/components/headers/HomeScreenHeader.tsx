@@ -30,7 +30,6 @@ export const HomeScreenHeader = () => {
   const xpProgress = Math.max(0, Math.min(1, levelInfo.progress));
   const green = accent;
 
-  // Animate the XP bar fill — spring on each change so XP gains read as a felt event.
   const xpWidth = useSharedValue(xpProgress);
   useEffect(() => {
     xpWidth.value = withSpring(xpProgress, {
@@ -166,8 +165,6 @@ const styles = StyleSheet.create({
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
   },
-  // Tiny "DEMO" pill rendered next to the greeting when signed in as the
-  // demo account, so portfolio visitors know what they're seeing.
   demoPill: {
     borderWidth: 1,
     borderRadius: 6,

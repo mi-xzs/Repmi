@@ -1,19 +1,3 @@
-// src/screens/MFAEnrollScreen.tsx
-//
-// H2 — TOTP enrolment.
-//
-// Flow:
-//   1. supabase.auth.mfa.enroll({ factorType: 'totp' }) — gives us a
-//      `totp.uri` (otpauth://…) + `id` (factor id).
-//   2. Render the URI as a QR code so the user can scan it into their
-//      authenticator app (Google Authenticator, 1Password, etc).
-//   3. Ask the user to type the 6-digit code their app shows.
-//   4. supabase.auth.mfa.challenge({ factorId }) → challenge.id.
-//   5. supabase.auth.mfa.verify({ factorId, challengeId, code }) →
-//      promotes the session to AAL2.
-//
-// H9 — screen-capture prevention while a QR / TOTP secret is on screen.
-
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
@@ -68,8 +52,6 @@ export default function MFAEnrollScreen() {
           setError(mapAuthError(err));
           return;
         }
-        // The Supabase types use a discriminated union; the totp branch
-        // carries `totp.uri` + `totp.secret`.
         const totp = (data as { totp?: { uri?: string; secret?: string }; id: string }).totp;
         setFactorId(data.id);
         setUri(totp?.uri ?? null);
@@ -113,8 +95,6 @@ export default function MFAEnrollScreen() {
         setError(mapAuthError(vErr));
         return;
       }
-      // M8 — record MFA enrolment so a compromised account can prove
-      // when the second factor was added.
       logAuditEvent('mfa_enrolled', null, { factorType: 'totp' });
       Alert.alert('Two-factor authentication enabled', 'You\'ll be asked for a code on your next sign-in.');
       navigation.goBack();

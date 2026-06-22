@@ -1,12 +1,3 @@
-// src/services/moderationService.ts
-//
-// H12 — UGC moderation: block / unblock / report.
-//
-// All four operations rely on RLS — `blocks` and `reports` policies in
-// the high-severity migration ensure a caller can only ever act as
-// themselves. The client functions trust the RLS layer; they don't
-// re-check `auth.uid()` themselves.
-
 import { supabase } from './supabase';
 import { logAuditEvent } from './profileService';
 
@@ -41,15 +32,10 @@ export async function blockUser(targetUserId: string): Promise<void> {
   const { error } = await supabase
     .from('blocks')
     .insert({ blocker_id: me, blocked_id: targetUserId });
-  // 23505 = already-blocked. Treat as success.
   if (error && (error as { code?: string }).code !== '23505') {
     throw error;
   }
 
-  // Severing the follow relationship in both directions stops a
-  // newly-blocked party from appearing in follow lists. Two
-  // single-direction deletes — clearer than `.or()` and avoids
-  // PostgREST nested-filter escaping quirks.
   await supabase
     .from('follows')
     .delete()
@@ -61,7 +47,6 @@ export async function blockUser(targetUserId: string): Promise<void> {
     .eq('follower_id', targetUserId)
     .eq('following_id', me);
 
-  // M8 — record the block in the audit log.
   await logAuditEvent('user_blocked', targetUserId, {});
 }
 
@@ -77,7 +62,6 @@ export async function unblockUser(targetUserId: string): Promise<void> {
     .eq('blocked_id', targetUserId);
   if (error) throw error;
 
-  // M8 — record the unblock so the audit trail is symmetric.
   await logAuditEvent('user_unblocked', targetUserId, {});
 }
 
@@ -94,11 +78,6 @@ export async function fetchBlockedUsers(): Promise<BlockedUser[]> {
   if (error || !blocks || blocks.length === 0) return [];
 
   const ids = blocks.map(b => b.blocked_id);
-  // Profile rows for blocked users are filtered by the new
-  // profiles_select_public policy — but the OWN-block exception kicks
-  // in here because RLS allows the row when the caller has blocked
-  // (i.e. when we're explicitly looking up our own block list).
-  // Fall back to RPC if needed; for now just try the direct fetch.
   const { data: profiles } = await supabase
     .from('profiles')
     .select('id, username, avatar_url')
@@ -134,8 +113,5 @@ export async function reportUser(
     });
   if (error) throw error;
 
-  // M8 — record the report submission. Reason is recorded but the
-  // free-text `details` is NOT, because it can contain PII about the
-  // reported user that we don't want duplicated in the audit log.
   await logAuditEvent('user_reported', targetUserId, { reason });
 }

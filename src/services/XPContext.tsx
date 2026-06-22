@@ -1,16 +1,3 @@
-// src/services/XPContext.tsx
-//
-// XP is fully derived from `workout_sessions` in Supabase, so it transfers
-// across devices automatically. We replay sessions chronologically to
-// reconstruct the streak multiplier that would have applied at each session's
-// time, then sum.
-//
-// Note: `hasRPE` is not preserved on the session record, so the +5 RPE bonus
-// is not applied when deriving. The discrepancy vs. the original entry is
-// at most 5 XP per session.
-//
-// Equipped season title moved to SettingsContext.
-
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { WorkoutSession } from '../screens/WorkoutScreen';
@@ -70,13 +57,8 @@ export const ACHIEVEMENTS: readonly AchievementDef[] = [
   { id: 'marathon',       xp: 40,  label: 'Marathon Session',    check: (c) => c.longestSessionDuration > 5400 },
 ] as const;
 
-// Re-export streak helpers so existing callers of XPContext keep working.
 export { getCurrentStreak, getLongestStreak };
 
-/**
- * Walk sessions chronologically, reconstructing the streak that would have
- * applied at each session's date.
- */
 export function deriveXPLog(sessions: WorkoutSession[]): XPLogEntry[] {
   const sorted = [...sessions].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
@@ -91,7 +73,6 @@ export function deriveXPLog(sessions: WorkoutSession[]): XPLogEntry[] {
     const currKey = dayKey(date);
 
     if (currKey === lastKey) {
-      // Same calendar day — streak unchanged.
     } else if (lastKey !== null) {
       const last = new Date(lastKey + 'T00:00:00');
       const curr = new Date(currKey + 'T00:00:00');
@@ -118,9 +99,6 @@ export function deriveXPLog(sessions: WorkoutSession[]): XPLogEntry[] {
   return entries;
 }
 
-/**
- * Build an AchievementContext from all sessions across all workouts.
- */
 function buildAchievementContext(
   allSessions: WorkoutSession[],
 ): AchievementContext {
@@ -182,9 +160,6 @@ function buildAchievementContext(
   };
 }
 
-/**
- * Compute total achievement XP from all sessions.
- */
 export function computeAchievementXP(
   allSessions: WorkoutSession[],
 ): { total: number; earned: readonly AchievementDef[] } {
@@ -235,13 +210,6 @@ export function XPProvider({ children }: { children: ReactNode }) {
       const { total: achXP } = computeAchievementXP(sessions);
       setAchievementXP(achXP);
 
-      // Write the full aggregate cache to profiles. The leaderboard
-      // + view-profile screen read this so they never need access to
-      // raw workout_sessions. Fire-and-forget — failure is logged
-      // and doesn't affect the local user's view.
-      // Staleness caveat: weekly_xp + streak are "as of last refresh."
-      // For users who don't open the app, weekly_xp will overstate
-      // until they refresh. Acceptable for v1.
       const sessionXP = log.reduce((s, e) => s + e.totalXP, 0);
       const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
       const weeklyXP = log.reduce((s, e) => {
@@ -252,9 +220,6 @@ export function XPProvider({ children }: { children: ReactNode }) {
       let totalDurationSec = 0;
       let totalReps = 0;
       let totalSets = 0;
-      // PR detection walks sessions chronologically so the same lift
-      // counted once when a new heaviest weight lands on it. First
-      // lift on an exercise doesn't count (no prior baseline).
       const sortedForPR = [...sessions].sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
       );
@@ -301,11 +266,6 @@ export function XPProvider({ children }: { children: ReactNode }) {
   }, [userId]);
 
   // ── Load on auth change ────────────────────────────────────────────────────
-  //
-  // Re-runs whenever the signed-in user changes (including sign-in after
-  // mount, and sign-out → sign-in as a different user). A ref tracks which
-  // user we've already initialized for so unrelated re-renders (e.g. workouts
-  // list changes) don't trigger an extra Supabase round-trip.
   const initializedForRef = useRef<string | 'no-user' | null>(null);
 
   useEffect(() => {
@@ -349,11 +309,6 @@ export function XPProvider({ children }: { children: ReactNode }) {
   const levelTitle = getLevelTitle(levelInfo.level);
 
   // ── Actions ────────────────────────────────────────────────────────────────
-  //
-  // `addXPEntry` now just triggers a refresh from Supabase. The session itself
-  // is saved separately by the caller via `sessionService.saveSession`. The
-  // `entry` argument is ignored (kept for call-site compatibility) — the
-  // authoritative log is derived from sessions on every refresh.
   const addXPEntry = useCallback(async (_entry: XPLogEntry): Promise<void> => {
     await refresh();
   }, [refresh]);

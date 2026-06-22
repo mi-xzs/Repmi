@@ -1,9 +1,3 @@
-// src/components/ui/AvatarTile.tsx
-//
-// Compact avatar that prefers a remote image, falls back to colored
-// initials. Used across achievements/leaderboard tiles and the
-// user-peek modal so a single visual treatment travels everywhere.
-
 import React from 'react';
 import { View, Image, Text } from 'react-native';
 
@@ -28,13 +22,9 @@ export function AvatarTile({
   avatarUrl?: string | null;
   name?: string | null;
   glow?: boolean;
-  // 'square' keeps the rounded-rectangle tile used by ChaseRow +
-  // YourStandingCard. 'circle' is for podium pillars and peek cards.
   shape?: 'square' | 'circle';
 }) {
   const radius = shape === 'circle' ? size / 2 : Math.max(6, Math.round(size * 0.25));
-  // Initials font scales with tile size — ~42% lands well for the
-  // 26–92px tiles tested across leaderboard + peek surfaces.
   const initialsSize = Math.max(10, Math.round(size * 0.42));
   return (
     <View

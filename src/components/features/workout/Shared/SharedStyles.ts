@@ -96,10 +96,6 @@ export const styles = StyleSheet.create({
   },
 
   // --- Done Button ---
-  // Background is transparent — the Feather icon provides all visual feedback.
-  // ○ (circle)       = not done, muted
-  // ✓ (check-circle) = done, highlighted
-  // Components set flex inline; active/inactive opacity is also set inline.
   doneButton: {
     height: 30,
     borderRadius: 8,
@@ -113,8 +109,6 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
   },
 
-  // Legacy text styles — no longer used in row done buttons but kept so any
-  // remaining references (e.g. modals) don't break.
   doneButtonText: {
     fontSize: 14,
     fontWeight: 'bold',
@@ -288,7 +282,6 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
   },
 
-  // Legacy row done button — kept for any remaining references
   doneButtonRow: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -347,7 +340,6 @@ modePill: {
 },
 
 modePillActive: {
-  // backgroundColor is set inline at the consumer using the active accent.
 },
 
 modePillText: {

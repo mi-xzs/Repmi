@@ -64,14 +64,9 @@ import {
 } from '../services/feedbackService';
 import { TrainingGoal } from '../types/user';
 
-// On wide web, cap the "screen width" that drives the segmented control
-// and the horizontal tab pager to the shared content column, so the whole
-// screen fits the same centered max-width as the rest of the web app.
 const SCREEN_W = getContentWidth(Dimensions.get('window').width);
 const TAB_COUNT = 5;
-const SEGMENT_W = (SCREEN_W - 32) / TAB_COUNT; // 16px padding each side
-// Swipe gesture thresholds — mirrors AchievementsScreen so the tab
-// nav grammar reads as one family across the app.
+const SEGMENT_W = (SCREEN_W - 32) / TAB_COUNT;
 const SWIPE_VELOCITY_THRESHOLD = 0.3;
 const SWIPE_DISTANCE_THRESHOLD = SCREEN_W * 0.35;
 
@@ -140,8 +135,6 @@ function AccountTab() {
   const { accent } = useAccent();
   const demoGuard = useDemoGuard();
 
-  // H9 — prevent screenshots while the Settings screen is mounted
-  // (bodyweight + height + email are all rendered here).
   useFocusEffect(useCallback(() => {
     preventScreenCaptureAsync().catch(() => {});
     return () => { allowScreenCaptureAsync().catch(() => {}); };
@@ -151,14 +144,11 @@ function AccountTab() {
   const [usernameInput,   setUsernameInput]   = useState(profile?.username ?? '');
   const [isDeleting,      setIsDeleting]      = useState(false);
 
-  // H2 — Security state.
   const [bioAvailable, setBioAvailable] = useState(false);
   const [bioEnabled,   setBioEnabled]   = useState(false);
-  const [mfaEnrolled,  setMfaEnrolled]  = useState<string | null>(null); // factor id if enrolled
+  const [mfaEnrolled,  setMfaEnrolled]  = useState<string | null>(null);
   const [blocked, setBlocked] = useState<BlockedUser[] | null>(null);
 
-  // A6 / M3 — re-auth modal state for destructive ops
-  // (disable MFA, delete account).
   const [reAuth, setReAuth] = useState<
     | { kind: 'disable_mfa'; factorId: string }
     | { kind: 'delete_account'; userId: string }
@@ -196,8 +186,6 @@ function AccountTab() {
     }
   };
 
-  // A6 / M3 — Disable 2FA is gated by ReAuthModal (password + biometric).
-  // The actual unenroll runs in performDisableMfa after re-auth succeeds.
   const disableMfa = () => {
     if (!mfaEnrolled) return;
     setReAuth({ kind: 'disable_mfa', factorId: mfaEnrolled });
@@ -210,9 +198,6 @@ function AccountTab() {
       notify('Failed', mapAuthError(error));
     } else {
       setMfaEnrolled(null);
-      // M8 — record the MFA-disable event in the audit log so a
-      // compromised account can prove when the second factor
-      // was removed.
       logAuditEvent('mfa_unenrolled', null, { factorType: 'totp' });
     }
   };
@@ -231,13 +216,7 @@ function AccountTab() {
     const trimmed = usernameInput.trim();
     setEditingUsername(false);
     if (!trimmed || trimmed === profile?.username) return;
-    // SECURITY (C1) — block in demo mode. The 30-day server-side
-    // rename rate limit means a single visitor could otherwise lock
-    // the demo handle to an arbitrary string for a month.
     if (!demoGuard('Renaming the demo account')) return;
-    // M11 — client-side check against the 30-day window. The server
-    // trigger is the authoritative gate, but checking here avoids a
-    // round-trip + lets us show a friendlier message.
     const remainingDays = daysUntilUsernameChangeAllowed(
       (profile as { username_changed_at?: string | null })?.username_changed_at,
     );
@@ -256,8 +235,6 @@ function AccountTab() {
     try {
       await updateProfile({ username: trimmed });
     } catch (e) {
-      // M11 — server-side rate-limit fires as PostgREST exception
-      // with hint 'username_change_rate_limit'. Surface generic copy.
       const msg = (e as { message?: string })?.message ?? '';
       if (/username_change_rate_limit/.test(msg)) {
         notify(
@@ -271,8 +248,6 @@ function AccountTab() {
     }
   };
 
-  // Use an in-app modal (styled like ReAuthModal) rather than Alert.alert,
-  // which is a no-op on react-native-web and would never fire signOut.
   const handleSignOut = () =>
     ask({
       title: 'Sign out',
@@ -289,16 +264,12 @@ function AccountTab() {
       logError('auth.passwordReset.failed', { code: (error as { code?: string }).code });
       notify('Failed', mapAuthError(error));
     } else {
-      // M8 — record password-reset request in the audit log.
       logAuditEvent('password_reset_requested', null, {});
       notify('Sent', 'Check your inbox for the reset link.');
     }
   };
 
   const handleChangePassword = () => {
-    // SECURITY (C1) — block in demo mode. Otherwise a visitor could
-    // trigger a password-reset email to the demo inbox (or change the
-    // demo password outright, locking everyone else out).
     if (!demoGuard('Changing the demo password')) return;
     ask({
       title: 'Change password',
@@ -308,8 +279,6 @@ function AccountTab() {
     });
   };
 
-  // A6 / M3 — Delete account is gated by ReAuthModal (password + biometric).
-  // The actual delete runs in performDeleteAccount after re-auth succeeds.
   const handleDeleteAccount = () => {
     if (isDeleting) return;
     if (!demoGuard('Deleting the account')) return;
@@ -322,9 +291,6 @@ function AccountTab() {
     setIsDeleting(true);
     try {
       await deleteAccount(userId);
-      // signOut inside deleteAccount fires onAuthStateChange in
-      // AuthContext, which unmounts the authed nav stack — no
-      // further navigation needed here.
     } catch (e) {
       setIsDeleting(false);
       logError('account.delete.failed', { name: (e as Error)?.name });
@@ -335,9 +301,6 @@ function AccountTab() {
     }
   };
 
-  // A6 / M3 — runs the queued destructive op after the modal verified
-  // the password + biometric. Errors are surfaced inside the modal so
-  // the user can retry without re-opening it.
   const handleReAuthConfirm = async (password: string) => {
     const pending = reAuth;
     if (!pending) return;
@@ -396,12 +359,6 @@ function AccountTab() {
           label="Change password"
           onPress={handleChangePassword}
         />
-        {/* H2 — Two-factor authentication. */}
-        {/* SECURITY (C1) — block enrolment in demo mode. Without this gate,
-            any visitor could bind their own TOTP secret to the shared demo
-            account, permanently locking every future recruiter out of the
-            login flow. Disable is also gated so the demo's own MFA state
-            (if it were ever enabled by an admin) can't be flipped off. */}
         <Row
           icon="shield"
           label={mfaEnrolled ? 'Two-factor: enabled' : 'Enable two-factor (TOTP)'}
@@ -411,7 +368,6 @@ function AccountTab() {
             else navigation.navigate('MFAEnroll');
           }}
         />
-        {/* H2 — Biometric unlock. */}
         <Row
           icon="unlock"
           label={bioAvailable ? 'Unlock with biometrics' : 'Biometrics unavailable'}
@@ -427,8 +383,6 @@ function AccountTab() {
         />
       </SettingsSection>
 
-      {/* H12 — Blocked users management. Hidden when the list is empty so
-          the user doesn't see an empty "Blocked users" card unnecessarily. */}
       {blocked && blocked.length > 0 ? (
         <SettingsSection title="Blocked users">
           {blocked.map((b, i) => (
@@ -461,7 +415,6 @@ function AccountTab() {
         />
       </SettingsSection>
 
-      {/* A6 / M3 — re-auth gate for disable-MFA + delete-account. */}
       <ReAuthModal
         visible={reAuth !== null}
         kind={reAuth?.kind ?? 'disable_mfa'}
@@ -474,10 +427,6 @@ function AccountTab() {
   );
 }
 
-// Lightweight in-app confirmation dialog styled to match the app (and the
-// ReAuthModal). Used instead of Alert.alert so it renders identically on
-// native and web (where Alert.alert is a no-op). confirmColor overrides the
-// confirm button tint (red for destructive ops, accent otherwise).
 function ConfirmModal({
   visible,
   title,
@@ -518,8 +467,6 @@ function ConfirmModal({
   );
 }
 
-// Single-button notice dialog (the styled replacement for an info/error
-// Alert.alert with no choice to make).
 function NoticeModal({
   visible,
   title,
@@ -561,10 +508,6 @@ type ConfirmOpts = {
   onConfirm: () => void;
 };
 
-// In-app replacement for Alert.alert. Returns notify()/ask() to open a
-// styled notice or confirm dialog, plus a `dialog` element each tab drops
-// into its tree. Self-contained so it works in every tab without prop
-// drilling — and, unlike Alert.alert, renders on web.
 function useDialog() {
   const { accent } = useAccent();
   const [notice, setNotice] = useState<{ title: string; message: string } | null>(null);
@@ -605,11 +548,6 @@ function useDialog() {
   return { notify, ask, dialog };
 }
 
-// A6 / M3 — modal that collects the password and routes through
-// requireReAuth() before any destructive op runs. Decoupled from the
-// caller so the screen just opens it and reacts to the resolved
-// promise; modal owns the password input, the spinner, and the
-// error-string mapping.
 function ReAuthModal({
   visible,
   kind,
@@ -649,8 +587,6 @@ function ReAuthModal({
     } catch (e) {
       const msg = (e as Error).message;
       if (msg === 'cancelled') {
-        // Biometric cancel — silent, leave the modal open so the user
-        // can retry or hit Cancel themselves.
       } else if (msg === 'password_mismatch') {
         setErr('Incorrect password.');
       } else {
@@ -719,15 +655,8 @@ function PreferencesTab() {
   const { accent, accentDim, accentSubtle } = useAccent();
   const { session } = useAuth();
   const navigation = useNavigation<any>();
-  // SECURITY (C1) — gate every profile-mutating handler in this tab.
-  // Weight, height, weekly target, and goal are all visible on the demo
-  // account's profile card; a visitor changing them grieves the experience
-  // for every future recruiter. Server-side trigger backstops this.
   const demoGuard = useDemoGuard();
 
-  // H4 — gate the first save of body metrics on GDPR Art. 9 consent.
-  // We lazily import to avoid pulling consent code into screens that
-  // don't need it. The check runs server-side too.
   const requireBodyMetricsConsent = useCallback(async (): Promise<boolean> => {
     const uid = session?.user?.id;
     if (!uid) return false;
@@ -794,7 +723,6 @@ function PreferencesTab() {
     const val = parseFloat(weightInput);
     if (!isNaN(val) && val > 0) {
       if (!demoGuard('Changing the weight')) return;
-      // H4 — gate save on consent.
       const ok = await requireBodyMetricsConsent();
       if (!ok) return;
       const kg = weightUnit === 'lbs' ? val / 2.20462 : val;
@@ -816,7 +744,6 @@ function PreferencesTab() {
     const val = parseFloat(heightInput);
     if (!isNaN(val) && val > 0) {
       if (!demoGuard('Changing the height')) return;
-      // H4 — gate save on consent.
       const ok = await requireBodyMetricsConsent();
       if (!ok) return;
       const cm = heightUnit === 'ft' ? val * 2.54 : val;
@@ -827,7 +754,6 @@ function PreferencesTab() {
   return (
     <ScrollView contentContainerStyle={s.tabContent} showsVerticalScrollIndicator={false}>
       <SettingsSection title="Body">
-        {/* Weight row — value + unit toggle combined */}
         {editingWeight ? (
           <View style={[s.row, { gap: 8 }]}>
             <View style={s.rowIcon}>
@@ -866,7 +792,6 @@ function PreferencesTab() {
             </View>
           </TouchableOpacity>
         )}
-        {/* Height row — value + unit toggle combined */}
         {editingHeight ? (
           <View style={[s.row, s.rowLast, { gap: 8 }]}>
             <View style={s.rowIcon}>
@@ -952,10 +877,6 @@ function PreferencesTab() {
   );
 }
 
-// Theme catalog mirrored from the store. Settings only needs the bits
-// it renders (id, name, swatch color, free/paid) — the full metadata
-// lives in AchievementsScreen's COSMETIC_THEMES. `id: null` is the
-// implicit default; equipping it falls back to the mint green palette.
 const SETTINGS_THEMES: { id: string | null; name: string; swatch: string; free: boolean }[] = [
   { id: null,      name: 'Mint Green', swatch: '#00FA9A', free: true  },
   { id: 'crimson', name: 'Crimson',    swatch: '#DC143C', free: false },
@@ -972,8 +893,6 @@ function CustomizationTab() {
   } = useSettings();
   const { accent, accentDim } = useAccent();
 
-  // Only show themes the user actually owns. Free themes are always
-  // available; paid themes appear once unlocked in the store.
   const ownedThemes = SETTINGS_THEMES.filter(t => t.free || (t.id !== null && ownedThemeIds.has(t.id)));
 
   return (
@@ -1027,10 +946,6 @@ function PrivacyTab() {
   const { publicProfile, openFollows, setPublicProfile, setOpenFollows } = useSettings();
   const { accent, accentDim } = useAccent();
   const { notify, dialog } = useDialog();
-  // SECURITY (C1) — gate privacy toggles in demo mode. Without this,
-  // any visitor could flip the demo profile to private (hiding it from
-  // search + leaderboard) or close follows, gutting the "fully populated"
-  // demo experience for every future recruiter.
   const demoGuard = useDemoGuard();
   const guardedSetPublicProfile = (v: boolean) => {
     if (!demoGuard('Changing profile privacy')) return;
@@ -1041,9 +956,6 @@ function PrivacyTab() {
     setOpenFollows(v);
   };
 
-  // M1 — Crash-reporting opt-in. The toggle is loaded from SecureStore
-  // on mount and persists each flip via the observability module
-  // (which also closes / reinitialises the Sentry client).
   const [crashReportingOn, setCrashReportingOn] = useState(false);
   useEffect(() => {
     isCrashReportingEnabled().then(setCrashReportingOn);
@@ -1084,7 +996,6 @@ function PrivacyTab() {
         />
       </SettingsSection>
 
-      {/* M1 — Crash reporting opt-in (GDPR Art. 6(1)(a)). Default OFF. */}
       <SettingsSection title="Crash reporting">
         <Row
           icon="alert-triangle"
@@ -1114,7 +1025,6 @@ function AboutTab() {
   const { accent, accentSubtle } = useAccent();
   const demoGuard = useDemoGuard();
 
-  // Feedback form state.
   const [open, setOpen]         = useState(false);
   const [category, setCategory] = useState<FeedbackCategory>('bug');
   const [message, setMessage]   = useState('');
@@ -1123,10 +1033,7 @@ function AboutTab() {
   const [done, setDone]         = useState(false);
 
   const openForm = useCallback(() => {
-    // SECURITY (M1) — block the shared demo account from sending feedback.
     if (!demoGuard('Sending feedback')) return;
-    // Reset on open (not on close) so the success view doesn't flash back to
-    // the empty form during the modal's fade-out animation.
     setCategory('bug');
     setMessage('');
     setBusy(false);
@@ -1164,13 +1071,11 @@ function AboutTab() {
       </SettingsSection>
 
       <SettingsSection title="Legal">
-        {/* TODO: update URL once legal docs are hosted */}
         <Row
           icon="file-text"
           label="Terms of service"
           onPress={() => Linking.openURL('https://repmi.co.uk/terms')}
         />
-        {/* TODO: update URL once legal docs are hosted */}
         <Row
           icon="shield"
           label="Privacy policy"
@@ -1179,13 +1084,11 @@ function AboutTab() {
         />
       </SettingsSection>
 
-      {/* Feedback / bug report form — submits to Supabase via submit_feedback(). */}
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={s.fbKav}
         >
-          {/* Tap the dim backdrop to dismiss (matches the report modal). */}
           <Pressable style={s.modalOverlay} onPress={() => setOpen(false)}>
             <Pressable style={s.modalCard} onPress={() => {}}>
             {done ? (
@@ -1300,9 +1203,6 @@ export default function SettingsScreen() {
     ? { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' as const }
     : null;
   const pillX = useRef(new Animated.Value(0)).current;
-  // Horizontal pager state — translateX drives the full-width row of
-  // tab panes; tabIndexRef gives the gesture handler stable access to
-  // the current index without re-creating the PanResponder closure.
   const translateX = useRef(new Animated.Value(0)).current;
   const tabIndexRef = useRef(0);
   const dragStartValue = useRef(0);
@@ -1336,8 +1236,6 @@ export default function SettingsScreen() {
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (_e, gs) => {
-        // Horizontal-dominant + minimum displacement so vertical
-        // scrolling inside each tab still wins.
         const horizontal = Math.abs(gs.dx) > Math.abs(gs.dy) * 1.8 && Math.abs(gs.dx) > 8;
         isHorizontal.current = horizontal;
         return horizontal;
@@ -1350,8 +1248,6 @@ export default function SettingsScreen() {
         if (!isHorizontal.current) return;
         const idx = tabIndexRef.current;
         let dx = gs.dx;
-        // Rubber-band past the first/last tab edges instead of letting
-        // them drift off-screen.
         if ((idx === 0 && dx > 0) || (idx === TAB_COUNT - 1 && dx < 0)) dx *= 0.15;
         translateX.setValue(dragStartValue.current + dx);
       },
@@ -1395,9 +1291,6 @@ export default function SettingsScreen() {
         ))}
       </View>
 
-      {/* Swipeable pager — all 5 tabs sit in a horizontal row of
-          `SCREEN_W * TAB_COUNT` width; translateX shifts the row so
-          one pane is on-screen at a time. */}
       <View style={{ flex: 1, overflow: 'hidden' }} {...panResponder.panHandlers}>
         <Animated.View
           style={{
@@ -1477,7 +1370,6 @@ const s = StyleSheet.create({
     color: colors.highlight,
   },
   tabLabelActive: {
-    // NOTE: unused dead style; module-scope inline can't react to theme.
     color: '#00FA9A',
   },
 

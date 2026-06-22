@@ -1,5 +1,3 @@
-// src/components/features/workout/Shared/PhaseExercisePickerModal.tsx
-
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Modal,
@@ -355,7 +353,6 @@ export const PHASE_CATEGORIES: PhaseCategory[] = [
   },
 ];
 
-// Flat lookup: exercise name → category (for mode auto-select)
 const EXERCISE_CATEGORY_MAP = new Map<string, PhaseCategory>();
 for (const cat of PHASE_CATEGORIES) {
   for (const item of cat.items) {
@@ -464,7 +461,6 @@ export default function PhaseExercisePickerModal({
           <View style={pickerStyles.pickerHandle} />
           <Text style={pickerStyles.pickerTitle}>Select Exercise</Text>
 
-          {/* Category dropdown — single filter, mirrors the main workout picker */}
           <View style={pickerStyles.filterRow}>
             <Pressable
               style={[pickerStyles.dropdown, activeCategory !== null && pickerStyles.dropdownActive, activeCategory !== null && { borderColor: accent }]}
@@ -641,7 +637,6 @@ const pickerStyles = StyleSheet.create({
     paddingVertical: 8,
   },
   dropdownActive: {
-    // borderColor applied inline via accent hook
   },
   dropdownLabel: {
     fontSize: 10,
@@ -664,7 +659,6 @@ const pickerStyles = StyleSheet.create({
     letterSpacing: 0.2,
   },
   dropdownValueActive: {
-    // color applied inline via accent hook
   },
   clearButton: {
     width: 28,
@@ -703,7 +697,6 @@ const pickerStyles = StyleSheet.create({
   },
   dropdownOptionTextActive: {
     fontWeight: '700',
-    // color applied inline via accent hook
   },
   searchInput: {
     width: '100%',

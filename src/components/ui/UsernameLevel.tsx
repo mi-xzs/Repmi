@@ -4,7 +4,7 @@ import { View, Text, StyleSheet } from 'react-native';
 type UsernameLevelProps = {
   username: string;
   level: number;
-  style?: object; // optional extra styling
+  style?: object;
 };
 
 export const UsernameLevel: React.FC<UsernameLevelProps> = ({

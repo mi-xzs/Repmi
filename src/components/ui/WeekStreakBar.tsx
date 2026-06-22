@@ -1,4 +1,3 @@
-// src/components/ui/WeekStreakBar.tsx
 import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, AccessibilityInfo } from 'react-native';
 import Animated, {
@@ -20,11 +19,10 @@ import { dayKey } from '../../utils/analyticsHelpers';
 
 const DAY_LABELS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
-// Returns the Monday of the current week
 function getWeekStart(): Date {
   const today = new Date();
-  const dow = today.getDay(); // 0 = Sun
-  const diff = dow === 0 ? -6 : 1 - dow; // shift so week starts Monday
+  const dow = today.getDay();
+  const diff = dow === 0 ? -6 : 1 - dow;
   const monday = new Date(today);
   monday.setDate(today.getDate() + diff);
   monday.setHours(0, 0, 0, 0);
@@ -40,7 +38,6 @@ function getCurrentWeekDays(): Date[] {
   });
 }
 
-// Pulses today's untrained dot — subtle nudge, gated by ReduceMotion.
 function TodayDot({ reduceMotion }: { reduceMotion: boolean }) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -112,7 +109,7 @@ export function WeekStreakBar() {
         for (const s of sessions) trained.add(dayKey(new Date(s.date)));
         setTrainedKeys(trained);
       })
-      .catch(() => { /* non-critical UI */ });
+      .catch(() => {});
     return () => { cancelled = true; };
   }, [userId]));
 
@@ -184,10 +181,10 @@ const styles = StyleSheet.create({
     backgroundColor: colors.button2,
   },
   dotTrained: {
-    backgroundColor: colors.RadarChart, // green accent
+    backgroundColor: colors.RadarChart,
   },
   dotToday: {
-    backgroundColor: colors.button1, // slightly brighter than inactive for today
+    backgroundColor: colors.button1,
   },
 });
 

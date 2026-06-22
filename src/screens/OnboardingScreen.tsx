@@ -442,7 +442,6 @@ export default function OnboardingScreen() {
         cover_url: null,
       });
     } catch {
-      // Profile can be completed later from the Profile tab
     } finally {
       setLoading(false);
     }

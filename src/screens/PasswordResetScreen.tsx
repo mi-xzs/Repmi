@@ -1,9 +1,3 @@
-// src/screens/PasswordResetScreen.tsx
-//
-// H2 — Step 1 of password reset: collect email, ask Supabase to send a
-// reset link. The link returns the user to PasswordResetConfirmScreen
-// via the `repmi://auth/reset` deep link.
-
 import React, { useState } from 'react';
 import {
   View,
@@ -18,17 +12,6 @@ import {
 import * as Linking from 'expo-linking';
 import { supabase } from '../services/supabase';
 
-// The redirect URL Supabase appends the recovery tokens to. MUST match
-// an entry in Supabase Dashboard → Auth → URL Configuration → Redirect
-// URLs, otherwise Supabase silently falls back to the Site URL and
-// strips the tokens (the user ends up on bare repmi.co.uk).
-//
-// Web: hard-code the production origin so it's bit-for-bit identical
-// to the allowlist entry. Expo's Linking.createURL on web can produce
-// subtly different shapes (trailing slash, hash-based URL) depending
-// on how it's configured, which historically broke matching.
-// Native: keep the deep-link path so iOS/Android open the app
-// directly via the repmi:// scheme.
 const PRODUCTION_RESET_URL = 'https://repmi.co.uk/auth/reset';
 import { colors } from '../theme/colors';
 import { useAccent } from '../services/SettingsContext';
@@ -49,18 +32,6 @@ export default function PasswordResetScreen({ navigation }: any) {
     }
     setLoading(true);
     setError('');
-    // ALWAYS use the production https URL — regardless of platform.
-    // Reasons:
-    //   - Email clients (Gmail web/iOS, Outlook) refuse to make
-    //     custom-scheme links (`repmi://`) clickable. The user would
-    //     see broken/plain text in the email body.
-    //   - Cross-device flow: a user requests reset on their phone but
-    //     opens the email on a laptop — only https:// links survive
-    //     that hop.
-    //   - On native with App Links / Universal Links verified
-    //     (.well-known files in public/), Android/iOS auto-route the
-    //     https URL to the installed app. Without the app installed,
-    //     the user gets the web flow as a clean fallback.
     const redirectTo = PRODUCTION_RESET_URL;
     const { error: err } = await supabase.auth.resetPasswordForEmail(
       email.trim(),
@@ -71,8 +42,6 @@ export default function PasswordResetScreen({ navigation }: any) {
       logError('auth.passwordReset.send.failed', { code: (err as { code?: string }).code });
       setError(mapAuthError(err));
     } else {
-      // Defensively show "sent" even if the email doesn't exist — leaking
-      // account existence via reset-email is the wrong default.
       setSent(true);
     }
   }

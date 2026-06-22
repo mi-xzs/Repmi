@@ -42,9 +42,6 @@ const RPE_LABELS: Record<number, { short: string; description: string }> = {
 
 // ─── Colour helpers ───────────────────────────────────────────────────────────
 
-// Monochrome accent scale: rating 1 = full brightness, rating 10 = most dim.
-// Base hex must be a #RRGGBB string (6 chars after the hash) so the alpha
-// suffix produces a valid #RRGGBBAA.
 function getRpeColorHex(rating: number, baseHex: string): string {
   const opacities = ['FF', 'C5', 'B0', '9D', '8A', '77', '63', '50', '3D', '2A'];
   const op = opacities[Math.max(0, Math.min(9, rating - 1))];
@@ -93,13 +90,11 @@ export default function RPEPrompt({
     }
   }, [visible]);
 
-  // Label fade in when selection changes
   useEffect(() => {
     if (selected !== null) {
       labelAnim.setValue(0);
       Animated.timing(labelAnim, { toValue: 1, duration: 200, useNativeDriver: true }).start();
 
-      // Pulse the selected pip
       Animated.sequence([
         Animated.timing(pulseAnim, { toValue: 1.18, duration: 100, useNativeDriver: true }),
         Animated.timing(pulseAnim, { toValue: 1,    duration: 120, useNativeDriver: true }),
@@ -113,7 +108,6 @@ export default function RPEPrompt({
     if (selected === null || confirmed) return;
     setConfirmed(true);
 
-    // Check animation then submit
     Animated.timing(checkAnim, { toValue: 1, duration: 350, useNativeDriver: true }).start(() => {
       setTimeout(() => {
         onSubmit({
@@ -282,7 +276,6 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 28,
     paddingBottom: Platform.OS === 'ios' ? 40 : 28,
     paddingHorizontal: 24,
-    // Subtle top border glow
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.07)',
     shadowColor: '#000',

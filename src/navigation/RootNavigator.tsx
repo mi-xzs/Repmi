@@ -71,7 +71,7 @@ export default function RootNavigator() {
         <Root.Screen name="Onboarding" component={OnboardingScreen} />
       ) : (
         <>
-          <Root.Screen name="Main" component={TabNavigator} /
+          <Root.Screen name="Main" component={TabNavigator} />
           <Root.Screen
             name="UserProfile"
             component={UserProfileScreen}

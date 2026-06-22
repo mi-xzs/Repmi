@@ -1,9 +1,3 @@
-// src/services/SettingsContext.tsx
-//
-// Holds the per-user, cross-device preferences that previously lived in
-// AsyncStorage only (units, equipped title, favorite workouts).
-// Source of truth = Supabase `user_settings`. Local state is optimistic.
-
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
 import { useProfile } from './ProfileContext';
@@ -19,10 +13,6 @@ import {
 import { logError } from './logger';
 
 // ── Theme accent palette ─────────────────────────────────────────────────────
-//
-// Each cosmetic theme defines a triplet that mirrors the original
-// colors.accent / accentDim / accentSubtle shape so callers can drop
-// these in wherever they were reading from the colors module.
 
 interface AccentPalette {
   accent: string;
@@ -58,13 +48,9 @@ interface SettingsContextValue {
   openFollows: boolean;
   waterTrackerEnabled: boolean;
   // ── Store / cosmetics ────────────────────────────────────────
-  // Sum of coins spent in the store. availableCoins = coins (from
-  // CoinContext) - spentCoins. Persisted in user_settings.extra.
   spentCoins: number;
   ownedThemeIds: ReadonlySet<string>;
   equippedThemeId: string | null;
-  // Active accent palette — switches off the equipped cosmetic theme.
-  // Defaults to mint green when no theme (or the default theme) is equipped.
   accent: string;
   accentDim: string;
   accentSubtle: string;
@@ -78,12 +64,8 @@ interface SettingsContextValue {
   setPublicProfile: (v: boolean) => void;
   setOpenFollows: (v: boolean) => void;
   setWaterTrackerEnabled: (v: boolean) => void;
-  // Atomic unlock — bumps spentCoins by `price` and adds `themeId`
-  // to the owned set in a single update so the two stay in sync.
   unlockTheme: (themeId: string, price: number) => void;
   equipTheme: (themeId: string | null) => void;
-  // Resets spentCoins to 0 — restores all spent coins to the
-  // wallet. Owned themes are kept; this is a refund, not a reset.
   refundAllCoins: () => void;
 }
 
@@ -102,7 +84,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     if (authLoading) return;
 
     if (!userId) {
-      // No user — keep defaults so the UI can render.
       setSettings(DEFAULT_SETTINGS);
       setIsLoaded(true);
       return;
@@ -112,12 +93,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       try {
-        // migrateSettingsFromAsyncStorage runs once, then fetches the merged row.
         const merged = await migrateSettingsFromAsyncStorage(userId);
         if (!cancelled) setSettings(merged);
       } catch (e) {
         logError('settings.load.failed', { name: (e as Error)?.name });
-        // Try a plain fetch as a fallback in case migration errored.
         try {
           const remote = await fetchSettings(userId);
           if (!cancelled) setSettings(remote);
@@ -168,9 +147,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     });
   }, [userId]);
 
-  // C1 — write to profiles.is_public_profile (the column RLS reads).
-  // The legacy user_settings.extra.publicProfile field is intentionally
-  // not touched any more; it was a no-op the whole time it shipped.
   const setPublicProfile = useCallback((v: boolean) => {
     if (!userId) return;
     updateProfile({ is_public_profile: v }).catch(e =>
@@ -199,7 +175,6 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     setSettings(prev => {
       const prevSpent = (prev.extra?.spentCoins as number | undefined) ?? 0;
       const prevOwned = (prev.extra?.ownedThemes as string[] | undefined) ?? [];
-      // Idempotent — re-unlocking an already-owned theme is a no-op.
       if (prevOwned.includes(themeId)) return prev;
       const next = {
         ...prev,
@@ -246,16 +221,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     [favoriteSet],
   );
 
-  // C1 — read from profiles.is_public_profile (server-side flag RLS
-  // gates on). While the profile is still loading we default to FALSE
-  // (privacy-preferring) so the toggle never briefly appears "on" for a
-  // private user.
   const publicProfile = profile?.is_public_profile ?? false;
   const openFollows   = (settings.extra?.openFollows   as boolean | undefined) ?? true;
   const waterTrackerEnabled = (settings.extra?.waterTrackerEnabled as boolean | undefined) ?? true;
 
-  // Store / cosmetics — derived from the JSONB extra blob so we
-  // don't need a schema migration just to ship the dummy store.
   const spentCoins = (settings.extra?.spentCoins as number | undefined) ?? 0;
   const equippedThemeId =
     (settings.extra?.equippedThemeId as string | null | undefined) ?? null;
@@ -308,12 +277,6 @@ export function useSettings(): SettingsContextValue {
   return ctx;
 }
 
-/**
- * Returns the active accent palette derived from the equipped cosmetic theme.
- * Defaults to mint green when no theme is equipped or the equipped theme is
- * the default. Components that show the app's primary "green" should read
- * from this hook so they swap when the user equips Crimson / Pink.
- */
 export function useAccent(): AccentPalette {
   const { accent, accentDim, accentSubtle } = useSettings();
   return { accent, accentDim, accentSubtle };

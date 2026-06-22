@@ -29,7 +29,6 @@ const PICKER_H = ITEM_H * VISIBLE;
 const MINUTES = Array.from({ length: 10 }, (_, i) => i);
 const SECONDS = [0, 5, 10, 15, 20, 30, 45];
 
-// On web the drum wheels are awkward — let min/sec be typed directly.
 const isWeb = Platform.OS === 'web';
 
 // ─── Drum wheel ─────────────────────────────────────────────
@@ -52,12 +51,6 @@ function DrumWheel({ items, initialIndex, label, onSelect }: DrumWheelProps) {
     scrollRef.current?.scrollTo({ y: initialIndex * ITEM_H, animated: false });
   }, [initialIndex]);
 
-  // Commit on every scroll frame. snapToInterval handles snapping natively
-  // (and on web via CSS scroll-snap), so we do NOT call scrollTo from a
-  // scroll-end handler — calling scrollTo({animated:true}) during an already
-  // in-flight momentum scroll re-enters the scroll responder and leaves the
-  // wheel unable to accept further gestures, which breaks the whole modal
-  // after the first scroll.
   const handleScroll = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       const i = Math.round(e.nativeEvent.contentOffset.y / ITEM_H);
@@ -149,8 +142,6 @@ export default function AddRestTimerButton({
   const draftMin = useRef(value !== undefined ? Math.floor(value / 60) : 1);
   const draftSec = useRef(value !== undefined ? value % 60 : 30);
 
-  // Web: typed min/sec, kept in sync with the draft refs that handleConfirm
-  // reads. Reset to the current value each time the modal opens.
   const [minStr, setMinStr] = useState(String(draftMin.current));
   const [secStr, setSecStr] = useState(String(draftSec.current));
   useEffect(() => {

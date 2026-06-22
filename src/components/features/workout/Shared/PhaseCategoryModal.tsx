@@ -1,5 +1,3 @@
-// src/components/features/workout/Shared/PhaseCategoryModal.tsx
-
 import React from 'react';
 import {
   Modal,
@@ -138,7 +136,6 @@ const styles = StyleSheet.create({
   },
   cellPressed: {
     backgroundColor: colors.button3,
-    // borderColor applied inline via accent hook
   },
   iconWrap: {
     width: 42,

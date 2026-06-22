@@ -1,4 +1,3 @@
-// src/screens/HomeScreen.tsx
 import React, { useCallback, useRef, useState } from 'react';
 import {
   View,
@@ -117,8 +116,6 @@ interface SwipeableWorkoutCardProps {
   allRefs: React.MutableRefObject<(Swipeable | null)[]>;
   refIndex: number;
   enterIndex: number;
-  // On wide web the cards lay out in a grid; this sizes each card to a
-  // grid cell. Undefined on mobile (full-width stacked).
   containerStyle?: StyleProp<ViewStyle>;
 }
 
@@ -291,7 +288,6 @@ function ImportLinkInput({ onImport }: { onImport: (link: string) => Promise<voi
 function HomeSkeleton() {
   return (
     <Screen>
-      {/* Header silhouette — username + level pill */}
       <View style={styles.skeletonHeader}>
         <Skeleton width={44} height={44} radius={22} />
         <View style={{ flex: 1, gap: 6 }}>
@@ -300,7 +296,6 @@ function HomeSkeleton() {
         </View>
       </View>
 
-      {/* Week streak bar silhouette — 7 day dots */}
       <View style={styles.skeletonWeekBar}>
         {Array.from({ length: 7 }).map((_, i) => (
           <Skeleton key={i} width={28} height={28} radius={14} />
@@ -331,9 +326,6 @@ export default function HomeScreen() {
   const { favoriteWorkoutIds: favorites } = useSettings();
   const [refreshKey, setRefreshKey] = React.useState(0);
 
-  // On wide web viewports, lay workout cards out in a horizontal wrapping
-  // grid instead of a vertical stack. `gridStyle`/`cardStyle` are undefined
-  // on mobile, so the phone UI keeps its full-width vertical list.
   const { isWide } = useResponsive();
   const gridStyle = isWide ? styles.cardGrid : undefined;
   const cardStyle = isWide ? styles.cardItem : undefined;
@@ -353,8 +345,6 @@ export default function HomeScreen() {
 
   const handleShare = async (workout: any) => {
     try {
-      // SECURITY (M3) — `shared_by` is now resolved server-side from the
-      // authenticated user's profile, so no username is passed here.
       const link = await shareWorkout(workout);
       await Share.share({
         message: `Check out my workout "${workout.workoutName}"!\n${link}`,
@@ -402,7 +392,6 @@ export default function HomeScreen() {
     return <HomeSkeleton />;
   }
 
-  // Partition workouts — adjust once you have an `imported` flag on WorkoutData
   const myWorkouts = workouts.filter((w) => !w.imported);
   const importedWorkouts = workouts.filter((w) => w.imported);
 
@@ -547,9 +536,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
 
-  // Wide-web only: lay workout cards out in a horizontal wrapping grid.
-  // `cardItem` sizes each card to a fixed cell so they flow left-to-right
-  // and wrap; more columns appear as the content column gets wider.
   cardGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

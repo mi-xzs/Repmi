@@ -1,5 +1,3 @@
-
-// src/screens/ProfileScreen.tsx
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
@@ -63,15 +61,11 @@ function formatTonnes(kg: number): string {
   return `${t.toFixed(2)}T`;
 }
 
-// Switch heavy lifts to tonnes so the inline meta row doesn't overflow on small screens.
 function formatVolumeShort(kg: number): string {
   if (kg >= 10000) return formatTonnes(kg);
   return `${Math.round(kg).toLocaleString()} KG`;
 }
 
-// Lifetime-stat volume: stays in KG until it crosses 1,000,000 — only
-// then switching to tonnes. Below the threshold the long-press modal
-// surfaces the tonne conversion on demand.
 function formatTotalVolume(kg: number): string {
   if (kg >= 1_000_000) return formatTonnes(kg);
   return `${Math.round(kg).toLocaleString()} KG`;
@@ -90,7 +84,6 @@ function StatPill({
   icon: string;
   onLongPress?: () => void;
 }) {
-  // Bigger pills on wide web; mobile keeps the compact baseline.
   const { isWide } = useResponsive();
   const containerStyle = isWide
     ? [pillStyles.container, { padding: 20, gap: 8, borderRadius: 14 }]
@@ -148,11 +141,7 @@ function WorkoutCalendar({ sessions }: { sessions: WorkoutSession[] }) {
   const { width: screenWidth } = useWindowDimensions();
   const { isWide } = useResponsive();
   const scrollRef = useRef<ScrollView>(null);
-  // Cap to the content column on wide web so the calendar fits the column.
   const visibleWidth = getContentWidth(screenWidth) - (16 * 2 + 14 * 2);
-  // The calendar shows ~52 weeks (180d before + 180d after today). On wide
-  // web we size cells so the whole ~52-column grid spans the container with
-  // no horizontal scroll. Mobile keeps the original compact 11px cells.
   const WEEK_COLS = 52;
   const GAP = isWide ? 4 : 3;
   const CELL = isWide
@@ -315,13 +304,11 @@ const ProfileScreen: React.FC = () => {
   const [nameInput,    setNameInput]    = useState('');
   const [followers,    setFollowers]    = useState(0);
   const [following,    setFollowing]    = useState(0);
-  // Follow-list modal — null = closed, otherwise which list to show.
   const [followListMode, setFollowListMode] = useState<'followers' | 'following' | null>(null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingCover,  setUploadingCover]  = useState(false);
   const demoGuard = useDemoGuard();
   const [volumeModalOpen, setVolumeModalOpen] = useState(false);
-  // Incoming follow requests (private accounts) — drives the inbox badge.
   const [pendingRequests, setPendingRequests] = useState(0);
 
   const pickImage = useCallback(async (
@@ -341,10 +328,6 @@ const ProfileScreen: React.FC = () => {
     if (result.canceled || !result.assets[0] || !session?.user.id) return;
     setUploading(true);
     try {
-      // H6 — uploadProfileImage now returns { url, path }. We stamp both
-      // on the profile: the signed URL for immediate render, and the
-      // raw path so future loads can mint a fresh signed URL when the
-      // 1-hour TTL elapses (handled in ProfileContext on next fetch).
       const out = await uploadProfileImage(session.user.id, bucket, result.assets[0].uri);
       if (out) {
         const pathKey = profileKey === 'avatar_url' ? 'avatar_path' : 'cover_path';
@@ -388,8 +371,6 @@ const ProfileScreen: React.FC = () => {
           setFollowing(counts.following);
         })
         .catch(() => {});
-      // Refresh on focus so the badge updates after the user returns from
-      // the requests inbox (where they may have cleared some).
       fetchPendingRequestCount()
         .then(setPendingRequests)
         .catch(() => {});
@@ -401,10 +382,6 @@ const ProfileScreen: React.FC = () => {
   const commitName = () => {
     setEditingName(false);
     if (!nameInput.trim()) return;
-    // SECURITY (C1) — block rename in demo mode. The 30-day server-side
-    // rate-limit means one visitor could otherwise lock the demo handle
-    // to an arbitrary string for a month. The server trigger backstops
-    // this if the client guard is bypassed.
     if (!demoGuard('Renaming the demo account')) return;
     updateProfile({ username: nameInput.trim() });
   };
@@ -414,10 +391,6 @@ const ProfileScreen: React.FC = () => {
   const totalSessions  = allSessions.length;
   const totalDuration  = allSessions.reduce((a, s) => a + s.duration, 0);
 
-  // One pass through sessions for the four set-derived totals + PRs.
-  // PRs walk sessions chronologically so a new heaviest weight is
-  // counted once per exercise (first lift doesn't count — no prior
-  // baseline). Warm-ups/cooldowns excluded throughout.
   const { totalVolume, totalReps, totalSets, prCount } = useMemo(() => {
     let totalVolume = 0;
     let totalReps = 0;
@@ -497,8 +470,7 @@ const ProfileScreen: React.FC = () => {
     <View style={[styles.root, rootWideStyle]}>
       <ScrollView showsVerticalScrollIndicator={false}>
 
-        {/* ── Cover + Avatar ── avatar straddles the cover's bottom edge ── */}
-        {/* Taller cover on web (360 vs 220 mobile baseline). */}
+        {/* ── Cover + Avatar ── */}
         <View style={[styles.coverContainer, isWide && { height: 360 }]}>
           <TouchableOpacity
             style={[styles.coverTap, isWide && { height: 360 }]}
@@ -515,7 +487,6 @@ const ProfileScreen: React.FC = () => {
             }
           </TouchableOpacity>
 
-          {/* Absolutely positioned so half sits inside cover, half below */}
           <View style={styles.avatarAnchor}>
             <TouchableOpacity onPress={pickAvatar} activeOpacity={0.85} style={styles.avatarRing}>
               {profile?.avatar_url
@@ -545,9 +516,6 @@ const ProfileScreen: React.FC = () => {
             <Feather name="settings" size={18} color={colors.button1} />
           </TouchableOpacity>
 
-          {/* Follow-requests inbox — shows a count badge when there are
-              pending requests. Always tappable so users can review past
-              requests even at zero. */}
           <TouchableOpacity
             style={styles.requestsBtn}
             onPress={() => navigation.navigate('FollowRequests')}
@@ -601,8 +569,6 @@ const ProfileScreen: React.FC = () => {
                   {displayTitle}
                 </Text>
               </View>
-              {/* Coin badge moved to the Store tab — that's now the
-                  natural home for the wallet readout. */}
               {profile?.goal && GOAL_META[profile.goal] && (() => {
                 const g = GOAL_META[profile.goal!];
                 return (
@@ -637,8 +603,7 @@ const ProfileScreen: React.FC = () => {
             <Text style={styles.memberSince}>Member since {memberSince}</Text>
           </View>
 
-          {/* ── Key stats ── two rows of three. Volume stays in KG
-              until 1M kg; long-press surfaces the tonne conversion. */}
+          {/* ── Key stats ── */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Lifetime Stats</Text>
             <View style={styles.pillRow}>
@@ -666,7 +631,7 @@ const ProfileScreen: React.FC = () => {
             </View>
           </View>
 
-          {/* ── Bottom row (web): Top Workouts + Top Muscles side by side ── */}
+          {/* ── Bottom row (web) ── */}
           <View style={isWide ? { flexDirection: 'row', gap: 14, alignItems: 'stretch' } : undefined}>
             {/* Top Workouts */}
             <View style={[styles.section, isWide && { flex: 1 }]}>
@@ -754,9 +719,6 @@ const ProfileScreen: React.FC = () => {
         viewerId={session?.user.id}
         onClose={() => setFollowListMode(null)}
         onCountsChanged={() => {
-          // A follow/unfollow inside the modal may have changed the
-          // viewer's *following* count (if the viewer is the owner).
-          // Re-fetch so the header chips stay accurate.
           if (session?.user.id) {
             fetchFollowCounts(session.user.id)
               .then(counts => {
@@ -772,9 +734,6 @@ const ProfileScreen: React.FC = () => {
 };
 
 // ─── Follow-list modal (Instagram-style) ─────────────────────────────────────
-// Shows the owner's followers or following list. Each row carries a
-// Follow/Following toggle so the viewer can manage relationships
-// without leaving the modal. Closes via tap-outside or the X button.
 
 type FollowListMode = 'followers' | 'following';
 
@@ -795,7 +754,6 @@ function FollowListModal({
   const visible = mode !== null;
   const [users, setUsers] = useState<ProfileSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
-  // Per-user edge status toward the viewer: 'accepted' | 'pending' | absent.
   const [followEdges, setFollowEdges] = useState<Map<string, FollowEdgeStatus>>(new Map());
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const navigation = useNavigation<any>();
@@ -812,8 +770,6 @@ function FollowListModal({
           : await fetchFollowing(ownerId);
       if (cancelled) return;
       setUsers(list);
-      // Resolve the viewer's edge toward each user so every row can show
-      // the right button state (Follow / Requested / Following).
       if (viewerId && list.length > 0) {
         const edges = await fetchFollowEdges(viewerId, list.map(u => u.id));
         if (!cancelled) setFollowEdges(edges);
@@ -837,25 +793,23 @@ function FollowListModal({
     async (target: ProfileSearchResult) => {
       if (!viewerId || target.id === viewerId) return;
       const prevStatus = followEdges.get(target.id) ?? null;
-      const wasEngaged = prevStatus !== null; // following or requested
+      const wasEngaged = prevStatus !== null;
       setPendingIds(prev => new Set(prev).add(target.id));
 
       if (wasEngaged) {
-        // Unfollow / cancel request.
         setEdge(target.id, null);
         try {
           await unfollowUser(viewerId, target.id);
           onCountsChanged();
         } catch (e) {
           logError('profile.follow.toggle.failed', { name: (e as Error)?.name });
-          setEdge(target.id, prevStatus); // revert
+          setEdge(target.id, prevStatus);
         } finally {
           setPendingIds(prev => { const n = new Set(prev); n.delete(target.id); return n; });
         }
         return;
       }
 
-      // New follow/request — server decides accepted vs pending.
       try {
         const result = await followUser(viewerId, target.id);
         setEdge(target.id, result);
@@ -908,7 +862,7 @@ function FollowListModal({
               {users.map(u => {
                 const isSelf = u.id === viewerId;
                 const edge = followEdges.get(u.id) ?? null;
-                const engaged = edge !== null; // following or requested
+                const engaged = edge !== null;
                 const followLabel =
                   edge === 'accepted' ? 'Following'
                   : edge === 'pending' ? 'Requested'
@@ -918,9 +872,6 @@ function FollowListModal({
                   <Pressable
                     key={u.id}
                     onPress={() => {
-                      // Close the list modal before navigating —
-                      // otherwise the modal stays painted on top of
-                      // the view-profile screen.
                       onClose();
                       navigation.navigate('UserProfile', { userId: u.id });
                     }}
@@ -1097,7 +1048,7 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: 16,
-    paddingTop: 55,     // 43px avatar bottom half + 12px gap
+    paddingTop: 55,
   },
 
   // Cover + avatar header
@@ -1139,7 +1090,6 @@ const styles = StyleSheet.create({
     right: 0,
     padding: 6,
   },
-  // Follow-requests inbox button — sits just left of the settings gear.
   requestsBtn: {
     position: 'absolute',
     top: 8,
@@ -1162,10 +1112,9 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
   },
-  // avatar center sits exactly on the cover's bottom edge
   avatarAnchor: {
     position: 'absolute',
-    bottom: -43,        // half of 86px total avatar diameter
+    bottom: -43,
     left: 0,
     right: 0,
     alignItems: 'center',
@@ -1328,7 +1277,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 
-  // Workouts panel — single container, divided rows
+  // Workouts panel
   workoutsPanel: {
     backgroundColor: colors.container,
     borderRadius: 14,

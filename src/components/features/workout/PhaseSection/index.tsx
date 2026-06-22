@@ -1,5 +1,3 @@
-// src/components/features/workout/PhaseSection/index.tsx
-
 import React, { useState, useEffect, useMemo, useCallback, useRef, forwardRef, useImperativeHandle } from 'react';
 import { View, Text, Pressable, TextInput, StyleSheet, Modal, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
@@ -17,8 +15,6 @@ import PhaseExercisePickerModal from '../Shared/PhaseExercisePickerModal';
 import PhaseCategoryModal from '../Shared/PhaseCategoryModal';
 import RestTimerModal from '../../RestTimerModal';
 
-// On web, drum-wheel pickers are awkward — let reps and time be typed
-// directly. Mobile keeps the drum-wheel modals.
 const isWeb = Platform.OS === 'web';
 const webTimeInput = {
   minWidth: 38,
@@ -32,8 +28,6 @@ const webTimeInput = {
 
 export type PhaseKind = 'warmup' | 'cooldown';
 
-// Imperative API exposed to CreateWorkoutScreen so it can validate the phase
-// before saving and scroll to the first invalid row's view.
 export type PhaseSectionHandle = {
   validate: () => boolean;
   getFirstErrorView: () => View | null;
@@ -55,8 +49,6 @@ const MODE_ICON: Record<PhaseRowMode, keyof typeof Feather.glyphMap> = {
   distance: 'navigation',
 };
 
-// Backwards-compat: rows saved before `mode` existed get a sensible default
-// inferred from which fields they populated.
 function inferMode(row: ExerciseRowBase): PhaseRowMode {
   if (row.mode) return row.mode;
   if ((row.meters ?? 0) > 0) return 'distance';
@@ -78,8 +70,6 @@ function normalizeRows(rows: ExerciseRowBase[]): ExerciseRowBase[] {
   return rows.map((r) => (r.mode ? r : { ...r, mode: inferMode(r) }));
 }
 
-// Phase total: sum the planned duration of timed rows. Reps rows contribute 0
-// to the timeline; surfaced as a separate count.
 function computePhaseSummary(rows: ExerciseRowBase[]) {
   let totalSeconds = 0;
   let repsRows = 0;
@@ -99,7 +89,6 @@ function formatPhaseTotal(seconds: number): string {
   return `${m}m ${s}s`;
 }
 
-// A group of rows sharing a single category label.
 type SectionGroup = {
   category: string | undefined;
   rows: ExerciseRowBase[];
@@ -147,17 +136,10 @@ const PhaseSection = forwardRef<PhaseSectionHandle, Props>(function PhaseSection
       : [getDefaultRowForCategory(undefined)]
   );
 
-  // Latest exercises, assigned during render so it's current when the sync
-  // effect below runs. Also used by setTimeout callbacks that would
-  // otherwise capture a stale closure.
   const exercisesRef = useRef(exercises);
   exercisesRef.current = exercises;
 
   useEffect(() => {
-    // Skip our own echo: editing a row calls onChange(next); the parent
-    // stores that same array and passes it back as `value`. Rebuilding rows
-    // here on every keystroke would remount the controlled TextInputs and
-    // drop focus on web.
     if (value === exercisesRef.current) return;
     if (Array.isArray(value)) setExercises(normalizeRows(value));
   }, [value]);
@@ -173,26 +155,19 @@ const PhaseSection = forwardRef<PhaseSectionHandle, Props>(function PhaseSection
   const [selectedRowIndex, setSelectedRowIndex] = useState<number | null>(null);
   const [pickerDefaultCategory, setPickerDefaultCategory] = useState<string | undefined>(undefined);
 
-  // Long-press popup for changing a row's mode. Null = closed.
   const [modePopupRowIdx, setModePopupRowIdx] = useState<number | null>(null);
 
-  // Info popup explaining how the long-press mode toggle works.
   const [infoVisible, setInfoVisible] = useState(false);
 
-  // Per-row validation errors. Populated only when `validate()` is called by
-  // CreateWorkoutScreen on save; cleared as the user edits the offending cell.
   const [nameErrors, setNameErrors] = useState<boolean[]>([]);
   const [valueErrors, setValueErrors] = useState<boolean[]>([]);
 
-  // Refs to each rendered row's outer View so the parent can scroll precisely
-  // to the first invalid row after validate().
   const rowViewRefs = useRef<(View | null)[]>([]);
   const firstInvalidIdxRef = useRef<number | null>(null);
 
   const sections = useMemo(() => computeSections(exercises), [exercises]);
   const phaseSummary = useMemo(() => computePhaseSummary(exercises), [exercises]);
 
-  // First-undone row index — drives the next-row highlight during active mode.
   const nextUndoneIndex = useMemo(
     () => (active ? exercises.findIndex(r => !r.done) : -1),
     [active, exercises]
@@ -200,13 +175,11 @@ const PhaseSection = forwardRef<PhaseSectionHandle, Props>(function PhaseSection
 
   const isEditMode = !readonly && !active;
 
-  // Reset all errors when row count changes — add/delete invalidates indexing.
   useEffect(() => {
     setNameErrors([]);
     setValueErrors([]);
   }, [exercises.length]);
 
-  // Imperative validate() — runs on Save in CreateWorkoutScreen.
   useImperativeHandle(ref, () => ({
     validate(): boolean {
       let valid = true;
@@ -244,10 +217,6 @@ const PhaseSection = forwardRef<PhaseSectionHandle, Props>(function PhaseSection
   }));
 
   // ── Mutation helpers (spread-the-row to avoid shared-reference bugs).
-  // Read latest exercises via exercisesRef so we can compute the new array
-  // synchronously OUTSIDE the setExercises updater — calling onChange inside
-  // the updater would trigger a parent setState during this component's
-  // render, which React forbids.
   const updateRow = useCallback(<K extends keyof ExerciseRowBase>(
     index: number,
     key: K,
@@ -258,8 +227,6 @@ const PhaseSection = forwardRef<PhaseSectionHandle, Props>(function PhaseSection
     next[index] = { ...next[index], [key]: newValue };
     setExercises(next);
     onChange?.(next);
-    // Clear the value error for this row as soon as the user touches a value
-    // field. (Mode flips don't clear — the new mode may still be invalid.)
     if (key === 'minutes' || key === 'seconds' || key === 'reps' || key === 'meters') {
       setValueErrors(curr => {
         if (!curr[index]) return curr;
@@ -334,7 +301,6 @@ const PhaseSection = forwardRef<PhaseSectionHandle, Props>(function PhaseSection
     }
   };
 
-  // Open the rest-timer modal with the row's planned duration.
   const handleStartTimedRow = (row: ExerciseRowBase) => {
     const seconds = (row.minutes ?? 0) * 60 + (row.seconds ?? 0);
     if (seconds <= 0) return;
@@ -500,7 +466,6 @@ const PhaseSection = forwardRef<PhaseSectionHandle, Props>(function PhaseSection
 
   return (
     <View style={[styles.sectionContainer, { padding: 8 }]}>
-      {/* Phase title + duration summary + active-mode controls + delete */}
       <View style={styles.sectionHeaderRow}>
         <View style={phaseStyles.titleWrap}>
           <Text style={[styles.sectionTitle, { color: accent }]}>{config.title}</Text>
@@ -522,8 +487,6 @@ const PhaseSection = forwardRef<PhaseSectionHandle, Props>(function PhaseSection
         {isEditMode && onDelete && <DeleteButton onPress={onDelete} />}
       </View>
 
-      {/* Column headers — Mode and Exercise are nudged right so they align
-          visually with the Sets/Exercise columns of MainWorkout sections. */}
       <View style={styles.headerRow}>
         <Text style={[styles.headerText, { width: 40, marginLeft: 12, marginRight: 10 }]}>Mode</Text>
         <Text style={[styles.headerText, { flex: 1.3, marginLeft: 6, marginRight: 2 }]}>Exercise</Text>
@@ -532,8 +495,6 @@ const PhaseSection = forwardRef<PhaseSectionHandle, Props>(function PhaseSection
         {isEditMode && <Text style={{ width: 24 }} />}
       </View>
 
-      {/* Sections — each category badge sits ABOVE its bordered container,
-          so the label tags the group rather than living inside it. */}
       {sections.map((section, sectionIdx) => (
         <View
           key={`section-${sectionIdx}`}
@@ -575,7 +536,6 @@ const PhaseSection = forwardRef<PhaseSectionHandle, Props>(function PhaseSection
                   row.done && { opacity: 0.55 },
                 ]}
               >
-                {/* Mode icon — long-press in edit mode to choose; static in active/readonly */}
                 {isEditMode ? (
                   <Pressable
                     style={[phaseStyles.modeButton, { backgroundColor: cellBackground }]}
@@ -741,7 +701,7 @@ function InfoPopup({ visible, onClose }: { visible: boolean; onClose: () => void
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={popupStyles.overlay} onPress={onClose}>
-        <Pressable style={popupStyles.card} onPress={() => { /* swallow */ }}>
+        <Pressable style={popupStyles.card} onPress={() => {}}>
           <Text style={popupStyles.title}>How it works</Text>
 
           <View style={infoStyles.tipRow}>
@@ -769,8 +729,6 @@ function InfoPopup({ visible, onClose }: { visible: boolean; onClose: () => void
   );
 }
 
-// Long-press popup for selecting a row's mode. Three large pills — discoverable
-// and accessible, unlike a 28-pixel cycle button.
 const MODE_OPTIONS: { mode: PhaseRowMode; label: string }[] = [
   { mode: 'timed', label: 'Time' },
   { mode: 'reps', label: 'Reps' },
@@ -792,7 +750,7 @@ function ModePopup({
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={popupStyles.overlay} onPress={onClose}>
-        <Pressable style={popupStyles.card} onPress={() => { /* swallow */ }}>
+        <Pressable style={popupStyles.card} onPress={() => {}}>
           <Text style={popupStyles.title}>Row mode</Text>
           {MODE_OPTIONS.map((opt) => {
             const isActive = current === opt.mode;
@@ -938,7 +896,6 @@ const popupStyles = StyleSheet.create({
     marginBottom: 6,
   },
   optionActive: {
-    // backgroundColor applied inline via accent hook
   },
   optionLabel: {
     color: colors.titleText,

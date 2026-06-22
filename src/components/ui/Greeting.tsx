@@ -2,12 +2,12 @@ import React from 'react';
 import { Text, StyleSheet } from 'react-native';
 
 type GreetingProps = {
-  style?: object; // optional extra styling
+  style?: object;
 };
 
 export const Greeting: React.FC<GreetingProps> = ({ style }) => {
   const getGreeting = (): string => {
-    const hour = new Date().getHours(); // 0-23
+    const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Hello!';
     return 'Good Evening!';
@@ -18,7 +18,7 @@ export const Greeting: React.FC<GreetingProps> = ({ style }) => {
 
 const styles = StyleSheet.create({
   text: {
-    fontSize: 20, // ✅ set a normal readable font size
+    fontSize: 20,
     color: '#555',
     fontWeight: 'bold'
   },

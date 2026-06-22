@@ -1,13 +1,3 @@
-// src/screens/MFAChallengeScreen.tsx
-//
-// H2 — TOTP challenge after sign-in.
-//
-// Reached when `signInWithPassword` succeeds but
-// `getAuthenticatorAssuranceLevel()` reports `currentLevel=aal1,
-// nextLevel=aal2` — i.e. the user has at least one verified TOTP
-// factor enrolled and must satisfy it before the session is fully
-// trusted.
-
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
@@ -42,9 +32,6 @@ export default function MFAChallengeScreen() {
   }, []));
 
   useEffect(() => {
-    // Pick the first verified TOTP factor — that's the one the user
-    // can already satisfy. Unverified factors (enrolment-in-progress)
-    // shouldn't gate sign-in.
     supabase.auth.mfa.listFactors().then(({ data, error: err }) => {
       if (err) {
         logError('mfa.list.failed', { code: (err as { code?: string }).code });
@@ -53,7 +40,6 @@ export default function MFAChallengeScreen() {
       }
       const totp = (data?.totp ?? []).find(f => f.status === 'verified');
       if (!totp) {
-        // No verified TOTP factor — bail to the app.
         navigation.goBack();
         return;
       }
@@ -88,8 +74,6 @@ export default function MFAChallengeScreen() {
         setError(mapAuthError(vErr));
         return;
       }
-      // On success the session is now AAL2; auth-state listener will
-      // re-render the app stack. Pop this screen from the auth nav.
       navigation.goBack();
     } finally {
       setBusy(false);

@@ -1,18 +1,3 @@
-// src/screens/UserProfileScreen.tsx
-//
-// Read-only profile view for any non-self user. Layout mirrors the
-// owner's ProfileScreen tab so the page feels familiar — same cover
-// + avatar header, same badges, same Lifetime Stats grid, same
-// activity calendar shell, same top-workouts shell. Edit affordances
-// (cover/avatar picker, name input, settings cog) are replaced by
-// a back chevron and a Follow / Unfollow button.
-//
-// Stats come from the profiles cache (written by each user's own
-// XPContext.refresh), so this screen never reads raw workout_sessions
-// belonging to someone else. Sections that genuinely need raw session
-// data (calendar, top workouts, muscle radar) render empty states for
-// now and will fill in once those aggregates land in the cache too.
-
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
@@ -70,7 +55,6 @@ function formatTonnes(kg: number): string {
   return `${t.toFixed(2)}T`;
 }
 
-// Same threshold logic as ProfileScreen — KG until 1M, then tonnes.
 function formatTotalVolume(kg: number): string {
   if (kg >= 1_000_000) return formatTonnes(kg);
   return `${Math.round(kg).toLocaleString()} KG`;
@@ -142,12 +126,10 @@ export default function UserProfileScreen() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<ProfileStats | null>(null);
   const [counts, setCounts] = useState<{ followers: number; following: number }>({ followers: 0, following: 0 });
-  // 'none' = not following, 'pending' = request sent, 'accepted' = following.
   const [followState, setFollowState] = useState<'none' | FollowEdgeStatus>('none');
   const [pending, setPending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [volumeModalOpen, setVolumeModalOpen] = useState(false);
-  // H12 — kebab menu + report modal state.
   const [menuOpen, setMenuOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
   const [reportReason, setReportReason] = useState<ReportReason | null>(null);
@@ -174,11 +156,8 @@ export default function UserProfileScreen() {
 
   useEffect(() => { load(); }, [load]);
 
-  // H12 — Block & Report.
   const handleBlock = useCallback(() => {
     setMenuOpen(false);
-    // SECURITY (M1) — block in demo mode so a shared demo account
-    // can't be used to grief real users' block lists.
     if (!demoGuard('Blocking users')) return;
     Alert.alert(
       `Block ${profile?.username ?? 'this user'}?`,
@@ -203,8 +182,6 @@ export default function UserProfileScreen() {
 
   const openReport = useCallback(() => {
     setMenuOpen(false);
-    // SECURITY (M1) — block in demo mode so the shared account can't
-    // be used to file fake reports against real users.
     if (!demoGuard('Reporting users')) return;
     setReportOpen(true);
   }, [demoGuard]);
@@ -230,17 +207,12 @@ export default function UserProfileScreen() {
 
   const handleToggle = useCallback(async () => {
     if (!viewerId || isSelf) return;
-    // SECURITY (M1) — block in demo mode so the shared account can't
-    // be used to spam follow requests at real users.
     if (!demoGuard('Following users')) return;
     setPending(true);
     const prevState = followState;
-    // already engaged (following OR requested) → tapping clears it
     const wasEngaged = prevState !== 'none';
 
     if (wasEngaged) {
-      // Unfollow or cancel-request: only decrement the follower count if we
-      // were actually an accepted follower (a pending request never counted).
       const wasAccepted = prevState === 'accepted';
       setFollowState('none');
       if (wasAccepted) setCounts(c => ({ ...c, followers: c.followers - 1 }));
@@ -256,9 +228,6 @@ export default function UserProfileScreen() {
       return;
     }
 
-    // New follow/request — the server decides accepted vs pending based on the
-    // target's privacy. We can't predict it, so we don't optimistically bump
-    // the count; we apply the real result when it returns.
     try {
       const result = await followUser(viewerId, targetId);
       setFollowState(result);
@@ -297,15 +266,13 @@ export default function UserProfileScreen() {
   return (
     <View style={styles.root}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* ── Cover + Avatar ── mirrors ProfileScreen, just no pickers ── */}
+        {/* ── Cover + Avatar ── */}
         <View style={styles.coverContainer}>
           {profile.cover_url
             ? <Image source={{ uri: profile.cover_url }} style={styles.cover} />
             : <View style={styles.coverPlaceholder} />
           }
 
-          {/* Back chevron — sits where the cover edit badge sits on the
-              owner's view, so the top-right corner reads identically. */}
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             hitSlop={10}
@@ -315,7 +282,6 @@ export default function UserProfileScreen() {
             <Feather name="chevron-left" size={20} color="#fff" />
           </TouchableOpacity>
 
-          {/* H12 — kebab menu (hidden when viewing self). */}
           {!isSelf && (
             <TouchableOpacity
               onPress={() => setMenuOpen(true)}
@@ -327,7 +293,6 @@ export default function UserProfileScreen() {
             </TouchableOpacity>
           )}
 
-          {/* Avatar straddling the cover's bottom edge — same positioning */}
           <View style={styles.avatarAnchor}>
             <View style={styles.avatarRing}>
               {profile.avatar_url
@@ -345,7 +310,7 @@ export default function UserProfileScreen() {
         {/* ── Padded content ── */}
         <View style={styles.scroll}>
 
-          {/* Name + badges — name is static text, no edit affordance */}
+          {/* Name + badges */}
           <View style={styles.avatarSection}>
             <Text style={styles.name}>{profile.username}</Text>
 
@@ -380,10 +345,9 @@ export default function UserProfileScreen() {
               </View>
             </View>
 
-            {/* Follow / Unfollow — sits where "Member since" sits on the
-                owner's view. Hidden when viewing self. */}
+            {/* Follow / Unfollow */}
             {!isSelf && (() => {
-              const engaged = followState !== 'none'; // following or requested
+              const engaged = followState !== 'none';
               const label =
                 followState === 'accepted' ? 'FOLLOWING'
                 : followState === 'pending' ? 'REQUESTED'
@@ -423,7 +387,7 @@ export default function UserProfileScreen() {
             })()}
           </View>
 
-          {/* ── Key stats ── identical to ProfileScreen Lifetime Stats */}
+          {/* ── Key stats ── */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Lifetime Stats</Text>
             <View style={styles.pillRow}>
@@ -443,8 +407,7 @@ export default function UserProfileScreen() {
             </View>
           </View>
 
-          {/* ── Activity ── needs raw session dates which aren't in the
-              cache yet, so empty state for now. */}
+          {/* ── Activity ── */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Activity</Text>
             <View style={styles.calendarCard}>
@@ -455,8 +418,7 @@ export default function UserProfileScreen() {
             </View>
           </View>
 
-          {/* ── Top Workouts ── needs per-workout breakdown which isn't
-              cached. Empty state matches ProfileScreen's empty design. */}
+          {/* ── Top Workouts ── */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Top Workouts</Text>
             <View style={styles.emptyState}>
@@ -465,9 +427,7 @@ export default function UserProfileScreen() {
             </View>
           </View>
 
-          {/* ── Muscle focus radar ── needs exercise data per session.
-              Render the empty state of the existing chart for shape
-              parity with the owner's view. */}
+          {/* ── Muscle focus radar ── */}
           <View style={styles.section}>
             <RadarChart
               data={[]}
@@ -481,7 +441,7 @@ export default function UserProfileScreen() {
         </View>
       </ScrollView>
 
-      {/* Volume kg ↔ tonne conversion modal — matches ProfileScreen. */}
+      {/* Volume kg ↔ tonne conversion modal */}
       <Modal
         visible={volumeModalOpen}
         transparent
@@ -499,7 +459,6 @@ export default function UserProfileScreen() {
         </Pressable>
       </Modal>
 
-      {/* H12 — Block / Report kebab menu. */}
       <Modal
         visible={menuOpen}
         transparent
@@ -521,7 +480,6 @@ export default function UserProfileScreen() {
         </Pressable>
       </Modal>
 
-      {/* H12 — Report flow. */}
       <Modal
         visible={reportOpen}
         transparent
@@ -613,10 +571,10 @@ const styles = StyleSheet.create({
   },
   scroll: {
     paddingHorizontal: 16,
-    paddingTop: 55,     // 43px avatar bottom half + 12px gap (matches ProfileScreen)
+    paddingTop: 55,
   },
 
-  // Cover + avatar header — dimensions match ProfileScreen exactly
+  // Cover + avatar header
   coverContainer: {
     width: '100%',
     height: 220,
@@ -642,7 +600,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // avatar center sits exactly on the cover's bottom edge
   avatarAnchor: {
     position: 'absolute',
     bottom: -43,
@@ -673,7 +630,7 @@ const styles = StyleSheet.create({
     color: colors.highlight,
   },
 
-  // Name / info section — identical to ProfileScreen
+  // Name / info section
   avatarSection: {
     alignItems: 'center',
     marginBottom: 20,
@@ -765,7 +722,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
   },
 
-  // Sections — match ProfileScreen
+  // Sections
   section: {
     marginBottom: 20,
     gap: 10,
@@ -808,7 +765,7 @@ const styles = StyleSheet.create({
     color: colors.button1,
   },
 
-  // Volume conversion modal — same styling as ProfileScreen.
+  // Volume conversion modal
   modalBackdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
@@ -844,7 +801,6 @@ const styles = StyleSheet.create({
     color: colors.button1,
   },
 
-  // H12 — kebab button + Block/Report UI.
   kebabBtn: {
     position: 'absolute',
     top: 48,

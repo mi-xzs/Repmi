@@ -1,5 +1,3 @@
-// src/screens/AchievementsScreen.tsx
-
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   View,
@@ -86,27 +84,18 @@ import {
 } from '../utils/analyticsHelpers';
 
 // ─── Rarity tier system ──────────────────────────────────────
-//
-// Single-hue saturation ladder anchored on the project's brand
-// mint (#00FA9A). Rarity progresses from neutral → brand:
-// cool gray → warm gray → desaturated mint → accentDim → accent.
-// The brand owns the top two tiers. No foreign hues.
-//
-// Local-only color tokens — theme/colors.ts is NOT modified.
-// The Rarity type + rarityFromXP() live in xpService so coinService
-// can map achievement payouts off the same thresholds.
 
 interface RarityToken {
   key: Rarity;
   label: string;
-  stars: number; // 1–5 star indicator
-  color: string; // primary tint
-  glow: string; // outer glow color
-  gradient: [string, string, ...string[]]; // card backdrop gradient
+  stars: number;
+  color: string;
+  glow: string;
+  gradient: [string, string, ...string[]];
   borderActive: string;
   borderIdle: string;
-  ringOuter: string; // outer halo
-  particle: boolean; // floats particles
+  ringOuter: string;
+  particle: boolean;
 }
 
 const RARITY: Record<Rarity, RarityToken> = {
@@ -172,9 +161,6 @@ const RARITY: Record<Rarity, RarityToken> = {
   },
 };
 
-// Crimson rarity ladder — 5 reds, light pink-red → deep vivid crimson.
-// Mirrors the green ladder's brightness/saturation ramp so the visual
-// rhythm of the 5-tier system is preserved when Crimson is equipped.
 const RARITY_CRIMSON: Record<Rarity, RarityToken> = {
   common: {
     key: 'common',
@@ -238,7 +224,6 @@ const RARITY_CRIMSON: Record<Rarity, RarityToken> = {
   },
 };
 
-// Pink rarity ladder — soft pink → neon hot-pink, same ramp shape.
 const RARITY_PINK: Record<Rarity, RarityToken> = {
   common: {
     key: 'common',
@@ -302,10 +287,6 @@ const RARITY_PINK: Record<Rarity, RarityToken> = {
   },
 };
 
-// Theme-aware rarity hook. Returns the rarity palette matching the
-// equipped cosmetic theme — green by default, crimson reds, or pink.
-// Components reading RARITY[xxx] should use this hook instead when
-// the visual should swap with the cosmetic theme.
 function useThemedRarity(): Record<Rarity, RarityToken> {
   const { equippedThemeId } = useSettings();
   if (equippedThemeId === 'crimson') return RARITY_CRIMSON;
@@ -487,7 +468,6 @@ function AchievementCard({ achievement, index, onPress }: CardProps) {
     onPress(achievement);
   };
 
-  // Locked silhouette
   if (!unlocked) {
     return (
       <Reanimated.View
@@ -544,7 +524,6 @@ function AchievementCard({ achievement, index, onPress }: CardProps) {
     );
   }
 
-  // Unlocked gacha tile
   return (
     <Reanimated.View
       entering={FadeInDown.delay(index * 60)
@@ -556,10 +535,8 @@ function AchievementCard({ achievement, index, onPress }: CardProps) {
     >
       <Pressable onPress={handlePress} onPressIn={handlePressIn} onPressOut={handlePressOut}>
         <Reanimated.View style={pressStyle}>
-          {/* Outer glow halo */}
           <GlowHalo tier={tier} intense={tier.key === 'legendary' || tier.key === 'epic'} />
 
-          {/* Card body */}
           <View
             style={[cardStyles.card, { borderColor: tier.borderActive, shadowColor: tier.color }]}
           >
@@ -570,7 +547,6 @@ function AchievementCard({ achievement, index, onPress }: CardProps) {
               style={StyleSheet.absoluteFillObject}
             />
 
-            {/* Rarity ribbon top */}
             <View
               style={[
                 cardStyles.rarityRibbon,
@@ -582,11 +558,9 @@ function AchievementCard({ achievement, index, onPress }: CardProps) {
               </Text>
             </View>
 
-            {/* Particle layer for legendary */}
             {tier.particle && <LegendaryParticles color={tier.color} />}
 
             <View style={cardStyles.cardRow}>
-              {/* Icon orb */}
               <View
                 style={[
                   cardStyles.iconWrap,
@@ -794,7 +768,6 @@ function XPHeader({ equippedTitle }: { equippedTitle: string | null }) {
   const pct = Math.round(levelInfo.progress * 100);
   const displayTitle = equippedTitle ?? levelTitle.title;
 
-  // Ambient shimmer on level pill
   const shimmer = useSharedValue(0);
   useEffect(() => {
     shimmer.value = withRepeat(
@@ -942,12 +915,7 @@ function RarityFilterBar({
 }
 
 // ─── Leaderboard ───────────────────────────────────────────
-//
-// Rarity-driven ranking page. Mirrors the season hub aesthetic:
-// muted RPG palette, star-row rarity signals, ceremonial top-3,
-// gradient backdrops, optional legendary particles.
 
-// Rank → rarity mapping. Top 3 ceremonial, then taper down.
 function rankToRarity(rank: number): Rarity {
   if (rank <= 1) return 'legendary';
   if (rank <= 2) return 'epic';
@@ -957,10 +925,6 @@ function rankToRarity(rank: number): Rarity {
 }
 
 // ─── Avatar tile (rounded-square, rarity-bordered) ─────────
-//
-// Square profile tile with rarity color driving the border and
-// background tint. Shows the user's avatar image if provided,
-// otherwise their name initials in the rarity color.
 
 function formatXP(xp: number): string {
   if (xp >= 10000) return `${(xp / 1000).toFixed(1)}k`;
@@ -974,26 +938,12 @@ interface ShowcaseEntry {
   rank: 1 | 2 | 3;
   name: string;
   xp: number;
-  // Tier-of-the-moment for this entry (e.g. "Spartan", "Olympian").
-  // Surfaced under the name so the podium tells you WHAT KIND of
-  // athlete is up there, not just a number.
   title: string;
-  // Whether this entry represents the current user. Drives a
-  // small "YOU" pill on the avatar and an accent inset stroke,
-  // mirroring how YourStandingCard labels the user elsewhere.
   isYou: boolean;
 }
 
 // ─── Slot sub-pieces ──────────────────────────────────────
-// Each leaf owns a single visual responsibility so the orchestrator
-// (`TopShowcaseSlot`) stays declarative. Per design-taste pass:
-// three leaves instead of one 70-line function resists future taste
-// drift.
 
-// SlotAvatar — avatar tile + rank-1 ambient shimmer + rank-1 one-shot
-// impact glow + isYou inset accent stroke. The depth signal for the
-// winner lives entirely on the avatar (the card-level tint wash was
-// dropped per taste's "pick one of [wash, ring], not both" rule).
 function SlotAvatar({
   size,
   tier,
@@ -1014,9 +964,6 @@ function SlotAvatar({
   const ringRadius = Math.round(ringSize * 0.25);
   const innerRadius = Math.max(5, Math.round((size - 2) * 0.25));
 
-  // Perpetual shimmer on the rank-1 ring — slowed to 3000ms and
-  // widened to scale [0.96, 1.07] so it reads as regal breathing,
-  // not a layout glitch.
   const shimmer = useSharedValue(0);
   useEffect(() => {
     if (isFirst) {
@@ -1036,14 +983,11 @@ function SlotAvatar({
     ],
   }));
 
-  // One-shot impact glow — fires ~340ms after mount when the rank-1
-  // slot has just landed. Layered over the perpetual shimmer so the
-  // moment of impact reads as a brighter pop rather than a steady glow.
   const impact = useSharedValue(0);
   useEffect(() => {
     if (!isFirst) return;
     impact.value = withDelay(
-      460, // 180 entrance delay + 60 hold + 220 to peak of overshoot
+      460,
       withSequence(
         withTiming(1, { duration: 120, easing: Easing.out(Easing.cubic) }),
         withTiming(0, { duration: 240, easing: Easing.in(Easing.cubic) }),
@@ -1054,10 +998,6 @@ function SlotAvatar({
 
   return (
     <View style={[topShowcaseStyles.tileWrap, { height: ringSize }]}>
-      {/* Vertical spotlight column behind rank 1 — a thin gradient
-          stripe brightest where the avatar covers it, fading above
-          and below. Reads as a literal podium spotlight. Painted
-          before the avatar so the avatar masks the middle. */}
       {isFirst && (
         <View
           pointerEvents="none"
@@ -1116,9 +1056,6 @@ function SlotAvatar({
   );
 }
 
-// SlotIdentity — rarity ribbon, ordinal label, name, tier title.
-// Ranks 2/3 carry the same shape as rank 1 but with reduced ribbon
-// emphasis so the gold slot stays unambiguously dominant.
 function SlotIdentity({
   rank,
   name,
@@ -1138,8 +1075,6 @@ function SlotIdentity({
   const ordinal = rank === 1 ? '1ST' : rank === 2 ? '2ND' : '3RD';
   return (
     <View style={topShowcaseStyles.identity}>
-      {/* Rarity ribbon — mirrors AchievementCard ribbon vocabulary so
-          the podium reads as a sibling of the achievement tiles. */}
       <View
         style={[
           topShowcaseStyles.ribbon,
@@ -1181,9 +1116,6 @@ function SlotIdentity({
   );
 }
 
-// SlotXP — XP figure. Rank 1 scrubs 0 → target on mount via the
-// AnimatedTextInput trick (mirrors StandingPrimaryStat). Ranks 2/3
-// stay static — counter-up on all three would read as casino-busy.
 function SlotXP({
   target,
   tier,
@@ -1196,9 +1128,6 @@ function SlotXP({
   const count = useSharedValue(0);
   useEffect(() => {
     if (!isFirst) return;
-    // Delay until after the rank-1 landing has settled (180 entrance +
-    // 60 hold + 280 overshoot ≈ 520ms). The eye sees the avatar land,
-    // then the score register — choreography, not race.
     count.value = withDelay(
       520,
       withTiming(target, { duration: 520, easing: Easing.out(Easing.cubic) }),
@@ -1243,9 +1172,6 @@ function SlotXP({
   );
 }
 
-// TopShowcaseSlot — orchestration. Owns the entrance choreography
-// (manual landing for rank 1, layout animator for ranks 2/3) and the
-// press feedback. Composes the three leaves above.
 function TopShowcaseSlot({
   entry,
   avatarUrl,
@@ -1262,12 +1188,8 @@ function TopShowcaseSlot({
   const isFirst = entry.rank === 1;
   const isSecond = entry.rank === 2;
   const size = isFirst ? 72 : 52;
-  // Podium step on the 4-grid (16 / 28 instead of the old 18 / 28).
   const podiumOffset = isFirst ? 0 : isSecond ? 16 : 28;
 
-  // Press feedback — same scale + spring spec as AchievementCard so
-  // the podium reads as interactive in the same vocabulary as the
-  // rest of the rarity family.
   const press = useSharedValue(1);
   const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: press.value }] }));
   const onPressIn = useCallback(() => {
@@ -1280,11 +1202,6 @@ function TopShowcaseSlot({
     Haptics.selectionAsync().catch(() => {});
   }, []);
 
-  // Rank-1 manual landing — anticipation → impact → settle.
-  // Starts at translateY: -28 above its rest position, holds 60ms
-  // (so ranks 2/3 land first), then drops with a bezier overshoot
-  // and a spring settle. Paired with a Success haptic at the
-  // zero-crossing for a small ceremonial thud.
   const landY = useSharedValue(isFirst ? -28 : 0);
   const landOpacity = useSharedValue(isFirst ? 0 : 1);
   useEffect(() => {
@@ -1302,7 +1219,7 @@ function TopShowcaseSlot({
     );
     const t = setTimeout(() => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    }, 460); // entrance delay (180) + hold (60) + 220ms to overshoot peak
+    }, 460);
     return () => clearTimeout(t);
   }, [isFirst]);
   const landingStyle = useAnimatedStyle(() => ({
@@ -1310,8 +1227,6 @@ function TopShowcaseSlot({
     transform: [{ translateY: landY.value }],
   }));
 
-  // Rank 1 uses the manual landing style; ranks 2/3 use the layout
-  // animator (FadeInDown with the back-overshoot easing).
   const wrapperEntering = isFirst
     ? undefined
     : FadeInDown.delay(delay)
@@ -1348,17 +1263,8 @@ function TopShowcaseSlot({
   );
 }
 
-// PodiumShimmer — perpetual shine pass across the podium card.
-// Mirrors BannerShimmer (line ~2433) so the podium reads as a
-// sibling of the season banner: same skewed band, same gradient,
-// same timing. Pure transform + opacity — counts as one perpetual
-// loop in the podium region's budget.
 function PodiumShimmer() {
   const x = useSharedValue(-1);
-  // useFocusEffect + cancelAnimation pattern — restart the loop every
-  // time the screen regains focus so animations resume after tab
-  // switches, navigation away/back, or any state where Reanimated
-  // worklets may have stalled. Cleanup on blur prevents leaks.
   useFocusEffect(
     useCallback(() => {
       x.value = withRepeat(
@@ -1393,12 +1299,6 @@ function PodiumShimmer() {
   );
 }
 
-// PodiumSectionHeader — section header with a one-shot reveal sweep
-// and dot pulse on mount. Sits above the podium card and announces
-// the section into existence before the slot stagger fires.
-// Total reveal beat is ~520ms, parallel with the slot entries (the
-// dot punches at 240ms, the sweep crosses by 520ms, then the
-// rank-1 manual landing fires at ~640ms).
 function PodiumSectionHeader({
   count,
   mode,
@@ -1426,9 +1326,6 @@ function PodiumSectionHeader({
     );
   }, []);
 
-  // Sweep band traverses from off-left to off-right of the section.
-  // Width is approximated from SCREEN_WIDTH minus scroll padding
-  // (16 each side) — the section sits inside leaderboardStyles.scroll.
   const SWEEP_BAND_WIDTH = 120;
   const SWEEP_TRAVEL = SCREEN_WIDTH - 32;
   const sweepStyle = useAnimatedStyle(() => ({
@@ -1444,9 +1341,6 @@ function PodiumSectionHeader({
     ],
   }));
 
-  // Dot punches brighter then settles slightly above its idle opacity
-  // so the eye registers "something just happened here" without the
-  // section header becoming a perpetual fidget.
   const dotPulseStyle = useAnimatedStyle(() => ({
     opacity: interpolate(dotPulse.value, [0, 0.5, 1], [0.6, 1, 0.85], Extrapolation.CLAMP),
     transform: [
@@ -1457,9 +1351,6 @@ function PodiumSectionHeader({
   return (
     <View style={topShowcaseStyles.sectionHeaderWrap}>
       <View style={leaderboardStyles.sectionHeader}>
-        {/* Dot inherits the legendary-tier color so the section is
-            semantically tied to the rarity ladder (same hex as
-            colors.accent — no visual change, but loaded with meaning). */}
         <Reanimated.View
           style={[
             leaderboardStyles.sectionDot,
@@ -1471,15 +1362,8 @@ function PodiumSectionHeader({
         <View style={leaderboardStyles.sectionCountPill}>
           <Text style={leaderboardStyles.sectionCountText}>TOP {count}</Text>
         </View>
-        {/* Period toggle — pushed to the far right via marginLeft:'auto'
-            so it sits at the row's flex-end. Slide-only animation
-            mirrors the top-of-screen SwipeTabs indicator. */}
         <View style={{ marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <ModePillBar mode={mode} onChange={onModeChange} />
-          {/* Add Friend — user-plus icon next to the period toggle.
-              Opens a search modal where the user can find someone
-              by username and follow them. Same compact pill height
-              as the toggle so the row reads as one cluster. */}
           <Pressable
             onPress={() => {
               Haptics.selectionAsync().catch(() => {});
@@ -1495,9 +1379,6 @@ function PodiumSectionHeader({
           </Pressable>
         </View>
       </View>
-      {/* Sweep underline — a slim accent gradient band that crosses
-          the section header once on mount and then dies. Clipped by
-          the track's overflow:hidden so the band reads as in-bounds. */}
       <View pointerEvents="none" style={topShowcaseStyles.sweepTrack}>
         <Reanimated.View
           style={[topShowcaseStyles.sweepBand, { width: SWEEP_BAND_WIDTH }, sweepStyle]}
@@ -1526,35 +1407,14 @@ function TopThreeShowcase({
 
   return (
     <View style={topShowcaseStyles.card}>
-      {/* Single neutral backdrop — the rank-1 tint wash was dropped
-          (taste's depth-collapse argument: the slot-level glow ring
-          already carries the winner signal). Border tinted with the
-          legendary tier idle stroke so the card itself inherits a
-          quiet gold identity. */}
       <LinearGradient
         colors={[colors.container, colors.background]}
         start={{ x: 0, y: 0 }}
         end={{ x: 0, y: 1 }}
         style={StyleSheet.absoluteFillObject}
       />
-      {/* Background shine pass — same shimmer the season banner uses,
-          so the podium reads as part of the same surface family. */}
       <PodiumShimmer />
-      {/* Podium-step backdrops — three tier-colored zones rising from
-          the card's bottom edge, ordered [silver, gold, bronze] to
-          match the slot row above. Heights step like a real podium
-          (1st tallest, then 2nd, then 3rd) so the silhouette reads
-          even when content fades. */}
       <View style={topShowcaseStyles.podiumSteps} pointerEvents="none">
-        {/* Bottom-anchored monochrome-green pedestals. Three shades
-            on the same hue (~150°) with progressive lightness so the
-            podium reads as 3 distinct steps while staying inside the
-            brand mint ladder. Each pedestal is darker than the brand
-            mint #00FA9A so the mint content above (ribbons, ring,
-            rank-1 XP) keeps contrast against the colored backdrop.
-            Heights encoded in gradient start positions: rank 1
-            rises tallest (0.5), rank 2 shorter (0.6), rank 3 shortest
-            (0.7). */}
         <LinearGradient
           colors={['transparent', '#10704BCC']}
           locations={[0.6, 1]}
@@ -1578,7 +1438,6 @@ function TopThreeShowcase({
         />
       </View>
       <View style={topShowcaseStyles.row}>
-        {/* Rank 2 enters first (left), 3 second (right), 1 lands last (center, manual). */}
         <TopShowcaseSlot
           entry={second}
           avatarUrl={second.avatarUrl}
@@ -1603,37 +1462,20 @@ function TopThreeShowcase({
 }
 
 // ─── Podium redesign sandbox ───────────────────────────────
-//
-// New podium components rendered side-by-side with the existing
-// podium so we can eyeball them against the reference image before
-// committing. All inline; no real-data wiring. When the design is
-// approved, this block replaces TopThreeShowcase + its supporting
-// pieces; until then the existing podium stays untouched.
 
-// Pentagon / shield rank badge pinned to the top of each pillar.
-// Five-sided "home plate" shape with rounded top corners and a
-// V-point at the bottom. Rank 1 is taller, brighter, and stroked
-// in brand mint; ranks 2/3 are smaller and slightly subdued.
 function RankBadgePentagon({ rank, color }: { rank: 1 | 2 | 3; color: string }) {
   const isFirst = rank === 1;
-  // Near-square shield: rank 1 ~44×46, ranks 2/3 ~34×36. Shallow V
-  // (chevron of 6-8px) for a crisp medal-chip silhouette, not the
-  // earlier balloon-pin geometry.
   const w = isFirst ? 38 : 34;
   const h = isFirst ? 46 : 36;
   const vDepth = isFirst ? 8 : 6;
   const r = 8;
   const path = `M ${r} 0 L ${w - r} 0 Q ${w} 0 ${w} ${r} L ${w} ${h - vDepth} L ${w / 2} ${h} L 0 ${h - vDepth} L 0 ${r} Q 0 0 ${r} 0 Z`;
-  // Per-rank id so the two/three badge gradients don't collide on Defs.
   const strokeGradId = `badge-stroke-${rank}`;
 
   return (
     <View style={{ width: w, height: h, alignItems: 'center', justifyContent: 'flex-start' }}>
       <Svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
         <Defs>
-          {/* Vertical fade — mint at the top, background color at the V-tip.
-              Rank 2/3 only: the inverted badges look "dipped" into the dark
-              surface, with the outline dissolving where it meets the pillar. */}
           <SvgLinearGradient id={strokeGradId} x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0" stopColor={color} stopOpacity={1} />
             <Stop offset="1" stopColor={colors.background} stopOpacity={1} />
@@ -1664,12 +1506,6 @@ function RankBadgePentagon({ rank, color }: { rank: 1 | 2 | 3; color: string }) 
   );
 }
 
-// Galaxy backdrop — subtle starfield inside the clipped pillar frame.
-// Deterministic positions (looks random, stable across renders) with a
-// per-rank offset so the three pillars don't reveal an identical
-// pattern when placed side by side. Mix of small dim white stars
-// (cosmic dust) and a few brighter mint accent stars (foreground
-// luminaries that tie the field into the brand palette).
 const GALAXY_DUST: Array<[number, number, number, number]> = [
   [0.12, 0.06, 0.6, 0.4],
   [0.42, 0.04, 1.2, 0.7],
@@ -1735,9 +1571,6 @@ function PillarGalaxyBackground({ rank }: { rank: 1 | 2 | 3 }) {
   );
 }
 
-// Inner glow rendered inside the clipped pillar frame — transparent
-// at mid-pillar fading down to colored at the bottom edge, so the
-// pillar appears to glow "from within" toward its base.
 function PillarInnerGlow({ color, isFirst }: { color: string; isFirst: boolean }) {
   return (
     <LinearGradient
@@ -1756,13 +1589,6 @@ function PillarInnerGlow({ color, isFirst }: { color: string; isFirst: boolean }
   );
 }
 
-// Bottom bloom — two layered halos using SVG RadialGradient for true
-// elliptical falloff. Two crossed LinearGradients produced a visible
-// diamond/plus crosshatch pattern at the edges; a radial fades smoothly
-// in all directions from a single center. Stacked tight + wide halos
-// approximate inverse-square falloff (close-light is dense, far-light
-// is diffuse) the way one gradient can't. `rank` keys unique gradient
-// IDs so the three pillars don't collide on Defs.
 function PillarBottomBloom({
   color,
   intensity,
@@ -1776,9 +1602,6 @@ function PillarBottomBloom({
   const wideId = `bloom-wide-${rank}`;
   return (
     <>
-      {/* Tight halo — dense, hugs the LED. Aspect ratio of the host
-          View stretches the radial into a wide ellipse, matching the
-          way a horizontal LED strip actually spreads light. */}
       <View
         pointerEvents="none"
         style={{
@@ -1802,9 +1625,6 @@ function PillarBottomBloom({
         </Svg>
       </View>
 
-      {/* Wide diffuse bloom — broader, dimmer. Peak alpha lower and
-          falloff longer so the two halos sum cleanly at the LED
-          without overexposing. */}
       <View
         pointerEvents="none"
         style={{
@@ -1831,13 +1651,6 @@ function PillarBottomBloom({
   );
 }
 
-// Border glow — single SVG rounded-rect stroke run through an
-// feGaussianBlur filter. A real continuous Gaussian gradient, not
-// layered approximations. The filter region is expanded (-50% to 150%)
-// so the blur falloff doesn't get clipped at the SVG's edges.
-// Cross-platform: react-native-svg 15 supports feGaussianBlur on iOS,
-// Android, and web. Padding around the pillar gives the blur room to
-// fall off into transparency before the SVG ends.
 const GLOW_PADDING = 60;
 function PillarBorderGlow({
   color,
@@ -1884,18 +1697,9 @@ function PillarBorderGlow({
   );
 }
 
-// Dotted/dashed orbit ring behind the rank-1 avatar. Static, no loop.
 function DottedOrbit({ size, color }: { size: number; color: string }) {
-  // SVG Circle with strokeDasharray — the only way to get a reliable
-  // dotted ring on a curved path in React Native. (View borderStyle:
-  // 'dashed' falls back to solid on iOS for rounded borders.)
-  // Slow 18s linear rotation so the dashes appear to travel around
-  // the ring like an orbital path. Linear easing because rotation
-  // velocity should be constant — eased rotation reads as "wobble."
   const r = (size - 1) / 2;
   const spin = useSharedValue(0);
-  // useFocusEffect — keeps the orbit rotation alive across focus
-  // changes. 18s loops are particularly susceptible to stalling.
   useFocusEffect(
     useCallback(() => {
       spin.value = withRepeat(withTiming(1, { duration: 18000, easing: Easing.linear }), -1, false);
@@ -1917,11 +1721,6 @@ function DottedOrbit({ size, color }: { size: number; color: string }) {
           r={r}
           stroke={color + '66'}
           strokeWidth={1}
-          // Mixed pattern: each repeat is one long 40px line + a run
-          // of five 2px dashes. Pattern length ~102; for a typical
-          // rank-1 avatar (~108 size, ~336 circumference) this fits
-          // ~3 times → 3 long connected line segments around the ring,
-          // separated by clusters of small dashes.
           strokeDasharray="40 14 2 6 2 6 2 6 2 6 2 14"
           fill="none"
         />
@@ -1930,13 +1729,7 @@ function DottedOrbit({ size, color }: { size: number; color: string }) {
   );
 }
 
-// Topographic background curves + sparkle dots scoped to the podium
-// section only. Static SVG; no animation.
 const SANDBOX_BACKDROP_W = Dimensions.get('window').width;
-// White dust stars spread across the full backdrop — paired with the
-// existing mint sparkle cluster (upper region) they form the same
-// dust+accent galaxy treatment used inside the pillars, scaled to
-// the larger surface.
 const BACKDROP_GALAXY_DUST: Array<[number, number, number, number]> = [
   [0.04, 0.04, 0.7, 0.4],
   [0.13, 0.02, 0.5, 0.25],
@@ -1983,8 +1776,6 @@ const BACKDROP_GALAXY_DUST: Array<[number, number, number, number]> = [
   [0.89, 0.65, 0.7, 0.36],
   [0.16, 0.1, 0.5, 0.22],
   [0.94, 0.18, 0.6, 0.28],
-  // Lower band — populates the area below the pillars that's now
-  // inside the backdrop after extending to full card height.
   [0.08, 0.94, 0.6, 0.3],
   [0.23, 0.97, 0.5, 0.22],
   [0.37, 0.95, 0.7, 0.38],
@@ -1993,10 +1784,6 @@ const BACKDROP_GALAXY_DUST: Array<[number, number, number, number]> = [
   [0.77, 0.94, 0.5, 0.22],
   [0.91, 0.97, 0.7, 0.35],
 ];
-// Partition the dust array once at module load into 3 bands by index
-// modulo 3. Each band gets its own crossfade loop with a coprime
-// duration, producing a "stars sparkling in turn" effect — bands
-// brighten and dim out of phase, never re-syncing.
 const BACKDROP_DUST_BANDS: Array<typeof BACKDROP_GALAXY_DUST> = (() => {
   const bands: Array<typeof BACKDROP_GALAXY_DUST> = [[], [], []];
   BACKDROP_GALAXY_DUST.forEach((star, i) => bands[i % 3].push(star));
@@ -2005,15 +1792,9 @@ const BACKDROP_DUST_BANDS: Array<typeof BACKDROP_GALAXY_DUST> = (() => {
 
 function PodiumBackdrop({ height }: { height: number }) {
   const { accent } = useAccent();
-  // Three coprime crossfade loops. Coprime so the bands never lock
-  // back into sync after their respective periods. Range 0.55→1.0
-  // keeps stars visible at the dim end (going to 0 reads as broken
-  // pixels rather than twinkle).
   const t1 = useSharedValue(0);
   const t2 = useSharedValue(0);
   const t3 = useSharedValue(0);
-  // useFocusEffect — restart sparkle bands when the screen regains
-  // focus and clean up cleanly on blur.
   useFocusEffect(
     useCallback(() => {
       t1.value = withRepeat(
@@ -2038,9 +1819,6 @@ function PodiumBackdrop({ height }: { height: number }) {
       };
     }, []),
   );
-  // Phase-shift the bands by inverting one of them — so when band 1
-  // is brightening, band 2 is dimming, and band 3 is on its own clock.
-  // Full 0 → 1 range so each band fully disappears and reappears.
   const band1Style = useAnimatedStyle(() => ({
     opacity: interpolate(t1.value, [0, 1], [0, 1], Extrapolation.CLAMP),
   }));
@@ -2054,8 +1832,6 @@ function PodiumBackdrop({ height }: { height: number }) {
 
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-      {/* Static base layer — radial glow, topographic lines, mint
-          accent stars. Stays anchored while the dust twinkles. */}
       <Svg
         width="100%"
         height={height}
@@ -2063,8 +1839,6 @@ function PodiumBackdrop({ height }: { height: number }) {
         preserveAspectRatio="none"
       >
         <Defs>
-          {/* Radial gradient — brightest mint at the dead center,
-              fading smoothly to fully transparent at the edges. */}
           <RadialGradient id="backdrop-core-glow" cx="0.5" cy="0.55" rx="0.7" ry="0.6">
             <Stop offset="0" stopColor={accent} stopOpacity={0.32} />
             <Stop offset="0.5" stopColor={accent} stopOpacity={0.1} />
@@ -2095,7 +1869,6 @@ function PodiumBackdrop({ height }: { height: number }) {
             d={`M 0 ${height * 0.88} Q ${SANDBOX_BACKDROP_W * 0.4} ${height * 0.82}, ${SANDBOX_BACKDROP_W * 0.75} ${height * 0.9} T ${SANDBOX_BACKDROP_W} ${height * 0.86}`}
           />
         </G>
-        {/* Mint accent stars — static. Brand anchors that don't twinkle. */}
         <G fill={accent} fillOpacity={0.4}>
           <Circle cx={SANDBOX_BACKDROP_W * 0.06} cy={height * 0.11} r={0.8} />
           <Circle cx={SANDBOX_BACKDROP_W * 0.16} cy={height * 0.06} r={1.6} />
@@ -2108,12 +1881,6 @@ function PodiumBackdrop({ height }: { height: number }) {
         </G>
       </Svg>
 
-      {/* Three twinkling dust-star bands. Each band wraps an SVG in a
-          Reanimated.View so the whole layer crossfades as a unit
-          (cheap) without touching individual <Circle> attributes
-          (expensive on web). Star radii × 1.7 and alphas × 2 (capped)
-          on render so the sparkle reads at the small SVG scale — the
-          original tiny dim points were too small to perceive change. */}
       {BACKDROP_DUST_BANDS.map((stars, bandIdx) => (
         <Reanimated.View
           key={`band-${bandIdx}`}
@@ -2143,22 +1910,11 @@ function PodiumBackdrop({ height }: { height: number }) {
   );
 }
 
-// New pillar card composing all the redesigned pieces. Static —
-// no entrance animation in the sandbox so the user can compare
-// shapes directly. Animation gets reattached when we ship.
-// Per-rank pillar dimensions. Rank 1 is visibly WIDER than 2/3 so the
-// podium silhouette reads "king in the middle" — the reference image's
-// rank-1 card is clearly chunkier, not just taller. Widths roughly:
-// rank 1 = 38% of available width; ranks 2/3 = 28% each. Heights are
-// kept compact so the section doesn't dominate the screen.
 const PILLAR_DIMS: Record<1 | 2 | 3, { width: number; height: number }> = {
   1: { width: 120, height: 260 },
   2: { width: 100, height: 210 },
   3: { width: 100, height: 200 },
 };
-// Bottom-glow intensity per rank — keys the bloom opacity and LED halo so
-// the center card visually dominates. ~1.8x ratio between ranks 1 and 3
-// keeps the side cards legible rather than ghosting them out.
 const PILLAR_INTENSITY: Record<1 | 2 | 3, number> = {
   1: 1.0,
   2: 0.7,
@@ -2186,10 +1942,6 @@ function PodiumPillar({
   const avatarSize = isFirst ? 92 : 64;
   const orbitSize = avatarSize + 16;
 
-  // Press feedback — same scale + spring spec as TopShowcaseSlot
-  // (the production podium) so the sandbox reads as interactive in
-  // the same vocabulary. Haptics.selectionAsync on press for the
-  // same restrained feel — not a Medium impact.
   const press = useSharedValue(1);
   const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: press.value }] }));
   const onPressIn = useCallback(() => {
@@ -2202,14 +1954,7 @@ function PodiumPillar({
     Haptics.selectionAsync().catch(() => {});
   }, []);
 
-  // Avatar pulse — gentle scale 1.0 → 1.08 breath, all three ranks
-  // synchronized for a unified "podium is alive" heartbeat across the
-  // leaderboard. Only the avatar tile pulses; the orbit ring stays
-  // static so the breathing reads as the avatar itself, not a ring
-  // expansion.
   const pulse = useSharedValue(0);
-  // useFocusEffect — keeps the avatar breath looping reliably across
-  // navigation focus changes.
   useFocusEffect(
     useCallback(() => {
       pulse.value = withRepeat(
@@ -2232,9 +1977,6 @@ function PodiumPillar({
       onLongPress={onLongPress}
       delayLongPress={320}
       style={{
-        // Rank 1 sits slightly LOWER than ranks 2/3 — negative margin
-        // extends past the row's flex-end alignment baseline so the
-        // leader pillar plants more firmly than its neighbors.
         marginBottom: isFirst ? -8 : 0,
       }}
     >
@@ -2249,10 +1991,6 @@ function PodiumPillar({
           pressStyle,
         ]}
       >
-        {/* Pentagon rank badge — overhangs the top of the clipped frame.
-          Rank 1 also gets a star + soft glow stacked above the badge;
-          its wrapper top compensates so the badge itself still lands
-          at -14 like ranks 2/3. */}
         <View
           style={{
             position: 'absolute',
@@ -2262,9 +2000,6 @@ function PodiumPillar({
           }}
         >
           {isFirst && (
-            // 4-point glint with the same 5-layer concentric soft glow
-            // copied from the season-pass tier connector gems. Sits
-            // just above the badge with a tight 2px gap.
             <View
               style={{
                 marginBottom: 2,
@@ -2335,21 +2070,10 @@ function PodiumPillar({
           <RankBadgePentagon rank={rank} color={accent} />
         </View>
 
-        {/* Border glow — rank 1 only. Single SVG rounded-rect stroke +
-          feGaussianBlur for a true continuous Gaussian gradient.
-          Renders BEFORE the bloom so it sits deepest. */}
         {isFirst && <PillarBorderGlow color={accent} width={width} height={height} />}
 
-        {/* Bottom bloom — sibling of the clipped frame so it can extend
-          past the card's bottom edge. Renders BEFORE the frame so it
-          paints behind; the bloom's top portion gets covered by the
-          frame, the bottom portion peeks out as the elliptical halo. */}
         <PillarBottomBloom color={accent} intensity={intensity} rank={rank} />
 
-        {/* Clipped pillar frame — darker fill so the pillar reads as a
-          discrete inset against the topographic backdrop, not as a
-          translucent ghost. Rank 1 gets a full-alpha border + outer
-          mint shadow for its "lit-up" look. */}
         <View
           style={{
             width: '100%',
@@ -2370,18 +2094,10 @@ function PodiumPillar({
             elevation: isFirst ? 0 : 2,
           }}
         >
-          {/* Galaxy backdrop — deepest layer inside the frame, behind the
-            inner glow and content. Per-rank offset so the three
-            pillars don't show identical star patterns. */}
           <PillarGalaxyBackground rank={rank} />
 
-          {/* Inner glow — gradient from mid-pillar transparent down to
-            colored at the bottom edge. First child so it renders
-            behind the flex content but on top of the dark backdrop. */}
           <PillarInnerGlow color={accent} isFirst={isFirst} />
 
-          {/* Avatar zone — sized to the avatar (plus orbit headroom on
-            rank 1). The dotted orbit sits behind the avatar. */}
           <View
             style={{
               width: orbitSize,
@@ -2412,9 +2128,6 @@ function PodiumPillar({
             </View>
           </View>
 
-          {/* Equipped title — italic, dim. Now comes FIRST (above the
-            name) so the player's chosen identity reads before their
-            handle. */}
           <Text
             numberOfLines={1}
             ellipsizeMode="tail"
@@ -2428,7 +2141,6 @@ function PodiumPillar({
             {title}
           </Text>
 
-          {/* Name — white, bold. Sits below the equipped title. */}
           <Text
             numberOfLines={1}
             ellipsizeMode="tail"
@@ -2443,11 +2155,6 @@ function PodiumPillar({
             {name}
           </Text>
 
-          {/* XP — big mint, pinned to the bottom of the pillar via
-            marginTop: 'auto'. Each pillar's bottom-padding (14)
-            handles the safe inset. Combined with the row's flex-end
-            alignment + rank-1's -8 marginBottom, rank 1's XP lands
-            8px below ranks 2/3, which sit in line with each other. */}
           <Text
             numberOfLines={1}
             adjustsFontSizeToFit
@@ -2471,11 +2178,6 @@ function PodiumPillar({
   );
 }
 
-// Empty-slot placeholder. Same dimensions and baseline alignment
-// as PodiumPillar so the row's silhouette stays intact when ranks
-// are missing — dashed outlines + "—" content read as "open slot,
-// no player here" rather than a broken pillar. No animations, no
-// long-press; this is purely structural.
 function EmptyPodiumPillar({ rank }: { rank: 1 | 2 | 3 }) {
   const { width, height } = PILLAR_DIMS[rank];
   const isFirst = rank === 1;
@@ -2488,14 +2190,10 @@ function EmptyPodiumPillar({ rank }: { rank: 1 | 2 | 3 }) {
         height,
         alignItems: 'center',
         position: 'relative',
-        // Match PodiumPillar's rank-1 baseline drop so the row of
-        // mixed real + empty pillars sits on the same line.
         marginBottom: isFirst ? -8 : 0,
         opacity: 0.4,
       }}
     >
-      {/* Rank badge — same anchored position as the pentagon in
-          PodiumPillar so the eye reads the same vertical landmarks. */}
       <View
         style={{
           position: 'absolute',
@@ -2522,8 +2220,6 @@ function EmptyPodiumPillar({ rank }: { rank: 1 | 2 | 3 }) {
         </Text>
       </View>
 
-      {/* Pillar body — dashed outline so the slot reads as a
-          placeholder, not an actual card. */}
       <View
         style={{
           flex: 1,
@@ -2590,11 +2286,6 @@ function EmptyPodiumPillar({ rank }: { rank: 1 | 2 | 3 }) {
   );
 }
 
-// Sandbox composer — three pillars + backdrop. Static dummy data.
-// Mounts at the top of LeaderboardView so it's eyeball-comparable
-// against the reference image.
-// Format a raw XP number to the compact "24.8k" / "850" display string
-// used by the pillar XP readouts.
 function formatPillarXp(n: number): string {
   if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
   return String(n);
@@ -2616,12 +2307,7 @@ function PodiumSandbox({
 }) {
   const themedRarity = useThemedRarity();
   const sectionHeight = 300;
-  // Card height = section + paddingTop (16) + paddingBottom (20) from
-  // topShowcaseStyles.card. Backdrop sizes to this so the galaxy covers
-  // the full card area, not just the inner section.
   const cardHeight = sectionHeight + 36;
-  // Index by rank so we can render in podium order (2, 1, 3) regardless
-  // of how the caller sorted entries.
   const byRank: Record<1 | 2 | 3, PodiumEntry | undefined> = {
     1: entries.find((e) => e.rank === 1),
     2: entries.find((e) => e.rank === 2),
@@ -2629,9 +2315,6 @@ function PodiumSandbox({
   };
   const renderPillar = (rank: 1 | 2 | 3) => {
     const e = byRank[rank];
-    // Always render something for every rank slot so the podium row
-    // keeps its 3-pillar silhouette. Empty ranks get a dimmed
-    // placeholder with "—" content.
     if (!e) return <EmptyPodiumPillar key={rank} rank={rank} />;
     return (
       <PodiumPillar
@@ -2654,16 +2337,9 @@ function PodiumSandbox({
           end={{ x: 0, y: 1 }}
           style={StyleSheet.absoluteFillObject}
         />
-        {/* Backdrop lives at the card level (not inside the section) so
-            it fills the full container including the card's vertical
-            padding regions. Stars stretch across the entire surface. */}
         <PodiumBackdrop height={cardHeight} />
-        {/* Diagonal shine sweep — sits above the backdrop and below the
-            pillars so the light band passes behind the rank cards. */}
         <PodiumShimmer />
         <View style={{ height: sectionHeight, position: 'relative', justifyContent: 'flex-end' }}>
-          {/* center keeps the wider rank-1 pillar visually balanced
-              between the two narrower ranks 2/3. */}
           <View
             style={{
               flexDirection: 'row',
@@ -2683,10 +2359,7 @@ function PodiumSandbox({
 }
 
 // ─── Profile preview (Steam-style hover card) ───────────────
-// Long-press on any leaderboard entry surfaces a dense stat panel
-// with avatar, title, rank delta, XP breakdown, tier, and a
-// percentile bar. Modeled after Steam's profile peek but adapted
-// to the app's dark-glass + rarity-tinted vocabulary.
+
 interface ProfilePreviewData {
   name: string;
   displayName?: string | null;
@@ -2699,9 +2372,6 @@ interface ProfilePreviewData {
   delta?: number;
   isYou?: boolean;
   totalEntries: number;
-  // Pressing the See Profile CTA invokes this. Always wired — for
-  // the current user it lands on the real Profile screen, for
-  // dummies on a read-only DummyProfileScreen.
   onSeeProfile: () => void;
 }
 
@@ -2714,8 +2384,6 @@ function ProfilePreviewModal({
 }) {
   const themedRarity = useThemedRarity();
   const visible = data !== null;
-  // Card scale spring on appearance — same spec family as DetailModal
-  // so peek and unlock celebrations share a kinetic vocabulary.
   const scale = useSharedValue(0.92);
   useEffect(() => {
     if (visible) {
@@ -2729,18 +2397,11 @@ function ProfilePreviewModal({
 
   if (!data) return null;
   const r = themedRarity[data.rarity];
-  // Bar fill = how much of the field is BELOW this user. Rank 1 fills
-  // the bar; last rank shows a thin sliver. Visual reads as "their
-  // share of the leaderboard."
   const fillPct =
     data.totalEntries > 0
       ? Math.max(5, Math.round((1 - (data.rank - 1) / data.totalEntries) * 100))
       : 0;
-  // "TOP X%" label = standard percentile (rank / total). ceil so a
-  // rank-2-of-9 reads "TOP 23%" not "TOP 22%".
   const topPct = data.totalEntries > 0 ? Math.ceil((data.rank / data.totalEntries) * 100) : 0;
-  // Delta indicator — ▲ climb, ▼ drop, — flat. Color-coded so the
-  // direction reads pre-attentively without parsing the glyph.
   const deltaUp = (data.delta ?? 0) > 0;
   const deltaDown = (data.delta ?? 0) < 0;
   const deltaGlyph = deltaUp ? '▲' : deltaDown ? '▼' : '—';
@@ -2761,9 +2422,6 @@ function ProfilePreviewModal({
       >
         <BlurView intensity={32} tint="dark" style={StyleSheet.absoluteFill} />
         <Pressable style={previewStyles.dismissArea} onPress={onClose}>
-          {/* box-none keeps the card pressable area inert relative
-              to the dismiss layer — taps on the card don't bubble
-              to the dismiss handler. */}
           <View style={previewStyles.center} pointerEvents="box-none">
             <Reanimated.View
               style={[
@@ -2814,8 +2472,6 @@ function ProfilePreviewModal({
 
               <View style={previewStyles.divider} />
 
-              {/* Stat grid — two equal columns. TIER was removed since
-                  the title above already conveys rarity through color. */}
               <View style={previewStyles.statGrid}>
                 <View style={previewStyles.statCell}>
                   <Text style={previewStyles.statLabel}>TOTAL XP</Text>
@@ -2829,8 +2485,6 @@ function ProfilePreviewModal({
 
               <View style={previewStyles.divider} />
 
-              {/* Percentile bar — a single visual that contextualizes
-                  rank against the field. "Top 25%" reads instantly. */}
               <View style={previewStyles.percentileWrap}>
                 <View style={previewStyles.percentileTrack}>
                   <View
@@ -2849,9 +2503,6 @@ function ProfilePreviewModal({
                 </Text>
               </View>
 
-              {/* See Profile CTA — present for every entry. Routes to
-                  the real Profile for the current user, or to a
-                  read-only DummyProfile for any registered dummy. */}
               <Pressable
                 onPress={() => {
                   onClose();
@@ -2891,8 +2542,6 @@ const previewStyles = StyleSheet.create({
     borderWidth: 1.5,
     padding: 18,
     overflow: 'hidden',
-    // Rarity-tinted glow beneath the card — picks up the borderColor
-    // for a halo that reads as ambient lighting, not a hard drop shadow.
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.45,
     shadowRadius: 24,
@@ -2967,14 +2616,10 @@ const previewStyles = StyleSheet.create({
     borderRightWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
   },
-  // Right-hand cell in the 2-column grid — single divider on the
-  // left, no right divider so the card edge handles that visual.
   statCellRight: {
     borderLeftWidth: 1,
     borderColor: 'rgba(255,255,255,0.06)',
   },
-  // See-profile CTA — full-width pill with rarity-tinted border so it
-  // belongs to the same family as the card chrome.
   cta: {
     marginTop: 14,
     flexDirection: 'row',
@@ -3027,10 +2672,7 @@ const previewStyles = StyleSheet.create({
 });
 
 // ─── Add Friend modal ────────────────────────────────────────
-// Search by username, follow people, add them to your leaderboard.
-// Results are fetched live from Supabase `profiles`; follows go into
-// the `follows` table. Optimistic UI: pressing Follow flips the
-// button instantly and only reverts on backend error.
+
 function AddFriendModal({
   visible,
   followerId,
@@ -3045,22 +2687,15 @@ function AddFriendModal({
   const [results, setResults] = useState<ProfileSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [followingIds, setFollowingIds] = useState<Set<string>>(new Set());
-  // Track per-row "in flight" follow toggles so we can disable the
-  // button while the network call is settling.
   const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const navigation = useNavigation<any>();
-  // SECURITY (M1) — block follow/unfollow in demo mode so the shared
-  // account can't be used to spam real users with follow requests.
   const demoGuard = useDemoGuard();
 
-  // Card spring on appearance — same spec as ProfilePreviewModal so
-  // the two modals share kinetic vocabulary.
   const scale = useSharedValue(0.92);
   useEffect(() => {
     if (visible) {
       scale.value = 0.92;
       scale.value = withSpring(1, { stiffness: 220, damping: 18 });
-      // Reset state when reopening so a stale query doesn't linger.
       setQuery('');
       setResults([]);
       setFollowingIds(new Set());
@@ -3071,8 +2706,6 @@ function AddFriendModal({
     transform: [{ scale: scale.value }],
   }));
 
-  // Debounced search — fire 280ms after the user stops typing so
-  // we don't hammer Supabase on every keystroke.
   useEffect(() => {
     if (!visible) return;
     const q = query.trim();
@@ -3086,8 +2719,6 @@ function AddFriendModal({
       const found = await searchProfilesByUsername(q, followerId);
       setResults(found);
       setLoading(false);
-      // Resolve which of the new results the caller is already
-      // following — drives the button state per row.
       if (followerId && found.length > 0) {
         const set = await fetchFollowingSet(
           followerId,
@@ -3106,7 +2737,6 @@ function AddFriendModal({
       if (!followerId) return;
       if (!demoGuard('Following users')) return;
       const isFollowing = followingIds.has(target.id);
-      // Mark pending and optimistically flip the visible state.
       setPendingIds((prev) => new Set(prev).add(target.id));
       setFollowingIds((prev) => {
         const next = new Set(prev);
@@ -3123,7 +2753,6 @@ function AddFriendModal({
         }
       } catch (e) {
         console.error('[AddFriendModal] follow toggle failed', e);
-        // Revert the optimistic flip on failure.
         setFollowingIds((prev) => {
           const next = new Set(prev);
           if (isFollowing) next.add(target.id);
@@ -3233,8 +2862,6 @@ function AddFriendModal({
                         <View key={r.id} style={addFriendStyles.row}>
                           <Pressable
                             onPress={() => {
-                              // Close the modal before navigating —
-                              // otherwise the modal stays on top.
                               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(
                                 () => {},
                               );
@@ -3369,8 +2996,6 @@ const addFriendStyles = StyleSheet.create({
     marginTop: 12,
     minHeight: 140,
   },
-  // Empty / loading / no-results status block. Centered so the card
-  // doesn't collapse to a tiny height when there's nothing to show.
   statusWrap: {
     paddingVertical: 32,
     alignItems: 'center',
@@ -3396,8 +3021,6 @@ const addFriendStyles = StyleSheet.create({
     gap: 12,
     paddingVertical: 9,
   },
-  // Long-press target wrapping avatar + username. Takes the row's
-  // flexible space so the Follow button stays pinned right.
   peekHit: {
     flex: 1,
     flexDirection: 'row',
@@ -3411,9 +3034,6 @@ const addFriendStyles = StyleSheet.create({
     color: '#fff',
     letterSpacing: 0.2,
   },
-  // Follow button — accent-colored when idle (action available),
-  // dimmed when active (already done) so the eye reads "this is the
-  // tap target" pre-attentively.
   followBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -3423,9 +3043,7 @@ const addFriendStyles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 1,
   },
-  followBtnIdle: {
-    // borderColor + backgroundColor applied inline using the active accent.
-  },
+  followBtnIdle: {},
   followBtnActive: {
     borderColor: 'rgba(255,255,255,0.12)',
     backgroundColor: 'rgba(255,255,255,0.04)',
@@ -3436,10 +3054,6 @@ const addFriendStyles = StyleSheet.create({
     letterSpacing: 0.8,
   },
 });
-
-// Peek modal was replaced by navigation to UserProfileScreen — tap
-// anywhere a user appears (search result, standings row, follow list)
-// to push a read-only profile view on top of the tab stack.
 
 // ─── Chase row (card-style standings entry) ────────────────
 
@@ -3473,7 +3087,6 @@ function ChaseRow({
   const deltaNegative = delta < 0;
   const deltaColor = deltaPositive ? accent : deltaNegative ? '#D87575' : colors.button1;
 
-  // One-shot pip punch on mount when delta != 0 — quick "this row moved" cue
   const pipScale = useSharedValue(1);
   useEffect(() => {
     if (delta !== 0) {
@@ -3487,11 +3100,6 @@ function ChaseRow({
     transform: [{ scale: pipScale.value }],
   }));
 
-  // Press scale — mirrors AchievementCard at line ~301 so a tap on a
-  // rival row feels the same as a tap on an achievement tile. Spring
-  // values (stiffness 320 / damping 14) match the achievement card
-  // exactly. Light haptic on press in — restraint: not Medium, this
-  // is browsing, not unlocking.
   const press = useSharedValue(1);
   const pressStyle = useAnimatedStyle(() => ({ transform: [{ scale: press.value }] }));
   const handlePressIn = () => {
@@ -3566,26 +3174,6 @@ function ChaseRow({
 }
 
 // ─── Your Standing sticky bar ────────────────────────────
-//
-// Sticky bar anchored above the bottom tab nav. The user's position
-// is the most load-bearing signal on a standings screen, so it
-// stays in view as they scroll the podium and rivals above. Three
-// states:
-//
-//   throne     — user is #1. Frame the lead, not the climb.
-//   podium     — user is #2 or #3. Frame as "on the podium".
-//   climbing   — user is #4+. Frame the next rival by name + delta.
-//
-// Rarity follows the user's own rank, mirroring the podium tiers
-// so the bar visually inherits its presentation from how well the
-// user is doing — same RARITY ladder the Achievements tab uses
-// for gacha tiles.
-//
-// Composition: the bar is split into named sub-pieces so each
-// region has a single responsibility.
-//
-//   ┌ StandingRankBlock · Avatar · StandingHeader · StandingPrimaryStat ┐
-//   └─────────────────── StandingChaseTrack ────────────────────────────┘
 
 type StandingState = 'throne' | 'podium' | 'climbing';
 
@@ -3595,22 +3183,8 @@ interface StandingTarget {
   rank: number;
 }
 
-// Reanimated counter-up: <Text> can't be driven by a shared value
-// directly, so we animate a non-editable <TextInput> via the official
-// `text` prop trick and apply `useAnimatedProps`. The display value
-// is rebuilt on the UI thread each frame, so the digits scrub without
-// triggering a React render.
 const AnimatedTextInput = Reanimated.createAnimatedComponent(TextInput);
 
-// Frame the state into the pieces of copy the card actually renders.
-// Pulled out of the component so the render JSX stays declarative
-// and the framing logic stays scannable on its own.
-//
-// Returns `primaryNumTarget` (raw integer) and `primaryNumPrefix`
-// alongside the formatted `primaryNum` so pass 3 can animate a
-// counter-up via Reanimated. The displayed string is rebuilt each
-// frame as `${prefix}${formatXP(round(target * t))}` — keeping the
-// k-suffix formatting intact during the tween.
 function getStandingCopy(
   state: StandingState,
   rank: number,
@@ -3671,9 +3245,6 @@ function getStandingCopy(
     };
   }
 
-  // climbing — rank 4 is the most motivating moment (one from
-  // podium); deeper ranks get a generic chase frame plus the
-  // podium delta in the footer if still in striking range.
   const onPodiumDoor = rank === 4;
   const kicker = onPodiumDoor ? 'ONE FROM THE PODIUM' : 'CHASING THE PODIUM';
   if (nextRival) {
@@ -3701,9 +3272,6 @@ function getStandingCopy(
   };
 }
 
-// Compute fill % toward the rival ahead. Floor anchors near-empty
-// when freshly behind, near-full when close — feels like "you're
-// almost there" rather than a literal proportion.
 function getChasePct(xp: number, nextRival: StandingTarget | null, isThrone: boolean): number {
   if (isThrone) return 100;
   if (!nextRival) return 0;
@@ -3713,7 +3281,6 @@ function getChasePct(xp: number, nextRival: StandingTarget | null, isThrone: boo
   return Math.min(100, Math.max(2, Math.round(((xp - floor) / range) * 100)));
 }
 
-// Numeric rank + total entries. Anchors the left of the hero.
 function StandingRankBlock({ rank, tier }: { rank: number; tier: RarityToken }) {
   return (
     <View
@@ -3730,7 +3297,6 @@ function StandingRankBlock({ rank, tier }: { rank: number; tier: RarityToken }) 
   );
 }
 
-// Kicker label + identity line + xp readout. The middle column.
 function StandingHeader({
   kicker,
   title,
@@ -3756,14 +3322,6 @@ function StandingHeader({
   );
 }
 
-// The motivational primary number. Right-aligned. Inherits rarity color.
-//
-// Motion: the integer scrubs from 0 → target on mount with a tasteful
-// out-cubic easing (770ms — long enough to read, short enough to feel
-// snappy). When `target` or `prefix` change (mode toggle / XP delta),
-// the counter re-runs from its current value, with a 60ms scale punch
-// to draw the eye to the change. Tabular nums already locked in via
-// `LEADER_TYPE.displayNum` so digits don't reflow as they tick.
 function StandingPrimaryStat({
   value,
   target,
@@ -3777,21 +3335,14 @@ function StandingPrimaryStat({
   label: string;
   tier: RarityToken;
 }) {
-  // Counter shared value — drives the displayed integer via animatedProps.
   const count = useSharedValue(0);
-  // Quick scale punch when target changes — anchored to the right edge
-  // (where the column aligns) so the digits don't drift visually.
   const punch = useSharedValue(1);
 
   useEffect(() => {
-    // Counter: anticipation (idle at 0) → action (timed tween) → settle.
-    // out-cubic gives the number a "deceleration into rest" feel.
     count.value = withTiming(target, {
       duration: 770,
       easing: Easing.out(Easing.cubic),
     });
-    // Subtle 1.0 → 1.06 → 1.0 punch on re-runs. Skipped on mount
-    // because the entrance + counter sweep already supply the beat.
     if (count.value !== 0) {
       punch.value = withSequence(
         withTiming(1.06, { duration: 120, easing: Easing.out(Easing.quad) }),
@@ -3800,11 +3351,6 @@ function StandingPrimaryStat({
     }
   }, [target, prefix]);
 
-  // UI-thread text rebuild — no React render. The formatter is inlined
-  // inside the worklet because Reanimated workers can't safely capture
-  // an arbitrary outer JS function. Mirrors formatXP at line ~844 (k
-  // suffix for ≥1000, locale string otherwise — locale-free here for
-  // worklet safety).
   const animatedProps = useAnimatedProps(() => {
     'worklet';
     const raw = Math.max(0, Math.round(count.value));
@@ -3828,18 +3374,13 @@ function StandingPrimaryStat({
       <Reanimated.View style={punchStyle}>
         <AnimatedTextInput
           editable={false}
-          // RN requires a non-undefined defaultValue for the `text` prop
-          // trick to take effect on first paint.
           defaultValue={`${prefix}${formatXP(0)}`}
           animatedProps={animatedProps}
-          // Lock layout — TextInput has its own padding/border defaults
-          // that fight the LEADER_TYPE.displayNum spec.
           style={[
             youStandingStyles.primaryNum,
             youStandingStyles.primaryNumInput,
             { color: tier.color },
           ]}
-          // Static fallback for screen readers — counter is purely visual.
           accessible
           accessibilityLabel={value}
           underlineColorAndroid="transparent"
@@ -3852,38 +3393,20 @@ function StandingPrimaryStat({
   );
 }
 
-// Chase-track progress. Sits at the bottom edge of the sticky card.
-//
-// Motion: the static track sits underneath. A sibling overlay with
-// `width: '100%'` and `transformOrigin: 'left'` is scaled along X
-// from 0 → pct/100 with out-cubic easing (800ms) — the rival fill
-// "sweeps in" rather than expanding. We never touch the `width` prop
-// (GPU-friendly transform-only). When the user is within striking
-// range (>= 95%), the fill softly pulses opacity to signal proximity
-// — a 3-cycle one-shot, not perpetual, so we don't burn the loop
-// budget on a near-permanent state.
 function StandingChaseTrack({ pct, tier }: { pct: number; tier: RarityToken }) {
-  // Fill progress 0 → 1. Animated value drives scaleX on the overlay.
   const fill = useSharedValue(0);
-  // Proximity halo opacity — only kicks in for the "almost there" state.
   const proximity = useSharedValue(1);
 
   useEffect(() => {
     const target = Math.min(1, Math.max(0, pct / 100));
-    // Anticipation: tiny delay so the entrance staggers behind the
-    // hero row settling. Action: out-cubic sweep. Settle: implicit
-    // (timing ends naturally).
     fill.value = withDelay(
       120,
       withTiming(target, { duration: 800, easing: Easing.out(Easing.cubic) }),
     );
 
-    // Proximity pulse: only when within 5% of catching the rival.
-    // 3-cycle one-shot via withSequence so it reads as a celebration,
-    // not a permanent fidget.
     if (target >= 0.95) {
       proximity.value = withDelay(
-        920, // After the fill lands.
+        920,
         withSequence(
           withTiming(0.68, { duration: 380, easing: Easing.inOut(Easing.quad) }),
           withTiming(1, { duration: 380, easing: Easing.inOut(Easing.quad) }),
@@ -3903,9 +3426,6 @@ function StandingChaseTrack({ pct, tier }: { pct: number; tier: RarityToken }) {
 
   return (
     <View style={youStandingStyles.chaseTrack}>
-      {/* Scale-X overlay — width is fixed at 100%, transform is the
-          only animated value. transformOrigin keeps the sweep from
-          the left edge (RN supports this on Reanimated.View). */}
       <Reanimated.View
         style={[
           youStandingStyles.chaseFill,
@@ -3918,10 +3438,6 @@ function StandingChaseTrack({ pct, tier }: { pct: number; tier: RarityToken }) {
   );
 }
 
-// Ambient throne halo — slow opacity pulse on the rarity wash when the
-// user holds #1. Restraint-first: opacity only, 2400ms in-out cycle,
-// max 0.55. Reads as a "heat shimmer" rather than a strobe. Counts
-// as one perpetual loop in the budget.
 function ThroneHalo({ color }: { color: string }) {
   const o = useSharedValue(0.18);
   useEffect(() => {
@@ -3983,16 +3499,12 @@ function YourStandingCard({
     <View
       style={[youStandingStyles.card, { borderColor: tier.borderActive, shadowColor: tier.color }]}
     >
-      {/* Tier gradient — same vocabulary as AchievementCard so the
-          sticky bar reads as a sibling tile, not a foreign chrome. */}
       <LinearGradient
         colors={tier.gradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFillObject}
       />
-      {/* Tier wash — vertical fade so the top of the card carries
-          most of the rarity color weight. */}
       <LinearGradient
         colors={[tier.color + '1A', 'transparent']}
         start={{ x: 0.5, y: 0 }}
@@ -4000,19 +3512,10 @@ function YourStandingCard({
         style={StyleSheet.absoluteFillObject}
       />
 
-      {/* Throne halo — only when the user holds #1. Opacity-only loop. */}
       {isThrone && <ThroneHalo color={tier.color} />}
 
-      {/* Legendary shimmer — diagonal sweep replacing the previous
-          rising-particle effect. Same shimmer grammar used by the
-          season banner so the legendary signal reads consistently. */}
       {tier.particle && <BannerShimmer />}
 
-      {/*
-        Single dense row. Compact stagger so the bar settles fast on
-        tab entry (the sticky bar is a status indicator, not a hero):
-        rank (40ms) → avatar (80ms) → header (120ms) → primary (160ms).
-      */}
       <View style={youStandingStyles.topRow}>
         <Reanimated.View entering={FadeInDown.delay(40).springify().damping(12)}>
           <StandingRankBlock rank={rank} tier={tier} />
@@ -4037,7 +3540,6 @@ function YourStandingCard({
         </Reanimated.View>
       </View>
 
-      {/* Chase track — sits flush at the bottom edge of the card. */}
       {showChase && (
         <Reanimated.View
           entering={FadeIn.delay(200).duration(220).easing(Easing.out(Easing.cubic))}
@@ -4053,13 +3555,6 @@ function YourStandingCard({
 
 type LeaderboardMode = 'weekly' | 'all-time';
 
-// Animated period-toggle. The active pill background is no longer a
-// per-pill boolean — it's a single absolutely-positioned underlay
-// that slides between the two pill positions. Pill widths are
-// measured via onLayout (auto-width, so they can differ between
-// "7 DAYS" and "ALL-TIME"). Motion is GPU-only: we set the underlay's
-// static width to the widest of the two pills and animate translateX +
-// scaleX (origin: left) — never the `width` prop itself.
 function ModePillBar({
   mode,
   onChange,
@@ -4069,34 +3564,19 @@ function ModePillBar({
 }) {
   const { accent, accentSubtle } = useAccent();
   const options = ['weekly', 'all-time'] as const;
-  // Per-pill measured text widths. Both pills then force themselves
-  // to max() so they're the same size — that's what lets the
-  // underlay just translate (no width morph).
   const [textW, setTextW] = useState<number[]>([0, 0]);
   const maxTextW = Math.max(textW[0] ?? 0, textW[1] ?? 0);
-  // Pill body width = text + horizontal padding. Pillbar padding is
-  // 2 each side, no gap (pills sit edge-to-edge like SwipeTabs).
   const PILL_HPAD = 10;
   const PILL_GAP = 0;
   const BAR_PAD = 2;
   const pillW = maxTextW + PILL_HPAD * 2;
 
-  // Single transform — only translateX, mirroring the top-of-screen
-  // SwipeTabs pattern. No scaleX morph.
   const slideX = useSharedValue(0);
   const activeIdx = options.indexOf(mode);
-  // Only apply explicit pill width AFTER text has measured. Gate on
-  // maxTextW (not pillW) — pillW = maxTextW + padding is always > 0
-  // even when text hasn't measured, so gating on it would lock the
-  // pill to padding-only width and squash the text to zero, which
-  // reads as a tiny dot in the bar.
   const measured = maxTextW > 0;
 
   useEffect(() => {
     if (!measured) return;
-    // Active underlay's left edge = (pill index) * (pillW + gap).
-    // Timed cubic in-out — no overshoot, decisive snap. Springs
-    // always carry some bounce; timing eliminates it cleanly.
     slideX.value = withTiming(activeIdx * (pillW + PILL_GAP), {
       duration: 220,
       easing: Easing.inOut(Easing.cubic),
@@ -4109,9 +3589,6 @@ function ModePillBar({
 
   return (
     <View style={leaderboardStyles.modePillBar}>
-      {/* Sliding underlay — fixed width (no scaleX). Translates
-          between equal-width pill slots, matching the SwipeTabs
-          tab indicator at the top of the screen. */}
       {measured && (
         <Reanimated.View
           pointerEvents="none"
@@ -4131,9 +3608,6 @@ function ModePillBar({
               Haptics.selectionAsync().catch(() => {});
               onChange(opt);
             }}
-            // Equal-width pills: explicit width once measurements
-            // settle, otherwise content-sized for the first frame so
-            // the text has room to render and report its real width.
             style={[leaderboardStyles.modePill, measured && { width: pillW }]}
           >
             <Text
@@ -4161,27 +3635,14 @@ function ModePillBar({
 }
 
 // ─── Store ──────────────────────────────────────────────────
-// Catalog of cosmetic themes. Each theme inherits a rarity tier
-// from its price so the store reuses the same visual ladder as
-// achievements + the leaderboard — a 1500-coin Epic theme feels
-// like an Epic achievement, not a separate currency.
-//
-// Themes don't yet swap the app's actual color palette; the unlock
-// flow exercises the spend-coin + own-cosmetic state so the
-// system is wired end-to-end. When real theming lands, hook
-// equippedThemeId into the colors module via a ThemeProvider.
+
 interface CosmeticTheme {
   id: string;
   name: string;
   description: string;
   price: number;
-  // Two-color gradient that becomes the card's actual surface so
-  // each tile reads as that theme rather than as a generic chip.
   gradient: [string, string];
-  // Accent — replaces colors.accent if real theming were wired.
   accent: string;
-  // Maps to the existing RARITY ladder so the store inherits the
-  // same color/glow tokens used in achievements + leaderboard.
   rarity: Rarity;
 }
 
@@ -4210,7 +3671,6 @@ function StoreView() {
   const { coins } = useCoins();
   const { spentCoins, ownedThemeIds, equippedThemeId, unlockTheme, equipTheme } = useSettings();
   const available = Math.max(0, coins - spentCoins);
-  // Theme awaiting purchase confirmation. null = no modal open.
   const [pendingPurchase, setPendingPurchase] = useState<CosmeticTheme | null>(null);
 
   const handlePress = useCallback(
@@ -4219,7 +3679,6 @@ function StoreView() {
       const equipped = equippedThemeId === theme.id;
 
       if (equipped) {
-        // Tap an equipped theme to un-equip — fall back to default.
         Haptics.selectionAsync().catch(() => {});
         equipTheme(null);
         return;
@@ -4229,13 +3688,10 @@ function StoreView() {
         equipTheme(theme.id);
         return;
       }
-      // Locked: attempt unlock if affordable.
       if (available < theme.price) {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
         return;
       }
-      // Affordable & locked → confirmation modal. Light haptic here,
-      // medium when the user actually commits to the purchase.
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
       setPendingPurchase(theme);
     },
@@ -4250,8 +3706,6 @@ function StoreView() {
     setPendingPurchase(null);
   }, [pendingPurchase, unlockTheme, equipTheme]);
 
-  // +1 in the count = Mint Classic which is always free/owned but
-  // not stored in the persisted set.
   const ownedCount = ownedThemeIds.size + 1;
 
   return (
@@ -4261,10 +3715,7 @@ function StoreView() {
         contentContainerStyle={storeStyles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Wallet panel ──────────────────────────────────────
-            Same dome silhouette + star backdrop as the standings
-            panel. Wallet is the focal element of the store, so it
-            gets the same ceremonial treatment as the podium. */}
+        {/* ── Wallet panel ────────────────────────────────────── */}
         <Reanimated.View entering={FadeIn.duration(280)} style={storeStyles.walletPanel}>
           <PodiumBackdrop height={WALLET_PANEL_H} />
           <WalletShimmer />
@@ -4282,9 +3733,6 @@ function StoreView() {
                 <Text style={storeStyles.walletValueLabel}>COINS AVAILABLE</Text>
               </View>
             </View>
-            {/* Earned vs Spent breakdown — a small two-column ledger
-                row at the bottom of the panel. Same letterspaced
-                metric pattern the standings use. */}
             <View style={storeStyles.walletLedger}>
               <View style={storeStyles.ledgerCell}>
                 <Text style={storeStyles.ledgerLabel}>EARNED</Text>
@@ -4340,10 +3788,7 @@ function StoreView() {
           </View>
         </View>
 
-        {/* ── Coming Soon section ────────────────────────────────
-            Three dashed-outline placeholder cards that reuse the
-            EmptyPodiumPillar visual vocabulary. Signals "growing
-            collection" without faking content. */}
+        {/* ── Coming Soon section ──────────────────────────────── */}
         <View style={storeStyles.section}>
           <View style={storeStyles.sectionHeader}>
             <View
@@ -4369,9 +3814,6 @@ function StoreView() {
   );
 }
 
-// Approx height of the wallet panel — used by the PodiumBackdrop
-// inside it to size the SVG. Slightly generous so the star pattern
-// extends to the rounded corners.
 const WALLET_PANEL_H = 200;
 
 function ThemeCard({
@@ -4392,7 +3834,6 @@ function ThemeCard({
   const themedRarity = useThemedRarity();
   const r = themedRarity[theme.rarity];
 
-  // CTA state machine: equipped > owned > affordable > locked.
   const ctaLabel = equipped ? 'EQUIPPED' : owned ? 'EQUIP' : `${theme.price.toLocaleString()}`;
   const ctaColor = equipped
     ? theme.accent
@@ -4422,16 +3863,12 @@ function ThemeCard({
           pressed && { transform: [{ scale: 0.97 }] },
         ]}
       >
-        {/* The card surface IS the theme. Each tile expresses its
-            own personality rather than being a uniform container. */}
         <LinearGradient
           colors={theme.gradient}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={StyleSheet.absoluteFillObject}
         />
-        {/* Soft accent halo near the top — a focal glow that ties
-            the card's identity to its accent color. */}
         <View
           pointerEvents="none"
           style={[storeStyles.themeHalo, { backgroundColor: theme.accent + '22' }]}
@@ -4458,7 +3895,6 @@ function ThemeCard({
           )}
         </View>
 
-        {/* Big accent dot — the visual signature of the theme */}
         <View style={storeStyles.themeAccentSlot}>
           <View
             style={[
@@ -4507,10 +3943,6 @@ function ComingSoonCard({ hint }: { hint: string }) {
 }
 
 // ── Purchase confirmation modal ─────────────────────────────
-// Shows the theme being purchased, the wallet balance now, and
-// the balance after the purchase. Two large pill buttons: cancel
-// (subtle) and unlock (rarity-themed). Same kinetic vocabulary as
-// ProfilePreviewModal so the modals all share a kinetic family.
 function UnlockConfirmModal({
   theme,
   availableBefore,
@@ -4576,7 +4008,6 @@ function UnlockConfirmModal({
                 style={[confirmStyles.cardHalo, { backgroundColor: theme.accent + '20' }]}
               />
 
-              {/* Hero: rarity label + theme name + accent orb */}
               <Text style={[confirmStyles.rarityLabel, { color: r.color }]}>{r.label} THEME</Text>
               <Text style={confirmStyles.themeName}>{theme.name}</Text>
               <View
@@ -4587,8 +4018,6 @@ function UnlockConfirmModal({
               />
               <Text style={confirmStyles.themeDesc}>{theme.description}</Text>
 
-              {/* Balance diff card — current → after, with the cost
-                  pill in between for a visual ledger. */}
               <View style={confirmStyles.balanceFrame}>
                 <View style={confirmStyles.balanceCol}>
                   <Text style={confirmStyles.balanceLabel}>BALANCE</Text>
@@ -4654,9 +4083,6 @@ const storeStyles = StyleSheet.create({
   },
 
   // ── Wallet panel ─────────────────────────────────────────
-  // Contained card — sits inside the ScrollView's 16px padding (no
-  // edge-bleed), uniform corner radius all around. overflow:hidden
-  // clips the star backdrop + shimmer sweep to the rounded silhouette.
   walletPanel: {
     backgroundColor: 'rgba(255,215,0,0.025)',
     borderRadius: 22,
@@ -4682,8 +4108,6 @@ const storeStyles = StyleSheet.create({
     alignItems: 'center',
     gap: 14,
   },
-  // Round coin chip — gold-tinted halo so the symbol carries
-  // the wallet's identity even before reading the number.
   coinChip: {
     width: 48,
     height: 48,
@@ -4713,8 +4137,6 @@ const storeStyles = StyleSheet.create({
     color: 'rgba(255,255,255,0.5)',
     letterSpacing: 1.4,
   },
-  // Bottom ledger — earned vs spent in a single row, divider in
-  // the middle so the two read as parallel metrics.
   walletLedger: {
     flexDirection: 'row',
     alignItems: 'stretch',
@@ -4751,9 +4173,6 @@ const storeStyles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  // Compact refund pill — gold-tinted to match the wallet identity.
-  // Sits inline with the SPENT value so the affordance is right
-  // where the eye lands when reading "I've spent N coins."
   refundPill: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -4788,14 +4207,10 @@ const storeStyles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 10,
   },
-  // Wrap layer holds the FadeInDown entering animation so
-  // Reanimated owns layout changes cleanly.
   themeCardWrap: {
     flexBasis: '48%',
     flexGrow: 1,
   },
-  // The card surface itself IS the theme. Padding moved to inner
-  // padding instead of the wrap so the gradient reaches edges.
   themeCard: {
     borderRadius: 16,
     borderWidth: 1.5,
@@ -4808,8 +4223,6 @@ const storeStyles = StyleSheet.create({
     shadowRadius: 14,
     elevation: 10,
   },
-  // Soft accent glow near the top — color depth without the
-  // generic "card with header" pattern.
   themeHalo: {
     position: 'absolute',
     top: -40,
@@ -4839,14 +4252,10 @@ const storeStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Phantom slot keeps the layout stable for unlocked-but-not-
-  // equipped cards (no badge to show).
   themeBadgePlaceholder: {
     width: 22,
     height: 22,
   },
-  // Spotlight slot for the accent orb — center-aligned so the
-  // theme's identity color is the visual anchor of the card.
   themeAccentSlot: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -4891,8 +4300,6 @@ const storeStyles = StyleSheet.create({
   },
 
   // ── Coming Soon placeholders ─────────────────────────────
-  // Reuses the dashed-outline language from EmptyPodiumPillar so
-  // the empty state feels intentional, not broken.
   comingSoonCard: {
     flexBasis: '48%',
     flexGrow: 1,
@@ -4996,9 +4403,6 @@ const confirmStyles = StyleSheet.create({
     marginBottom: 20,
     lineHeight: 19,
   },
-  // Balance diff strip: BEFORE | -COST | AFTER, with the cost as
-  // a pill in the center so the visual reads left-to-right as a
-  // ledger entry.
   balanceFrame: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -5102,23 +4506,11 @@ function LeaderboardView() {
   const navigation = useNavigation<any>();
   const displayTitle = equippedSeasonTitle ?? levelTitle.title;
   const [mode, setMode] = useState<LeaderboardMode>('all-time');
-  // Measured height of the standings panel — drives the
-  // PodiumBackdrop SVG sizing so the topographic curves and dust
-  // bands distribute proportionally to the actual list height.
-  // Initial 700 covers a typical 7-row list before re-layout.
   const [standingsPanelH, setStandingsPanelH] = useState(700);
-  // Profile preview — populated by long-press on any leaderboard
-  // entry. null = closed.
   const [previewData, setPreviewData] = useState<ProfilePreviewData | null>(null);
-  // Add-friend modal visibility. Triggered by the user-plus button
-  // in the podium section header.
   const [addFriendOpen, setAddFriendOpen] = useState(false);
-  // Followed users — pulled from Supabase with their cached aggregate
-  // XP already attached (no need to read their raw workout_sessions).
   const [followedUsers, setFollowedUsers] = useState<FollowedProfile[]>([]);
 
-  // Load followed users on focus + whenever the add-friend modal
-  // closes, so a fresh follow shows up in standings immediately.
   const followerId = authSession?.user.id;
   const loadFollowed = useCallback(async () => {
     if (!followerId) {
@@ -5137,7 +4529,6 @@ function LeaderboardView() {
     if (!addFriendOpen) loadFollowed();
   }, [addFriendOpen, loadFollowed]);
 
-  // Sum of user XP earned in the last 7 days
   const weeklyXP = useMemo(() => {
     const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
     return xpLog.reduce((sum, e) => {
@@ -5148,20 +4539,12 @@ function LeaderboardView() {
 
   const userXP = mode === 'weekly' ? weeklyXP : totalXP;
 
-  // Build sorted standings (dummies + you). Sorted by XP desc for the active mode.
-  // Top 3 → ceremonial podium. Chase (rank 4+) excludes the user; the user lives
-  // in the hero card at top instead. nextRival / podiumTarget / leadOver drive
-  // the framing of YourStandingCard.
   const { top3, chase, yourRank, standingState, nextRival, podiumTarget, leadOver } =
     useMemo(() => {
       const tierTitle = (xp: number) => {
         const tIdx = SEASON_TIERS.reduce((best, t, i) => (xp >= t.xp ? i : best), 0);
         return SEASON_TIERS[tIdx].title;
       };
-      // Followed users — XP is the active mode's value (weekly or
-      // all-time) so the sort matches what the user sees. Tier title
-      // always reads off all-time XP since tiers are progression
-      // milestones, not period scoreboards.
       const others = followedUsers.map((u) => ({
         key: u.id,
         name: u.username,
@@ -5194,24 +4577,17 @@ function LeaderboardView() {
         yourRank: me.rank,
         standingState: state,
         nextRival: above ? { name: above.name, xp: above.xp, rank: above.rank } : null,
-        // Only relevant when the user is outside the podium — what XP gets them in.
         podiumTarget:
           me.rank > 3 && podiumEdge
             ? { name: podiumEdge.name, xp: podiumEdge.xp, rank: podiumEdge.rank }
             : null,
-        // Only relevant when the user holds #1 — who's chasing.
         leadOver:
           me.rank === 1 && below ? { name: below.name, xp: below.xp, rank: below.rank } : null,
       };
     }, [userXP, displayTitle, mode, followedUsers, profile?.avatar_url]);
 
-  // Total participants in the leaderboard — used by the profile
-  // preview to compute percentile ("Top 25% of 9").
-  const totalEntries = top3.length + chase.length + 1; // +1 for you
+  const totalEntries = top3.length + chase.length + 1;
 
-  // XP-by-name lookup so the profile preview can show BOTH all-time
-  // and weekly XP regardless of which mode is active. Entry rows
-  // only carry the active mode's XP, so we re-resolve from source.
   const xpByName = useMemo(() => {
     const m = new Map<string, { totalXP: number; weeklyXP: number }>();
     m.set('You', { totalXP, weeklyXP });
@@ -5221,11 +4597,6 @@ function LeaderboardView() {
     return m;
   }, [totalXP, weeklyXP, followedUsers]);
 
-  // Preview builder — resolves an entry into the dense data shape
-  // the modal renders. Centralized so podium and chase rows stay
-  // consistent. The See Profile CTA always works: for the current
-  // user it lands on the real Profile screen; for any dummy with
-  // a registered DUMMY_PROFILE it lands on DummyProfileScreen.
   const buildPreview = useCallback(
     (entry: {
       key: string;
@@ -5245,14 +4616,9 @@ function LeaderboardView() {
         weeklyXP: xpData.weeklyXP,
         rarity: rankToRarity(entry.rank),
         avatarUrl: isYou ? (profile?.avatar_url ?? null) : (entry.avatarUrl ?? null),
-        // Rank delta will come from real period-over-period tracking
-        // once a leaderboard backend lands; flat for now.
         delta: 0,
         isYou,
         totalEntries,
-        // Self lands on the Profile tab; any other entry routes to that
-        // user's UserProfile screen by id (standings entries are real
-        // followed users keyed by their user id).
         onSeeProfile: isYou
           ? () => navigation.navigate('Profile')
           : () => navigation.navigate('UserProfile', { userId: entry.key }),
@@ -5261,16 +4627,11 @@ function LeaderboardView() {
     [xpByName, profile?.username, profile?.avatar_url, totalEntries, navigation],
   );
 
-  // Long-press → medium haptic + open. Medium (not Light) signals
-  // "this is a discrete action," differentiating it from the Light
-  // browse haptic the row already plays on press-in.
   const showPreview = useCallback((data: ProfilePreviewData) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
     setPreviewData(data);
   }, []);
 
-  // Navigate to the view-profile screen for a non-self standings entry.
-  // Replaces the previous in-place peek modal.
   const goToUserProfile = useCallback(
     (entry: { key: string }) => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
@@ -5286,13 +4647,7 @@ function LeaderboardView() {
         contentContainerStyle={leaderboardStyles.scroll}
         showsVerticalScrollIndicator={false}
       >
-        {/* Podium — top 3 ceremonial showcase. Section header gives
-            it equal spatial framing to the chase below, instead of
-            floating loose. Degrades gracefully for short lists:
-            PodiumSandbox renders only the ranks present, so a solo
-            user shows as a single centered rank-1 pillar. The period
-            toggle (7 DAYS / ALL-TIME) lives inside this header so
-            the scope sits with the title it modifies. */}
+        {/* Podium */}
         {top3.length >= 1 && (
           <View style={leaderboardStyles.section}>
             <PodiumSectionHeader
@@ -5308,37 +4663,23 @@ function LeaderboardView() {
                 xp: e.xp,
                 title: e.title,
                 displayName: e.key === '__you__' ? profile?.username : e.name,
-                // Each entry now carries its own avatarUrl from the
-                // standings memo. AvatarTile falls back to initials
-                // when the URL is null.
                 avatarUrl: e.avatarUrl ?? null,
               }))}
               onPillarLongPress={(rank) => {
                 const e = top3.find((t) => t.rank === rank);
                 if (!e) return;
-                // Long-press opens the preview modal (with its See Profile
-                // CTA) for everyone — same gesture whether it's you or a
-                // rival, matching the chase rows below.
                 showPreview(buildPreview(e));
               }}
             />
           </View>
         )}
 
-        {/* Standings — rank 4+. Same section-header pattern as the
-            Achievements tab so the page reads as one design family.
-            Always rendered: shows an empty-state hint when no other
-            players exist so the page silhouette stays intact. */}
+        {/* Standings */}
         <Reanimated.View
           entering={FadeIn.delay(220).duration(260)}
           style={chaseStyles.panel}
           onLayout={(e) => setStandingsPanelH(e.nativeEvent.layout.height)}
         >
-          {/* Star/dust backdrop — same component as the podium so the
-              two sections share visual identity. The panel's
-              overflow:'hidden' + dome corners clip the SVG to the
-              panel silhouette. Three crossfading dust bands give
-              the field continuous twinkle. */}
           <PodiumBackdrop height={standingsPanelH} />
           <View style={chaseStyles.panelHeader}>
             <View style={[leaderboardStyles.sectionDot, { backgroundColor: accent }]} />
@@ -5363,14 +4704,10 @@ function LeaderboardView() {
               <ChaseRow
                 key={entry.key}
                 entry={entry}
-                // Rank delta will come from real period-over-period
-                // tracking once a leaderboard backend lands.
                 delta={0}
                 index={i}
                 isLast={i === chase.length - 1}
                 onPress={() => goToUserProfile(entry)}
-                // Long-press opens the same preview modal as the podium /
-                // your own entry, with its See Profile CTA.
                 onLongPress={() => showPreview(buildPreview(entry))}
               />
             ))
@@ -5378,11 +4715,7 @@ function LeaderboardView() {
         </Reanimated.View>
       </ScrollView>
 
-      {/* Sticky standing bar — anchored above the bottom tab nav.
-          A vertical fade strip above lets list content dissolve into
-          the bar instead of clipping hard. Outer wrapper is
-          pointerEvents="box-none" so the fade strip doesn't swallow
-          taps that belong to scrollable content above it. */}
+      {/* Sticky standing bar */}
       <View pointerEvents="box-none" style={youStandingStyles.stickyOuter}>
         <LinearGradient
           pointerEvents="none"
@@ -5408,14 +4741,9 @@ function LeaderboardView() {
         </View>
       </View>
 
-      {/* Profile preview — Steam-style hover card. Lives at the
-          LeaderboardView root so it overlays the sticky standing
-          bar too. Triggered by long-press on any podium pillar
-          (rank 1–3) or chase row (rank 4+). */}
+      {/* Profile preview */}
       <ProfilePreviewModal data={previewData} onClose={() => setPreviewData(null)} />
-      {/* Add-friend modal — search by username, follow people,
-          add them to your leaderboard. Triggered by the user-plus
-          button in the podium section header. */}
+      {/* Add-friend modal */}
       <AddFriendModal
         visible={addFriendOpen}
         followerId={authSession?.user.id}
@@ -5438,8 +4766,6 @@ const SEASON_TIERS = [
 ];
 
 const SEASON_END = new Date('2026-08-01');
-// Cap to the content column on wide web so the horizontal tab pager and
-// per-page content fit the same centered max-width as the rest of the app.
 const SCREEN_WIDTH = getContentWidth(Dimensions.get('window').width);
 const TAB_LABELS = ['Achievements', 'Leaderboard', 'Store'] as const;
 const TAB_COUNT = TAB_LABELS.length;
@@ -5447,8 +4773,6 @@ const SWIPE_VELOCITY_THRESHOLD = 0.3;
 const SWIPE_DISTANCE_THRESHOLD = SCREEN_WIDTH * 0.35;
 
 // ─── Unlocked Card (3-col grid) ──────────────────────────
-// Plain Feather icon + StarRow for rarity. Hex shell removed —
-// stars carry the rarity signal.
 
 const HEX_GRID_GAP = 8;
 const HEX_GRID_OUTER_PAD = 16;
@@ -5572,40 +4896,36 @@ function formatUnlockDate(dateStr: string): string {
 }
 
 // ─── Season tier rarity mapping ────────────────────────────
-//
-// 7 SEASON_TIERS → 5 rarity tokens. Locked in one place.
-// Mortal → common, Spartan → uncommon, Hero/Demigod → rare,
-// Olympian/God of Olympus → epic, Zeus → legendary (particles).
 
 function tierToRarity(tierIndex: number): Rarity {
   switch (tierIndex) {
     case 0:
-      return 'common'; // Mortal
+      return 'common';
     case 1:
-      return 'uncommon'; // Spartan
+      return 'uncommon';
     case 2:
-      return 'rare'; // Hero of Athens
+      return 'rare';
     case 3:
-      return 'rare'; // Demigod
+      return 'rare';
     case 4:
-      return 'epic'; // Olympian
+      return 'epic';
     case 5:
-      return 'epic'; // God of Olympus
+      return 'epic';
     case 6:
-      return 'legendary'; // Zeus
+      return 'legendary';
     default:
       return 'common';
   }
 }
 
 const TIER_ICONS: (keyof typeof Feather.glyphMap)[] = [
-  'user', // Mortal
-  'shield', // Spartan
-  'award', // Hero of Athens
-  'feather', // Demigod
-  'star', // Olympian
-  'sun', // God of Olympus
-  'zap', // Zeus
+  'user',
+  'shield',
+  'award',
+  'feather',
+  'star',
+  'sun',
+  'zap',
 ];
 
 // ─── Animated tier number ring (current tier pulse) ────────
@@ -5632,11 +4952,6 @@ function CurrentTierRing({ color, glow }: { color: string; glow: string }) {
 }
 
 // ─── Current-tier disk shimmer ─────────────────────────────
-//
-// Sweeps a soft white band across the tier icon circle. Replaces the
-// floating particles for the current tier — same shimmer grammar used
-// elsewhere on the banner, scoped to the 64px disk via an overflow:hidden
-// clip layer.
 
 function CurrentTierShimmer() {
   const x = useSharedValue(-1);
@@ -5701,13 +5016,6 @@ function BannerShimmer() {
 }
 
 // ─── Wallet diagonal shimmer ───────────────────────────────
-//
-// Sweeps a soft bright band along the top-left → bottom-right diagonal
-// of the wallet panel. The 5-stop gradient bakes the bright moment
-// into the centre of an absoluteFillObject layer; the layer itself is
-// then translated by ±W on X and ±H on Y simultaneously so the bright
-// moment travels from off the top-left corner, through the panel
-// centre, and off the bottom-right corner.
 
 function WalletShimmer() {
   const t = useSharedValue(-1);
@@ -5800,7 +5108,6 @@ function TierCard({ tier, index, unlocked, isCurrent, isPast, unlockDate }: Tier
     Haptics.selectionAsync().catch(() => {});
   };
 
-  // Visual state: locked < past < current
   const cardOpacity = !unlocked ? 0.42 : isCurrent ? 1 : isPast ? 0.92 : 1;
   const borderColor = isCurrent
     ? r.borderActive
@@ -5947,12 +5254,6 @@ function TierCard({ tier, index, unlocked, isCurrent, isPast, unlockDate }: Tier
 }
 
 // ─── Tier connector (vertical link between tier cards) ────
-//
-// Lives in the gap between two TierCards, aligned with the
-// tier-icon column. Color-grades from the previous tier's
-// rarity to the next, with a midpoint diamond node and soft
-// tapered ends. The "frontier" connector (last unlocked → next
-// locked) pulses to signal the user's next milestone.
 
 function TierConnector({
   fromUnlocked,
@@ -5970,9 +5271,6 @@ function TierConnector({
   const bothLocked = !fromUnlocked && !toUnlocked;
   const lit = !bothLocked;
 
-  // Pulse the frontier gem — "next milestone" beacon. Subtle
-  // scintillation rather than a wide bobble; gems shouldn't
-  // wobble at small sizes.
   const pulse = useSharedValue(0);
   useEffect(() => {
     if (isFrontier) {
@@ -5994,8 +5292,6 @@ function TierConnector({
     ],
   }));
 
-  // Line colors (tapered alpha at edges so the line fades softly
-  // out of each card rather than terminating with a hard cut).
   const dim = 'rgba(255,255,255,0.10)';
   const dimEdge = 'rgba(255,255,255,0)';
   const topLine = fromUnlocked ? fromColor : dim;
@@ -6003,8 +5299,6 @@ function TierConnector({
   const topEdge = fromUnlocked ? fromColor + '00' : dimEdge;
   const botEdge = toUnlocked ? toColor + '00' : dimEdge;
 
-  // Gem styling — hollow rotated square, rarity color carried
-  // entirely by the outline. Locked is a dimmer neutral outline.
   const gemColor = isFrontier ? fromColor : bothUnlocked ? toColor : fromColor;
   const gemBorder = bothLocked ? 'rgba(255,255,255,0.18)' : gemColor;
 
@@ -6055,8 +5349,6 @@ function SeasonBanner() {
   const themedRarity = useThemedRarity();
   const { totalXP, levelInfo, levelTitle } = useXP();
   const { accent } = useAccent();
-  // Measured banner height drives PodiumBackdrop's SVG sizing so the
-  // topographic curves and dust bands distribute proportionally.
   const [bannerH, setBannerH] = useState(440);
 
   const daysLeft = Math.max(
@@ -6080,9 +5372,6 @@ function SeasonBanner() {
       style={seasonStyles.banner}
       onLayout={(e) => setBannerH(e.nativeEvent.layout.height)}
     >
-      {/* Star/dust backdrop — same component as the leaderboard so the
-          two sections share visual identity. Radial mint glow,
-          topographic curves, accent stars + three crossfading dust bands. */}
       <PodiumBackdrop height={bannerH} />
 
       {/* Top row */}
@@ -6122,7 +5411,7 @@ function SeasonBanner() {
       <Text style={seasonStyles.bannerKicker}>BANNER</Text>
       <Text style={seasonStyles.bannerTitle}>Age of Olympus</Text>
 
-      {/* Current tier hero — ceremonial */}
+      {/* Current tier hero */}
       <View style={seasonStyles.currentRankRow}>
         <View style={seasonStyles.currentRankPlate}>
           <CurrentTierRing color={currentRarity.color} glow={currentRarity.glow} />
@@ -6166,7 +5455,7 @@ function SeasonBanner() {
         </View>
       </View>
 
-      {/* XP progress bar — tinted by current rarity */}
+      {/* XP progress bar */}
       <View style={seasonStyles.bannerProgressWrap}>
         <View style={seasonStyles.bannerProgressTrack}>
           <LinearGradient
@@ -6619,10 +5908,6 @@ function SeasonView({
 }
 
 // ─── Title card ────────────────────────────────────────────
-//
-// Small 3-col card mirroring the unlocked-achievement grid. Each
-// equipable title shows a tier icon, rarity stars, the title, and
-// an "EQUIP" / "EQUIPPED" action label at the base. Tap toggles.
 
 const TITLE_CARD_WIDTH = 104;
 
@@ -6714,8 +5999,6 @@ const titleCardStyles = StyleSheet.create({
 });
 
 // ─── Loading silhouette ───────────────────────────────────
-// Mirrors the Achievements tab silhouette: tab bar, season banner
-// block, divider, then a 3-up hex card grid.
 
 function AchievementsSkeleton() {
   return (
@@ -6752,12 +6035,7 @@ function AchievementsSkeleton() {
 
 const AchievementsScreen: React.FC = () => {
   const { contentMaxWidth, isWide, width: winW } = useResponsive();
-  // Reactive pager/page width — the module-level SCREEN_WIDTH is read once
-  // at app load, so pages overflow when the window has resized since then.
   const pagerW = getContentWidth(winW);
-  // On wide web, center the screen in the content column. Height comes from
-  // flex:1 (matching AnalyticsScreen) — the pager row below must use `flex: 1`
-  // (not `flexGrow: 1`) for the per-page ScrollViews to get bounded heights.
   const rootStyle = contentMaxWidth
     ? {
         flex: 1 as const,
@@ -6767,8 +6045,6 @@ const AchievementsScreen: React.FC = () => {
         backgroundColor: colors.background,
       }
     : { flex: 1 as const, backgroundColor: colors.background };
-  // On wide web the sub-tabs live in the side rail; read the selected one
-  // from the `tab` route param instead of the in-screen pill bar.
   const route = useRoute<RouteProp<RootTabParamList, 'Achievements'>>();
   const { workouts, isLoading: workoutsLoading } = useWorkouts();
   const { session: authSession } = useAuth();
@@ -6800,13 +6076,11 @@ const AchievementsScreen: React.FC = () => {
     [translateX, pagerW],
   );
 
-  // Drive the pager from the side-rail sub-tab param on wide web.
   const railTab = route.params?.tab;
   useEffect(() => {
     if (isWide && typeof railTab === 'number') snapToIndex(railTab);
   }, [railTab, isWide, snapToIndex]);
 
-  // Keep the active page aligned when the window (and so pagerW) resizes.
   useEffect(() => {
     translateX.setValue(-tabIndexRef.current * pagerW);
   }, [pagerW, translateX]);
@@ -6878,14 +6152,11 @@ const AchievementsScreen: React.FC = () => {
   let earlyLateCount = 0;
   const maxKgByExercise: Record<string, number> = {};
   let prCount = 0;
-  // Per-muscle aggregates (working sets + kg×reps volume) used by the
-  // muscle-milestone + penalty-badge achievements below.
   const setsByMuscle: Record<string, number> = {};
   const volumeByMuscle: Record<string, number> = {};
   let totalWorkingSets = 0;
   let benchSets = 0;
-  let cardioSets = 0; // any set carrying minutes/seconds/meters
-  // Week → session count, used by Eternal Flame's 52-week consistency streak.
+  let cardioSets = 0;
   const sessionsByWeek = new Map<number, number>();
 
   for (const s of allSessions) {
@@ -6893,8 +6164,6 @@ const AchievementsScreen: React.FC = () => {
     const d = new Date(s.date);
     const hour = d.getHours();
     if (hour < 8 || hour >= 20) earlyLateCount++;
-    // Week index from a fixed Monday epoch (1970-01-05) so weeks land on real
-    // calendar weeks regardless of timezone drift.
     const wk = Math.floor((d.getTime() - Date.UTC(1970, 0, 5)) / (7 * 86400000));
     sessionsByWeek.set(wk, (sessionsByWeek.get(wk) ?? 0) + 1);
     for (const ex of s.exercises) {
@@ -6947,14 +6216,11 @@ const AchievementsScreen: React.FC = () => {
     (setsByMuscle.Glutes ?? 0) +
     (setsByMuscle.Calves ?? 0);
   const chestVolume = volumeByMuscle.Chest ?? 0;
-  // Vitruvian — count of muscle groups with ≥30 working sets (target: all 10)
   const vitruvianCount = MUSCLE_GROUPS.filter((m) => (setsByMuscle[m] ?? 0) >= 30).length;
-  // Balanced Beast — count of muscles each contributing ≥10% of total sets
   const balancedCount =
     totalWorkingSets > 0
       ? MUSCLE_GROUPS.filter((m) => (setsByMuscle[m] ?? 0) / totalWorkingSets >= 0.1).length
       : 0;
-  // Penalty-badge conditions (mirror-muscle = chest+biceps heavy / back+legs light)
   const visibleMuscleShare =
     totalWorkingSets > 0 ? (chestSets + (setsByMuscle.Biceps ?? 0)) / totalWorkingSets : 0;
   const neglectedShare = totalWorkingSets > 0 ? (backSets + legSets) / totalWorkingSets : 0;
@@ -7232,8 +6498,6 @@ const AchievementsScreen: React.FC = () => {
     },
 
     // ── Bucket 2: penalty / nudge badges (active while behaviour fits) ──────
-    // These re-evaluate every render; training the neglected muscle "revokes"
-    // the badge naturally. Phrased as specialisation, not shaming.
     {
       id: 'chicken-legs',
       title: 'Chicken Legs',
@@ -7361,7 +6625,6 @@ const AchievementsScreen: React.FC = () => {
   // ── Rarity filter ──
   const [filter, setFilter] = useState<Rarity | 'all'>('all');
 
-  // Count by rarity (across all achievements regardless of unlocked status)
   const counts = useMemo<Record<Rarity | 'all', number>>(() => {
     const c: Record<Rarity | 'all', number> = {
       all: achievements.length,
@@ -7381,7 +6644,6 @@ const AchievementsScreen: React.FC = () => {
     [filter, achievements],
   );
 
-  // Sort: unlocked legendaries first by rarity descending, then locked by rarity descending
   const rarityRank: Record<Rarity, number> = {
     legendary: 0,
     epic: 1,
@@ -7422,8 +6684,6 @@ const AchievementsScreen: React.FC = () => {
   return (
     <View style={rootStyle}>
       {/* ── Header ─────────────────────────────────────────── */}
-      {/* On wide web the sub-tabs live in the side rail, so the in-screen
-          pill bar is hidden. */}
       {!isWide && (
         <View style={achStyles.header}>
           {/* ── Tab bar + dots ─────────────────────────────────── */}
@@ -7439,7 +6699,6 @@ const AchievementsScreen: React.FC = () => {
       {/* end header */}
 
       {/* ── Pager ──────────────────────────────────────────── */}
-      {/* Swipe is disabled on wide web — the rail drives the sub-tab. */}
       <View style={{ flex: 1, minHeight: 0, overflow: 'hidden' }} {...(isWide ? {} : panResponder.panHandlers)}>
         <Animated.View
           style={{
@@ -7705,7 +6964,6 @@ const styles = StyleSheet.create({
     flex: 1,
     maxWidth: 56,
     height: 1,
-    // backgroundColor applied inline using the active accent.
   },
   seasonDividerText: {
     fontSize: 13,
@@ -7723,25 +6981,13 @@ const styles = StyleSheet.create({
 });
 
 // ─── Leaderboard region design tokens ───────────────────
-//
-// Local-only color anchors. The project already uses these three
-// gray values across the file; naming them at the leaderboard
-// region locks pass 3's motion targets to a stable vocabulary
-// without modifying theme/colors.ts. Used by both leaderboardStyles
-// and youStandingStyles below.
+
 const LEADER_TEXT_PRIMARY = '#F4F4F4';
 const LEADER_TEXT_BODY = '#E5E5E5';
 const LEADER_TEXT_MUTED = '#9F9F9F';
 const LEADER_TRACK_BG = 'rgba(255,255,255,0.06)';
 
-// Typography atoms — every Text style in the Your Standing card
-// composes one of these so we keep a finite, intentional ladder.
-// 6 reusable roles cover the entire leaderboard tab. The `as const`
-// satisfiers narrow string-literal unions for fontWeight / textTransform
-// / fontStyle so StyleSheet.create accepts the spread.
 const LEADER_TYPE = {
-  // Big numeric display — rank num, primary stat. Tabular for stable
-  // alignment as numbers change.
   displayNum: {
     fontSize: 24,
     fontWeight: '900' as const,
@@ -7749,34 +6995,29 @@ const LEADER_TYPE = {
     lineHeight: 26,
     fontVariant: ['tabular-nums'] as ['tabular-nums'],
   },
-  // Hero word — "YOU". Reads as the identity label.
   identityWord: {
     fontSize: 16,
     fontWeight: '900' as const,
     letterSpacing: 0.4,
   },
-  // Body number — secondary XP readout.
   bodyNum: {
     fontSize: 12,
     fontWeight: '800' as const,
     letterSpacing: 0.4,
     fontVariant: ['tabular-nums'] as ['tabular-nums'],
   },
-  // Caption — title, secondary copy. Italic to read as voice.
   caption: {
     fontSize: 12,
     fontWeight: '500' as const,
     letterSpacing: 0.2,
     fontStyle: 'italic' as const,
   },
-  // Kicker — micro-cap headline. The voice of the card state.
   kicker: {
     fontSize: 10,
     fontWeight: '900' as const,
     letterSpacing: 1.6,
     textTransform: 'uppercase' as const,
   },
-  // Meta — unit suffixes, rank-of, primary stat label.
   meta: {
     fontSize: 9,
     fontWeight: '800' as const,
@@ -7785,32 +7026,16 @@ const LEADER_TYPE = {
 };
 
 // ─── Leaderboard scope + section styles ─────────────────
-//
-// Spacing locked to a 4-pixel baseline grid: 4/8/12/16. The
-// scope and section headers share the same dot+label+count
-// rhythm so the Leaderboard scans as one design family with
-// the Achievements / Season tabs.
+
 const leaderboardStyles = StyleSheet.create({
   scroll: {
     padding: 16,
     paddingTop: 20,
-    // Clear the sticky standing bar that sits docked to the tab nav.
-    // Card is ~59px tall + 2px hairline = ~61px occupied. A bit of
-    // breathing above means the last list row sits just above the card
-    // top when fully scrolled; the 28px fade strip transitions that
-    // final content into the bar as the user scrolls.
     paddingBottom: 74,
-    gap: 20, // section rhythm — generous enough to read as discrete blocks.
+    gap: 20,
   },
 
   // ── Period toggle (compact, no longer full-width) ────────
-  // The active state is rendered by a sliding underlay (see
-  // ModePillBar) — the pills themselves are transparent triggers.
-  // Period toggle — visual language mirrors the SwipeTabs at the
-  // top of the screen: same colors.button3 bar, colors.background
-  // active pill, subtle 6% white border on the active state. Sized
-  // a tick smaller than the top tabs so it nests inside a section
-  // header without dominating it.
   modePillBar: {
     flexDirection: 'row',
     backgroundColor: colors.button3,
@@ -7824,11 +7049,6 @@ const leaderboardStyles = StyleSheet.create({
     borderRadius: 999,
     alignItems: 'center',
   },
-  // Absolutely positioned underlay — fixed-width sibling that
-  // translates between two equal-sized pill slots. Mirrors the
-  // SwipeTabs tab indicator: translateX only, no width morph.
-  // Border tone matches SwipeTabs.tabPill so the two pills read as
-  // siblings in the same family.
   modePillUnderlay: {
     position: 'absolute',
     top: 2,
@@ -7844,8 +7064,6 @@ const leaderboardStyles = StyleSheet.create({
     letterSpacing: 1.2,
     textTransform: 'uppercase',
   },
-  // Round add-friend button — sized to match the modePillBar's
-  // visual height so the row reads as a single cluster of controls.
   addFriendBtn: {
     width: 26,
     height: 26,
@@ -7858,8 +7076,6 @@ const leaderboardStyles = StyleSheet.create({
   },
 
   // ── Section block (podium / rivals) ──────────────────────
-  // Same dot+label+count rhythm the Achievements tab uses so
-  // the Leaderboard reads as part of the same family.
   section: {
     gap: 12,
   },
@@ -7908,13 +7124,11 @@ const leaderboardStyles = StyleSheet.create({
 
 const topShowcaseStyles = StyleSheet.create({
   // ── Card shell ─────────────────────────────────────────
-  // Border tinted with the legendary tier idle stroke so the card
-  // inherits a quiet gold identity even before the slots populate.
   card: {
     borderRadius: 18,
     paddingTop: 16,
-    paddingBottom: 20, // 4-grid aligned (was 22)
-    paddingHorizontal: 12, // 4-grid aligned (was 10)
+    paddingBottom: 20,
+    paddingHorizontal: 12,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: RARITY.legendary.borderIdle,
@@ -7924,13 +7138,10 @@ const topShowcaseStyles = StyleSheet.create({
     alignItems: 'flex-start',
     justifyContent: 'space-around',
   },
-  // Outer slot — handles entrance translation, marginTop podium step.
   slot: {
     alignItems: 'center',
     flex: 1,
   },
-  // Inner slot — handles press scale + content stacking with a 4-grid
-  // gap so ribbon → rank → name → title → xp share a rhythm.
   slotInner: {
     alignItems: 'center',
     gap: 4,
@@ -7942,15 +7153,11 @@ const topShowcaseStyles = StyleSheet.create({
     marginBottom: 8,
     position: 'relative',
   },
-  // Vertical spotlight column behind rank 1. Thin, taller than the
-  // ring, brightest where the avatar masks it.
   spotlightColumn: {
     position: 'absolute',
     width: 6,
     overflow: 'hidden',
   },
-  // Perpetual shimmer ring on rank 1. Shadow opacity lowered to 0.6
-  // (was 0.9) — at 0.9 with the glow + tier wash it read as casino.
   glowRing: {
     position: 'absolute',
     borderWidth: 1.5,
@@ -7959,8 +7166,6 @@ const topShowcaseStyles = StyleSheet.create({
     shadowRadius: 14,
     elevation: 6,
   },
-  // One-shot impact glow — fires when the rank-1 slot lands. Sized
-  // slightly larger than the ring so the flash reads as a pop.
   impactGlow: {
     position: 'absolute',
     shadowOffset: { width: 0, height: 0 },
@@ -7969,9 +7174,6 @@ const topShowcaseStyles = StyleSheet.create({
     elevation: 10,
   },
   // ── isYou affordance ───────────────────────────────────
-  // 1px accent inset stroke around the avatar so "this is you" is
-  // legible at the avatar scale. Mirrors how the rest of the
-  // leaderboard announces the user.
   youInsetRing: {
     position: 'absolute',
     borderWidth: 1,
@@ -7997,7 +7199,6 @@ const topShowcaseStyles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  // Rarity ribbon — same vocabulary as AchievementCard rarityRibbon.
   ribbon: {
     paddingHorizontal: 6,
     paddingVertical: 1,
@@ -8010,38 +7211,28 @@ const topShowcaseStyles = StyleSheet.create({
     fontSize: 8.5,
     letterSpacing: 1.4,
   },
-  // Rank ordinal (1ST / 2ND / 3RD). Tabular nums via meta atom.
   rankLabel: {
     ...LEADER_TYPE.meta,
     color: colors.button1,
     letterSpacing: 1,
   },
-  // Name — body text. Caption atom dropped its italic for rank-2/3
-  // so the podium doesn't read as casino vocabulary.
   name: {
     ...LEADER_TYPE.caption,
     fontStyle: 'normal',
     fontWeight: '700',
     color: LEADER_TEXT_BODY,
   },
-  // Name on rank 1 — uses the identityWord atom for the same weight
-  // and tabular feel as "YOU" elsewhere.
   nameFirst: {
     ...LEADER_TYPE.identityWord,
     fontSize: 18,
     color: LEADER_TEXT_PRIMARY,
   },
-  // Tier title sub-label — fills the IA gap impeccable flagged:
-  // a name without a title is a number without identity.
   title: {
     ...LEADER_TYPE.caption,
     fontSize: 11,
     color: LEADER_TEXT_MUTED,
   },
   // ── XP figure ──────────────────────────────────────────
-  // Italic dropped (it read as casino). Tabular nums inherited
-  // from the bodyNum atom so digits don't reflow during the
-  // rank-1 counter-up.
   xp: {
     ...LEADER_TYPE.bodyNum,
     fontSize: 13,
@@ -8052,8 +7243,6 @@ const topShowcaseStyles = StyleSheet.create({
     fontSize: 16,
     lineHeight: 18,
   },
-  // TextInput chrome reset so the AnimatedTextInput counter aligns
-  // to the same baseline as the static <Text> on ranks 2/3.
   xpInput: {
     padding: 0,
     margin: 0,
@@ -8062,9 +7251,6 @@ const topShowcaseStyles = StyleSheet.create({
     includeFontPadding: false,
   },
   // ── Podium shimmer ─────────────────────────────────────
-  // Skewed shine band that traverses the card edge-to-edge.
-  // Same dimensions as seasonStyles.bannerShimmer so the visual
-  // grammar is identical across the two surfaces.
   podiumShimmer: {
     position: 'absolute',
     top: 0,
@@ -8072,10 +7258,6 @@ const topShowcaseStyles = StyleSheet.create({
     width: 110,
   },
   // ── Podium-step backdrops ──────────────────────────────
-  // Three tier-tinted lanes that fill the card edge-to-edge and
-  // top-to-bottom. Each lane sits behind one slot column. The
-  // card's overflow:hidden clips the outer corners against the
-  // card border radius.
   podiumSteps: {
     position: 'absolute',
     top: 0,
@@ -8088,14 +7270,9 @@ const topShowcaseStyles = StyleSheet.create({
     flex: 1,
   },
   // ── Section header reveal ──────────────────────────────
-  // Wraps the section header with a relative position so the sweep
-  // track can sit underneath without affecting flow.
   sectionHeaderWrap: {
     position: 'relative',
   },
-  // Track that the sweep band traverses across — clips the band
-  // when it goes off the edges of the header. Sits flush at the
-  // bottom of the header so the sweep reads as an underline.
   sweepTrack: {
     position: 'absolute',
     left: 0,
@@ -8111,11 +7288,6 @@ const topShowcaseStyles = StyleSheet.create({
 
 const chaseStyles = StyleSheet.create({
   panel: {
-    // Edge-to-edge: break out of the ScrollView's 16px padding so
-    // the panel reaches the screen edges. Dramatic asymmetric corner
-    // radii give the panel a strong dome silhouette — pronounced
-    // arched top, near-flat bottom — so it reads as a structural
-    // piece, not a generic card.
     marginHorizontal: -16,
     backgroundColor: 'rgba(255,255,255,0.025)',
     borderTopLeftRadius: 40,
@@ -8130,16 +7302,13 @@ const chaseStyles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 20, // wider inset so text clears the dome's curve at the edges
-    paddingTop: 14, // just enough to clear the dome curve; header stays compact
+    paddingHorizontal: 20,
+    paddingTop: 14,
     paddingBottom: 10,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255,255,255,0.05)',
     backgroundColor: 'rgba(255,255,255,0.015)',
   },
-  // Empty-state body for when no other competitors exist. Centered
-  // with a soft icon + two-line copy so the panel still feels
-  // populated even when chase is empty.
   emptyState: {
     paddingVertical: 32,
     paddingHorizontal: 24,
@@ -8276,27 +7445,9 @@ const chaseStyles = StyleSheet.create({
 });
 
 // ─── Your Standing sticky bar styles ─────────────────────
-//
-// Compact bar anchored above the bottom tab nav. Inherits the
-// gradient + rarity-border idiom from AchievementCard (line ~290) so
-// the bar reads as a sibling tile of the rest of the rarity family,
-// just denser.
-//
-// Design pass discipline:
-//   • Spacing on a 4-pixel baseline (mostly). Sub-4 values (2, 3) only
-//     for slim rhythm inside the bar where 4 would feel airy.
-//   • Typography ladder draws from LEADER_TYPE atoms — sizes are
-//     stepped down from the hero version to suit the denser frame.
-//   • Color resolves to LEADER_TEXT_* anchors, RARITY tokens, or theme
-//     colors.* — no orphan hex literals.
-//   • Elevation only on the card itself (it's the focal element).
 
 const youStandingStyles = StyleSheet.create({
   // ── Sticky wrapper ─────────────────────────────────────
-  // Anchors the bar to the bottom of the LeaderboardView container,
-  // which itself sits above the bottom tab nav. The fade strip sits
-  // ABOVE the card so scrolled content dissolves into the bar
-  // instead of clipping hard at a horizon line.
   stickyOuter: {
     position: 'absolute',
     left: 0,
@@ -8311,20 +7462,18 @@ const youStandingStyles = StyleSheet.create({
     height: 28,
   },
   stickyInner: {
-    paddingHorizontal: 0, // Edge-to-edge — bar spans the full screen width.
-    paddingBottom: 2, // Hairline — bar reads as docked to the tab nav, not floating.
+    paddingHorizontal: 0,
+    paddingBottom: 2,
   },
 
   // ── Card shell ─────────────────────────────────────────
-  // paddingBottom: 0 so the chase track sits flush at the bottom edge.
-  // topRow carries its own marginBottom for breathing above the track.
   card: {
-    borderRadius: 14, // Slightly tighter than the hero version (was 16).
+    borderRadius: 14,
     paddingTop: 10,
     paddingBottom: 0,
     paddingHorizontal: 12,
     overflow: 'hidden',
-    borderWidth: 1.2, // Match AchievementCard / tier card family.
+    borderWidth: 1.2,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 16,
@@ -8340,8 +7489,6 @@ const youStandingStyles = StyleSheet.create({
   },
 
   // ── Rank block — left anchor ───────────────────────────
-  // Compact: just "#03" in a tinted pill, no "of N" suffix —
-  // field scale already lives in the scope header ("STANDINGS · {n}").
   rankBlock: {
     paddingVertical: 4,
     paddingHorizontal: 8,
@@ -8363,8 +7510,6 @@ const youStandingStyles = StyleSheet.create({
   },
 
   // ── Middle column — kicker + identity ──────────────────
-  // The xp row was redundant with the primary stat on the right
-  // (often the same number, just framed differently), so it's gone.
   headerSlot: {
     flex: 1,
     minWidth: 0,
@@ -8409,10 +7554,6 @@ const youStandingStyles = StyleSheet.create({
     fontSize: 17,
     lineHeight: 19,
   },
-  // Reset TextInput chrome so the animated counter aligns to the same
-  // baseline as the original static <Text>. Zero padding, right align,
-  // fixed width derived from the column min-width so the digits don't
-  // jitter as they tick.
   primaryNumInput: {
     padding: 0,
     margin: 0,
@@ -8428,13 +7569,9 @@ const youStandingStyles = StyleSheet.create({
   },
 
   // ── Chase track — flush at the card's bottom edge ──────
-  // Slim 3px bar that spans the full width of the card. Touches the
-  // left and right card edges via negative margins to neutralize the
-  // card's horizontal padding. Pass 3 (motion) animates a scaleX
-  // overlay on top of this — never the `width` prop itself.
   chaseTrack: {
     height: 3,
-    marginHorizontal: -12, // Cancel card paddingHorizontal so it spans edge-to-edge.
+    marginHorizontal: -12,
     backgroundColor: LEADER_TRACK_BG,
     overflow: 'hidden',
   },
@@ -8951,7 +8088,6 @@ const seasonStyles = StyleSheet.create({
     letterSpacing: 1,
     marginTop: -1,
   },
-  // Disk-shaped clip so the shimmer sweep only shows inside the tier circle.
   currentRankShimmerClip: {
     ...StyleSheet.absoluteFillObject,
     borderRadius: 32,
@@ -9171,18 +8307,11 @@ const seasonStyles = StyleSheet.create({
   },
 
   // ── Tier ladder + connector ──────────────────────────────
-  // Wrapper has no internal gap — TierConnector controls the
-  // spacing between TierCards so the column reads as one ladder.
   tierLadder: {},
   tierConnectorWrap: {
     height: 36,
     position: 'relative',
   },
-  // Aligned with TierCard icon-chip center:
-  // card padding (14) + tierIconWrap half-width (28) = 42px.
-  // Single continuous line spanning the full wrap — the filled
-  // sparkle (rendered after the line in JSX, so on top) covers
-  // the line wherever they overlap. No gap, no T-tip.
   tierConnectorLine: {
     position: 'absolute',
     left: 41,
@@ -9191,10 +8320,6 @@ const seasonStyles = StyleSheet.create({
     width: 2,
     borderRadius: 1,
   },
-  // Subtle backdrop halo — four concentric circles centered on
-  // the sparkle at (42, 18). Decreasing alpha as radius grows
-  // composites into a smooth 360° radial fade. No shadow, so
-  // perfectly centered on iOS and Android.
   tierConnectorGlow1: {
     position: 'absolute',
     left: 33,
@@ -9227,9 +8352,6 @@ const seasonStyles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
   },
-  // Midpoint gem — 22px 4-point sparkle icon (MaterialCommunity
-  // "star-four-points"). Centered on the line at x=42: left =
-  // 42 - 11 = 31. Vertical center in 36px wrap: top = 7.
   tierConnectorNode: {
     position: 'absolute',
     left: 31,
@@ -9239,12 +8361,6 @@ const seasonStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Horizontal accent from the sparkle toward the right. Stops
-  // at the wrap's right edge (right: 0) — pushing past with
-  // negative offsets caused horizontal layout overflow that
-  // cascaded through the ScrollView and broke tier-card widths.
-  // Hairline 1.5px weight + rarity-to-transparent gradient
-  // dissolves into the edge — accent, not a second primary line.
   tierConnectorSideLine: {
     position: 'absolute',
     left: 63,
@@ -9253,9 +8369,6 @@ const seasonStyles = StyleSheet.create({
     height: 1.5,
     borderRadius: 0.75,
   },
-  // Dotted accent on the left of the sparkle — 5 small dots
-  // at 5px spacing, fading opacity outward. Visual counterpoint
-  // to the solid line on the right (line continues; dots trail).
   tierConnectorSideDot: {
     position: 'absolute',
     top: 17,

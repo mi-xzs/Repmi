@@ -1,22 +1,3 @@
-// src/components/features/RestTimerModal.tsx
-//
-// Background-safe rest timer.
-//
-// Three independent mechanisms work together:
-//   1. Wall-clock anchor (endAtRef).  Remaining time is computed from
-//      Date.now() rather than decremented per tick, so the foreground UI
-//      stays correct even after the JS thread was suspended.
-//   2. Local notification scheduled at endAt.  Fires regardless of app
-//      state, so the user gets a sound + buzz even with the screen locked
-//      or the app backgrounded.  Cancelled when the user dismisses early
-//      or when the foreground tick completes the timer first.
-//   3. AppState listener.  When the app returns to foreground we recompute
-//      remaining from the anchor and either resume ticking or fire the
-//      completion path (if the timer already ended while we were away).
-//
-// We keep the existing JS setInterval — it's still the source of truth for
-// the smooth countdown ring while the user is looking at the modal.
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
@@ -42,10 +23,6 @@ interface RestTimerModalProps {
   visible: boolean;
   durationSeconds: number;
   onDismiss: () => void;
-  // Fires exactly once when the timer hits 0 naturally, *before* the 800ms
-  // celebration delay + fade-out. The phase auto-advance uses this to mark the
-  // current row done so the next-row highlight is already in place by the
-  // time `onDismiss` closes the modal.
   onComplete?: () => void;
   title?: string;
 }
@@ -56,7 +33,6 @@ const RADIUS = (SIZE - STROKE) / 2;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 const KEEP_AWAKE_TAG = 'rest-timer';
 
-// Wrap Circle so we can drive strokeDashoffset with Animated.Value
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 export default function RestTimerModal({
@@ -70,18 +46,13 @@ export default function RestTimerModal({
   const [remaining, setRemaining] = useState(durationSeconds);
   const [paused, setPaused] = useState(false);
 
-  // Wall-clock anchor.  Updated when the timer opens, and rolled forward on resume.
   const endAtRef = useRef<number>(0);
-  // While paused, snapshot the remaining seconds so resume can re-anchor.
   const pausedRemainingRef = useRef<number | null>(null);
-  // The scheduled notification's identifier (so we can cancel it).
   const notifIdRef = useRef<string | null>(null);
-  // Guards against double-fire of the completion path (foreground + AppState).
   const completedRef = useRef(false);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Tracks how much of the ring is left: CIRCUMFERENCE (full) → 0 (empty)
   const progressAnim = useRef(new Animated.Value(CIRCUMFERENCE)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
@@ -100,12 +71,11 @@ export default function RestTimerModal({
   // ── Schedule the fallback notification ─────────────────────────────────────
   const scheduleNotification = useCallback(
     async (secondsFromNow: number) => {
-      // Always cancel a previous one first — no overlap.
       await cancelNotification();
       if (secondsFromNow <= 0) return;
 
       const ok = await ensureNotificationPermission();
-      if (!ok) return; // Gracefully degrade: foreground-only timer.
+      if (!ok) return;
 
       try {
         notifIdRef.current = await Notifications.scheduleNotificationAsync({
@@ -117,7 +87,7 @@ export default function RestTimerModal({
           trigger: {
             type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
             seconds: Math.max(1, Math.ceil(secondsFromNow)),
-            channelId: 'rest-timer', // Android — set up in App.tsx
+            channelId: 'rest-timer',
           },
         });
       } catch (e) {
@@ -129,8 +99,6 @@ export default function RestTimerModal({
   );
 
   // ── Completion in foreground: cancel notif, haptic, fade out ───────────────
-  // Defined as a ref so AppState/interval callbacks always call the same
-  // function without recreating the AppState subscription.
   const completionRef = useRef<() => void>(() => {});
   completionRef.current = () => {
     if (completedRef.current) return;
@@ -178,9 +146,6 @@ export default function RestTimerModal({
         intervalRef.current = null;
       }
     }
-    // We intentionally omit cancel/schedule from the dep array — those are
-    // stable callbacks and re-running this effect on every render would
-    // reschedule the notification.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, durationSeconds]);
 
@@ -230,13 +195,11 @@ export default function RestTimerModal({
   const togglePause = useCallback(() => {
     setPaused((wasPaused) => {
       if (wasPaused) {
-        // Resuming: roll endAt forward by however long we were paused.
         const resumingWith = pausedRemainingRef.current ?? remaining;
         endAtRef.current = Date.now() + resumingWith * 1000;
         pausedRemainingRef.current = null;
         scheduleNotification(resumingWith);
       } else {
-        // Pausing: snapshot remaining, cancel the notification.
         pausedRemainingRef.current = remaining;
         cancelNotification();
       }
@@ -262,14 +225,11 @@ export default function RestTimerModal({
   const secs = remaining % 60;
   const timeStr = `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 
-  // strokeDashoffset: 0 = full ring drawn, CIRCUMFERENCE = nothing drawn.
-  // progressAnim drives CIRCUMFERENCE→0 as time runs out, so dashoffset 0→CIRCUMFERENCE (ring drains).
   const strokeDashoffset = progressAnim.interpolate({
     inputRange: [0, CIRCUMFERENCE],
     outputRange: [CIRCUMFERENCE, 0],
   });
 
-  // Ring colour: accent when full, muted when almost empty
   const ringColor = progressAnim.interpolate({
     inputRange: [0, CIRCUMFERENCE * 0.3, CIRCUMFERENCE],
     outputRange: [colors.button1, accentDim, accent],
@@ -299,7 +259,6 @@ export default function RestTimerModal({
                 strokeWidth={STROKE}
                 fill="none"
               />
-              {/* Animated progress arc — rotated so it starts at 12 o'clock */}
               <AnimatedCircle
                 cx={SIZE / 2}
                 cy={SIZE / 2}

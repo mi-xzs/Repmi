@@ -1,5 +1,3 @@
-// src/screens/AnalyticsScreen.tsx
-
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
@@ -52,8 +50,6 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'overall', label: 'Overall' },
 ];
 const TAB_COUNT = TABS.length;
-// Cap to the content column on wide web so the charts + horizontal pager
-// fit the same centered max-width column as the rest of the web app.
 const SCREEN_W = getContentWidth(Dimensions.get('window').width);
 const SWIPE_VELOCITY_THRESHOLD = 0.3;
 const SWIPE_DISTANCE_THRESHOLD = SCREEN_W * 0.35;
@@ -121,14 +117,10 @@ function computeSectionStats(sessions: WorkoutSession[], sectionName: string) {
 
 const AnalyticsScreen: React.FC = () => {
   const { contentMaxWidth, isWide, width: winW } = useResponsive();
-  // Reactive pager/page width so the content fills the screen after a resize
-  // (the module-level SCREEN_W is only read once at load and goes stale).
   const pagerW = getContentWidth(winW);
   const rootWideStyle = contentMaxWidth
     ? { maxWidth: contentMaxWidth, alignSelf: 'center' as const, width: '100%' as const }
     : null;
-  // On wide web the sub-tabs live in the side rail; this screen reads the
-  // selected one from the `tab` route param instead of the in-screen pill.
   const route = useRoute<RouteProp<RootTabParamList, 'Analytics'>>();
   const { workouts, isLoading } = useWorkouts();
   const { session: authSession } = useAuth();
@@ -149,8 +141,6 @@ const AnalyticsScreen: React.FC = () => {
   const [loadingData, setLoadingData] = useState(false);
 
   // ── animation ────────────────────────────────────────────────────────────────
-  // Single Animated.Value representing the full pager offset.
-  // Rest position for tab i = -i * SCREEN_W
   const translateX = useRef(new Animated.Value(0)).current;
 
   const snapToIndex = useCallback(
@@ -162,7 +152,7 @@ const AnalyticsScreen: React.FC = () => {
       Animated.spring(translateX, {
         toValue: -index * pagerW,
         useNativeDriver: true,
-        velocity: -velocityX, // pass flick velocity through
+        velocity: -velocityX,
         tension: 68,
         friction: 11,
         overshootClamping: false,
@@ -171,13 +161,11 @@ const AnalyticsScreen: React.FC = () => {
     [translateX, pagerW],
   );
 
-  // Drive the pager from the side-rail sub-tab param on wide web.
   const railTab = route.params?.tab;
   useEffect(() => {
     if (isWide && typeof railTab === 'number') snapToIndex(railTab);
   }, [railTab, isWide, snapToIndex]);
 
-  // Keep the active page aligned when the window (and so pagerW) resizes.
   useEffect(() => {
     translateX.setValue(-tabIndexRef.current * pagerW);
   }, [pagerW, translateX]);
@@ -194,7 +182,6 @@ const AnalyticsScreen: React.FC = () => {
         return horizontal;
       },
       onPanResponderGrant: () => {
-        // Capture current animated value so we can offset from it
         translateX.stopAnimation((value) => {
           dragStartValue.current = value;
         });
@@ -205,7 +192,6 @@ const AnalyticsScreen: React.FC = () => {
         const idx = tabIndexRef.current;
         let dx = gs.dx;
 
-        // Rubber-band at edges
         if ((idx === 0 && dx > 0) || (idx === TAB_COUNT - 1 && dx < 0)) {
           dx *= 0.15;
         }
@@ -273,8 +259,6 @@ const AnalyticsScreen: React.FC = () => {
     }, [workouts, selectedIndex, loadData]),
   );
 
-  // While the Analytics tab is focused, force every <Text> to render uppercase.
-  // Restored on blur so other screens are unaffected.
   useFocusEffect(
     useCallback(() => {
       const TextAny = Text as unknown as { defaultProps?: { style?: TextStyle | TextStyle[] } };
@@ -339,8 +323,6 @@ const AnalyticsScreen: React.FC = () => {
   return (
     <View style={[styles.screen, rootWideStyle]}>
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      {/* On wide web the sub-tabs live in the side rail, so the in-screen
-          pill bar is hidden. */}
       {!isWide && (
         <View style={styles.header}>
           {/* Tab bar + dots */}
@@ -355,7 +337,6 @@ const AnalyticsScreen: React.FC = () => {
       )}
 
       {/* ── Pager ──────────────────────────────────────────────────────────── */}
-      {/* Swipe is disabled on wide web — the rail drives the sub-tab. */}
       <View style={{ flex: 1, overflow: 'hidden' }} {...(isWide ? {} : panResponder.panHandlers)}>
         <Animated.View
           style={{
@@ -394,7 +375,6 @@ const AnalyticsScreen: React.FC = () => {
                   <AnalyticsTabSkeleton />
                 ) : (
                   <ResponsiveGrid itemWidth={400}>
-                    {/* Top row: Stats | Warm-up+Structure | Targeted Muscles */}
                     <GridItem span="full">
                       <View
                         style={
@@ -403,7 +383,6 @@ const AnalyticsScreen: React.FC = () => {
                             : { gap: 14 }
                         }
                       >
-                        {/* Left half (matches RPE Over Time's half-width below): Stats + Warm-up/Structure */}
                         <View
                           style={
                             isWide
@@ -411,7 +390,6 @@ const AnalyticsScreen: React.FC = () => {
                               : { gap: 14 }
                           }
                         >
-                          {/* Column 1: Stats (2x2 of compact StatCards) */}
                           <View style={[{ gap: 10 }, isWide && { width: 300 }]}>
                             <View style={[styles.cardRow, { marginBottom: 0 }]}>
                               <StatCard
@@ -435,7 +413,6 @@ const AnalyticsScreen: React.FC = () => {
                             </View>
                           </View>
 
-                          {/* Column 2: Warm-up + Workout Structure stacked (Structure standalone when no warm-up) */}
                           <View style={[{ gap: 14 }, isWide && { flex: 1 }]}>
                             {warmUpStats && warmUpStats.count > 0 && (
                               <View style={[styles.section, { paddingTop: 12 }]}>
@@ -468,7 +445,6 @@ const AnalyticsScreen: React.FC = () => {
                               </View>
                             )}
 
-                            {/* Workout Structure stacked directly under Warm-up (same grid tile) */}
                             <View style={styles.section}>
                               <View style={[styles.cardHeader, { marginBottom: 8 }]}>
                                 <Feather name="grid" size={14} color={accent} />
@@ -551,7 +527,6 @@ const AnalyticsScreen: React.FC = () => {
                           </View>
                         </View>
 
-                        {/* Right half: Targeted Muscles (matches RPE width) */}
                         {hasMuscleSets && (
                           <View style={isWide ? { flex: 1 } : undefined}>
                             <View style={[styles.section, isWide && { flex: 1 }]}>
@@ -598,33 +573,6 @@ const AnalyticsScreen: React.FC = () => {
                         </View>
                       </View>
                     )}
-
-                    {/* {sessions.length >= 2 && Object.keys(weightDeltas).length > 0 && (
-                    <View style={styles.section}>
-                      <Text style={styles.sectionTitle}>vs Last Session</Text>
-                      <View style={deltaStyles.container}>
-                        {Object.entries(weightDeltas).map(([name, delta]) => {
-                          const isUp   = delta > 0;
-                          const isDown = delta < 0;
-                          return (
-                            <View key={`delta-${name}`} style={deltaStyles.row}>
-                              <Text style={deltaStyles.name} numberOfLines={1}>{name}</Text>
-                              <View style={[deltaStyles.badge, isUp && deltaStyles.badgeUp, isDown && deltaStyles.badgeDown]}>
-                                <Feather
-                                  name={isUp ? "trending-up" : isDown ? "trending-down" : "minus"}
-                                  size={11}
-                                  color={isUp ? accent : isDown ? "#E05C5C" : colors.button1}
-                                />
-                                <Text style={[deltaStyles.badgeText, isUp && deltaStyles.badgeTextUp, isDown && deltaStyles.badgeTextDown]}>
-                                  {" "}{isUp ? "+" : ""}{delta}kg
-                                </Text>
-                              </View>
-                            </View>
-                          );
-                        })}
-                      </View>
-                    </View>
-                  ) */}
 
                     <GridItem span="full">
                       <View

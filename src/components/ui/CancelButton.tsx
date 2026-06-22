@@ -1,4 +1,3 @@
-// components/ui/CancelButton.tsx
 import React from 'react';
 import { TouchableOpacity, Text } from 'react-native';
 import { colors } from '../../theme/colors';

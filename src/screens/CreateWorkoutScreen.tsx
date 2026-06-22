@@ -39,10 +39,6 @@ export default function CreateWorkoutScreen() {
   const warmUpRef = useRef<PhaseSectionHandle | null>(null);
   const cooldownRef = useRef<PhaseSectionHandle | null>(null);
 
-  // Scroll target tracking. Instead of measureLayout (which whines about
-  // "ref to a native component" when the inner view's tag isn't a clean
-  // native node in some RN/Fabric configurations), we compute the content
-  // y from absolute window coordinates plus the live scroll offset.
   const scrollRef = useRef<ScrollView | null>(null);
   const scrollOffsetY = useRef<number>(0);
   const nameSectionViewRef = useRef<View | null>(null);
@@ -58,9 +54,6 @@ export default function CreateWorkoutScreen() {
       try {
         view.measureInWindow((_vx, vy) => {
           UIManager.measure(scrollableNode, (_x, _y, _w, _h, _spx, spy) => {
-            // Window-y of the view minus window-y of the scroll viewport
-            // gives the view's position inside the visible viewport. Add the
-            // current scroll offset to get its absolute y in content space.
             const viewportRelative = vy - spy;
             resolve(scrollOffsetY.current + viewportRelative);
           });
@@ -101,9 +94,6 @@ export default function CreateWorkoutScreen() {
 
   const handleSave = async () => {
     let valid = true;
-    // Collect candidate target Views for any block that failed validation.
-    // We resolve them to y via measureLayout afterwards so the order of
-    // validation doesn't matter — we always scroll to the topmost error.
     const failingViews: (View | null)[] = [];
 
     if (!workoutName || workoutName.trim() === '') {
@@ -118,8 +108,6 @@ export default function CreateWorkoutScreen() {
       const ref = sectionRefs.current.get(sec.id);
       if (ref && !ref.validate()) {
         valid = false;
-        // Prefer the row the validator pinpointed; fall back to the section
-        // wrapper if no row ref was captured.
         failingViews.push(
           ref.getFirstErrorView() ?? sectionViewRefs.current.get(sec.id) ?? null
         );
@@ -128,8 +116,6 @@ export default function CreateWorkoutScreen() {
 
     if (showWarmUp && warmUpRef.current && !warmUpRef.current.validate()) {
       valid = false;
-      // PhaseSection knows which row failed — prefer that View for precise
-      // scrolling. Fall back to the whole section if no row ref was captured.
       failingViews.push(warmUpRef.current.getFirstErrorView() ?? warmUpViewRef.current);
     }
     if (showCooldown && cooldownRef.current && !cooldownRef.current.validate()) {
@@ -210,9 +196,6 @@ export default function CreateWorkoutScreen() {
             )}
           </View>
 
-          {/* On web there's no soft keyboard to dismiss, and this wrapper's
-              onPress fires when clicking inputs inside it — Keyboard.dismiss()
-              then blurs the input, making it impossible to type. No-op on web. */}
           <Pressable onPress={Platform.OS === 'web' ? undefined : () => Keyboard.dismiss()}>
             <View style={styles.inlineButtons}>
               {!showWarmUp && <AddWarmUpButton onPress={() => setCategoryModalPhase('warmup')} />}

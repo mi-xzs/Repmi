@@ -8,7 +8,6 @@ interface SwipeTabsProps {
   translateX: Animated.Value;
   screenWidth: number;
   activeIndex: number;
-  /** Horizontal padding of the parent container on each side (default 24) */
   containerPadding?: number;
   onTabPress: (index: number) => void;
   style?: ViewStyle;
@@ -25,8 +24,6 @@ export default function SwipeTabs({
 }: SwipeTabsProps) {
   const { accent } = useAccent();
   const tabCount = tabs.length;
-  // Compute pill width statically — avoids onLayout re-render flash.
-  // Tab bar width = screenWidth - (padding * 2). Pill area = tabBar - 4 (2px padding each side).
   const pillW = (screenWidth - containerPadding * 2 - 4) / tabCount;
 
   return (

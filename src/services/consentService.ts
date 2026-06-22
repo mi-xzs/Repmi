@@ -1,12 +1,3 @@
-// src/services/consentService.ts
-//
-// H4 — GDPR Art. 9(2)(a) explicit consent ledger.
-//
-// `body_metrics`   — age, weight, height; classified as health-related data.
-// `training_data`  — RPE, workout intensity, training-load metrics; also
-//                    Art. 9 territory in some EU jurisdictions, hence the
-//                    separate flag rather than bundling with body_metrics.
-
 import { supabase } from './supabase';
 import { logError } from './logger';
 
@@ -39,10 +30,6 @@ export async function hasConsent(
   return !!row && !row.revoked_at;
 }
 
-/**
- * Grant a consent. Idempotent — uses upsert keyed on (user_id, kind) so
- * re-granting after a revoke just clears `revoked_at`.
- */
 export async function grantConsent(
   userId: string,
   kind: ConsentKind,

@@ -32,7 +32,6 @@ interface XPSummaryModalProps {
   workoutName: string;
   session: WorkoutSession | null;
   prDeltas?: ReadonlyMap<string, PRDelta>;
-  /** Coins earned for THIS session (base + streak + PR bonus). */
   sessionCoins?: number | null;
   onDismiss: () => void;
 }
@@ -44,7 +43,7 @@ const RING_STROKE = 5;
 const RING_RADIUS = (RING_SIZE - RING_STROKE) / 2;
 const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
 
-const COIN_GOLD = colors.fav;          // #FFD700
+const COIN_GOLD = colors.fav;
 const COIN_SUBTLE = 'rgba(255,215,0,0.12)';
 
 // ─── Breakdown Row Config ─────────────────────────────────────────────────────
@@ -212,8 +211,6 @@ export default function XPSummaryModal({
   const username = profile?.username ?? null;
   const avatarUrl = profile?.avatar_url ?? null;
 
-  // Gate the share button until the remote avatar has loaded — captureRef
-  // would otherwise shoot a blank circle. Times out at 1.5s as a safety net.
   const [avatarReady, setAvatarReady] = useState(!avatarUrl);
   useEffect(() => {
     if (!visible) return;
@@ -236,7 +233,6 @@ export default function XPSummaryModal({
   // ── Enter / exit animation ──────────────────────────────────────────────────
   useEffect(() => {
     if (visible) {
-      // Reset flash
       flashAnim.setValue(0);
 
       Animated.parallel([

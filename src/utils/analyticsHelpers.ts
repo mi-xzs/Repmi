@@ -1,12 +1,9 @@
-// src/utils/analyticsHelpers.ts
-
 import { WorkoutData } from "../types/exercise";
 import { OverallData, RadarPoint, SessionSet } from "../types/analytics";
 import { WorkoutSession } from "../screens/WorkoutScreen";
 
 // ─── streak helpers ───────────────────────────────────────────────────────────
 
-/** Consecutive days worked backwards from today (resets at midnight to avoid TOD issues). */
 export function getCurrentStreak(sessions: WorkoutSession[]): number {
   if (sessions.length === 0) return 0;
   const trained = new Set(sessions.map((s) => dayKey(new Date(s.date))));
@@ -20,7 +17,6 @@ export function getCurrentStreak(sessions: WorkoutSession[]): number {
   return count;
 }
 
-/** Longest streak of consecutive calendar days. Tolerates DST transitions. */
 export function getLongestStreak(sessions: WorkoutSession[]): number {
   if (sessions.length === 0) return 0;
   const uniqueDays = Array.from(
@@ -157,7 +153,6 @@ export function muscleForExercise(name: string): string | null {
   return null;
 }
 
-/** Count planned working sets per muscle group from a workout template. */
 export function muscleSetsFromTemplate(workout: WorkoutData | null): Record<string, number> {
   if (!workout) return {};
   const result: Record<string, number> = {};
@@ -171,7 +166,6 @@ export function muscleSetsFromTemplate(workout: WorkoutData | null): Record<stri
   return result;
 }
 
-/** Returns the top 5 exercises in a workout template by total set count. */
 export const topExercises = (
   workout: WorkoutData
 ): { name: string; count: number }[] => {
@@ -224,7 +218,6 @@ export const computeOverall = (
     s.exercises.forEach((ex) => {
       if (ex.name === "Warm-up" || ex.name === "Cooldown") return;
 
-      // Volume accumulation (working sets only)
       ex.sets.forEach((set) => {
         if (set.label === "W") return;
         totalSets++;
@@ -235,7 +228,6 @@ export const computeOverall = (
         volumeByExercise[ex.name] = (volumeByExercise[ex.name] ?? 0) + kg * reps;
       });
 
-      // Frequency (count each exercise once per session)
       if (!seenInSession.has(ex.name)) {
         seenInSession.add(ex.name);
         exerciseFreq[ex.name] = (exerciseFreq[ex.name] ?? 0) + 1;
@@ -253,7 +245,6 @@ export const computeOverall = (
     .sort((a, b) => b.value - a.value)
     .slice(0, 5);
 
-  // Avg sessions per week over last 28 days
   const cutoff       = Date.now() - 28 * 24 * 60 * 60 * 1000;
   const recentCount  = allSessions.filter((s) => new Date(s.date).getTime() > cutoff).length;
   const weeklyFrequency = Math.round((recentCount / 4) * 10) / 10;

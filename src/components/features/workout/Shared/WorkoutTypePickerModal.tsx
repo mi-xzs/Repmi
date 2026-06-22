@@ -1,11 +1,3 @@
-// src/components/features/workout/Shared/WorkoutTypePickerModal.tsx
-//
-// Modal picker for choosing the workout's TYPE (its name), e.g.
-// "Push / Pull / Strength". Same filter / list pattern as
-// ExercisePickerModal: a Category dropdown selector, a search input,
-// and a grouped list. Multi-select with chips at the top — up to
-// `maxParts` (default 3) parts joined by " / ".
-
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Modal,
@@ -71,11 +63,6 @@ export default function WorkoutTypePickerModal({
 }: Props) {
   const { accent } = useAccent();
   const { height: winH } = useWindowDimensions();
-  // Give the sheet a definite pixel height so the inner flex:1 FlatList has a
-  // bounded container to scroll inside. On web a percentage height resolves to
-  // 0 inside the modal portal; on native, a parent with only `maxHeight` (no
-  // explicit `height`) lets flex:1 children collapse to 0 — so the type list
-  // renders nothing. A concrete height fixes both. (Mirrors ExercisePickerModal.)
   const sheetHeight = Math.round(winH * 0.85);
   const [categoryFilter, setCategoryFilter] = useState<Category | null>(null);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
@@ -89,8 +76,6 @@ export default function WorkoutTypePickerModal({
     }
   }, [visible]);
 
-  // Parse the current value into selected parts. Same logic as the old
-  // inline picker so renames stay non-destructive.
   const parts = useMemo(
     () =>
       (currentValue ?? '')
@@ -167,8 +152,6 @@ export default function WorkoutTypePickerModal({
         <View
           style={[
             pickerStyles.pickerSheet,
-            // Definite pixel height on every platform so the FlatList's flex:1
-            // gets bounds (native collapses it to 0 with only maxHeight).
             { height: sheetHeight, maxHeight: sheetHeight },
           ]}
         >
@@ -307,10 +290,6 @@ export default function WorkoutTypePickerModal({
             autoCorrect={false}
           />
 
-          {/* List — wrapped in flex:1/minHeight:0 so RN-web gives the
-              FlatList's inner scroller a definite bounded height. Do NOT
-              add overflow:'hidden' on the FlatList style — it clips the
-              inner scroll div from outside on RN-web. */}
           <View style={{ flex: 1, minHeight: 0 }}>
             <FlatList
               data={filteredItems}
@@ -402,7 +381,6 @@ const pickerStyles = StyleSheet.create({
     opacity: 0.65,
     textAlign: 'center',
   },
-  // Web: smaller font + tighter spacing so the full title fits without clipping.
   pickerTitleWeb: {
     fontSize: 12,
     letterSpacing: 0.8,
@@ -422,7 +400,6 @@ const pickerStyles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 22,
-    // backgroundColor applied inline via accent hook
   },
 
   selectedChipText: {
@@ -623,7 +600,6 @@ const pickerStyles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     borderRadius: 30,
-    // backgroundColor applied inline via accent hook
   },
 
   footerDoneText: {

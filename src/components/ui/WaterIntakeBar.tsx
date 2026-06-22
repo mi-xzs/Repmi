@@ -1,4 +1,3 @@
-// src/components/ui/WaterIntakeBar.tsx
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -63,11 +62,6 @@ export function WaterIntakeBar() {
   const fillFrac = useSharedValue(0);
 
   // --- Cancel in-flight animations on unmount ---
-  // The tracker is toggled on/off from Settings (and its own modal), which
-  // mounts/unmounts this component. On Reanimated 4 + the New Architecture, a
-  // `withSpring`/`withSequence` still running when its host SVG/view node is
-  // torn down can fire onto a detached node and hard-crash on native. Cancel
-  // both shared values' animations on unmount so nothing outlives the node.
   useEffect(() => {
     return () => {
       cancelAnimation(pulse);
@@ -105,9 +99,6 @@ export function WaterIntakeBar() {
   }, []);
 
   // --- Load on focus / when day changes ---
-  // SECURITY (H3): hydration counts are stored in SecureStore. Falls
-  // back to the legacy AsyncStorage entry once per upgraded build, then
-  // migrates the value and removes the plaintext copy.
   useFocusEffect(useCallback(() => {
     let cancelled = false;
     (async () => {
@@ -128,7 +119,6 @@ export function WaterIntakeBar() {
         setTotalMl(clamped);
         prevMlRef.current = clamped;
       } catch {
-        /* non-critical */
       }
     })();
     return () => { cancelled = true; };
@@ -159,7 +149,6 @@ export function WaterIntakeBar() {
   }, [totalMl, reduceMotion, pulse]);
 
   const persist = (n: number) => {
-    // SECURITY (H3): writes go to SecureStore now.
     secureSet(storageKey(userId, todayKey), String(n)).catch(() => {});
   };
 
@@ -171,7 +160,6 @@ export function WaterIntakeBar() {
     Haptics.impactAsync(haptic).catch(() => {});
   };
 
-  // Tap dial → add one cup, long-press → remove one cup
   const handleDialPress = () => {
     setTotal(totalMl + CUP_ML, Haptics.ImpactFeedbackStyle.Light);
   };
@@ -179,12 +167,10 @@ export function WaterIntakeBar() {
     setTotal(totalMl - CUP_ML, Haptics.ImpactFeedbackStyle.Medium);
   };
 
-  // Tap a size button → add that amount
   const handleSizeAdd = (ml: number) => {
     setTotal(totalMl + ml, Haptics.ImpactFeedbackStyle.Light);
   };
 
-  // Long-press a size button → remove that amount
   const handleSizeRemove = (ml: number) => {
     setTotal(totalMl - ml, Haptics.ImpactFeedbackStyle.Medium);
   };
@@ -201,9 +187,6 @@ export function WaterIntakeBar() {
     transform: [{ scale: pulse.value }],
   }));
 
-  // If user has disabled the tracker, render nothing — UNLESS the info
-  // modal is still open (so the user can read the "re-enable in Settings"
-  // hint and tap Done before the bar unmounts).
   if (!waterTrackerEnabled && !infoOpen) return null;
 
   return (
@@ -300,7 +283,7 @@ export function WaterIntakeBar() {
         onRequestClose={() => setInfoOpen(false)}
       >
         <Pressable style={styles.modalBackdrop} onPress={() => setInfoOpen(false)}>
-          <Pressable style={styles.modalCard} onPress={() => { /* swallow */ }}>
+          <Pressable style={styles.modalCard} onPress={() => {}}>
             <Text style={styles.modalTitle}>Water tracker</Text>
 
             <View style={styles.tipRow}>
@@ -429,7 +412,6 @@ const styles = StyleSheet.create({
     color: colors.titleText,
   },
   countGoalMet: {
-    // color applied inline via accent hook
   },
   countSub: {
     fontSize: 11,
@@ -539,10 +521,8 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     alignItems: 'center',
-    // backgroundColor applied inline via accent hook
   },
   modalCloseBtnPressed: {
-    // backgroundColor applied inline via accentDim hook
   },
   modalCloseText: {
     color: colors.background,

@@ -1,4 +1,3 @@
-// src/components/features/workout/WorkoutCard.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -14,7 +13,7 @@ type Props = {
   workout: WorkoutData;
   onPress: () => void;
   workoutIndex: number;
-  refreshKey?: number; // ← added so HomeScreen can trigger a reload on focus
+  refreshKey?: number;
 };
 
 export default function WorkoutCard({ workout, onPress, workoutIndex, refreshKey }: Props) {

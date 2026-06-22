@@ -59,7 +59,6 @@ const buildProgressionData = (
         return { date, allSets: ex.sets, topKg: 0, topBwReps, mode };
       }
 
-      // timed
       const topSeconds = workingSets.length > 0
         ? Math.max(...workingSets.map((set) => (set.minutes ?? 0) * 60 + (set.seconds ?? 0)))
         : 0;

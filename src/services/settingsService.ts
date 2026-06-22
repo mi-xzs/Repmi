@@ -1,9 +1,3 @@
-// src/services/settingsService.ts
-//
-// CRUD for the `user_settings` table. One row per user, primary key = user_id.
-// Stores small per-user prefs (units, equipped title, favorite workouts).
-// Other ad-hoc prefs go into the `extra` JSONB column.
-
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 import { logError, logCacheCorruption } from './logger';
@@ -80,12 +74,6 @@ export async function migrateSettingsFromAsyncStorage(userId: string): Promise<U
   const done = await AsyncStorage.getItem(MIGRATION_KEY);
   if (done) return remote;
 
-  // Collect any local prefs that aren't already represented server-side.
-  // C1 — `priv_publicProfile` is intentionally NOT drained any more.
-  // It used to be written into `extra.publicProfile`, which had no
-  // server-side effect (the column the RLS reads is
-  // `profiles.is_public_profile`). The legacy key is wiped by
-  // `clearLocalUserData` on sign-out.
   const [
     [, weightUnitRaw],
     [, heightUnitRaw],
@@ -102,10 +90,8 @@ export async function migrateSettingsFromAsyncStorage(userId: string): Promise<U
 
   let favorites: string[] = remote.favoriteWorkoutIds;
   if (favoritesRaw) {
-    // M6 — schema-validate the legacy favorites blob before merging.
     const parsed = FavoritesArraySchema.safeParse(safeJsonParse(favoritesRaw));
     if (parsed.success) {
-      // Union with remote — remote takes precedence on duplicates.
       favorites = Array.from(new Set([...remote.favoriteWorkoutIds, ...parsed.data]));
     } else {
       logCacheCorruption('favoriteWorkouts');
@@ -138,8 +124,6 @@ export async function migrateSettingsFromAsyncStorage(userId: string): Promise<U
     await AsyncStorage.setItem(MIGRATION_KEY, 'true');
   } catch (e) {
     logError('settings.migrate.upsert.failed', { name: (e as Error)?.name });
-    // Leave the flag unset so we retry next launch. Return merged so the
-    // current session uses the local values anyway.
   }
 
   return merged;

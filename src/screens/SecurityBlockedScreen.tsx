@@ -1,14 +1,3 @@
-// src/screens/SecurityBlockedScreen.tsx
-//
-// H9 — Non-dismissible block screen shown when freerasp detects a
-// jailbroken / rooted device, an attached debugger, or other strong
-// tampering signals. The button intentionally does nothing other than
-// re-display the rationale: this is a hard stop, not a "warn & continue".
-//
-// Once on this screen there is no in-app path back to the rest of the
-// UI for the lifetime of the process. The user must close the app from
-// the OS task switcher.
-
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';

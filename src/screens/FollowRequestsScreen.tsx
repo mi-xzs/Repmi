@@ -1,10 +1,3 @@
-// src/screens/FollowRequestsScreen.tsx
-//
-// Inbox of incoming follow requests for a private account. Each row lets the
-// owner approve (pending -> accepted) or reject (delete) the request, or tap
-// through to the requester's profile. Public accounts never accrue requests,
-// so this list is simply empty for them.
-
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
@@ -48,7 +41,6 @@ export default function FollowRequestsScreen() {
       return next;
     });
 
-  // Optimistically drop the row; restore it on failure.
   const respond = useCallback(
     async (requester: ProfileSearchResult, accept: boolean) => {
       if (busyIds.has(requester.id)) return;
@@ -60,7 +52,7 @@ export default function FollowRequestsScreen() {
         else await rejectFollowRequest(requester.id);
       } catch (e) {
         logError('followRequests.respond.failed', { accept, name: (e as Error)?.name });
-        setRequests(snapshot); // revert
+        setRequests(snapshot);
       } finally {
         setBusy(requester.id, false);
       }

@@ -1,5 +1,3 @@
-// src/components/analytics/WeeklyDigest.tsx
-
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, Text, View, StyleSheet } from 'react-native';
 import { Feather } from '@expo/vector-icons';
@@ -24,8 +22,8 @@ interface Props {
 
 interface WeekSummary {
   totalSessions: number;
-  totalDuration: number; // seconds
-  totalVolume: number; // kg·reps
+  totalDuration: number;
+  totalVolume: number;
   totalSets: number;
   topExercise: string | null;
   topMuscles: { name: string; sets: number; kg: number; reps: number }[];
@@ -41,8 +39,8 @@ interface WeekSummary {
 
 function startOfWeek(date: Date): Date {
   const d = new Date(date);
-  const day = d.getDay(); // 0=Sun
-  const diff = day === 0 ? -6 : 1 - day; // Monday-based
+  const day = d.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
   d.setDate(d.getDate() + diff);
   d.setHours(0, 0, 0, 0);
   return d;
@@ -57,7 +55,6 @@ function sessionVolume(session: WorkoutSession): number {
   );
 }
 
-// keyword → muscle group; order matters — specific phrases before short keywords
 const MUSCLE_KEYWORDS: [string, string][] = [
   ['bench press', 'Chest'],
   ['chest press', 'Chest'],
@@ -148,7 +145,6 @@ function buildSummary(allSessions: WorkoutSession[], workouts: WorkoutData[]): W
     else if (d >= prevWeekStart) prevSessions.push(s);
   }
 
-  // exercise volume map for top exercise
   const exerciseVol: Record<string, number> = {};
   const muscleSets: Record<string, number> = {};
   const muscleKg: Record<string, number> = {};
@@ -183,7 +179,6 @@ function buildSummary(allSessions: WorkoutSession[], workouts: WorkoutData[]): W
         );
       if (muscle) muscleSets[muscle] = (muscleSets[muscle] ?? 0) + workingSetCount;
     }
-    // workout name
     const w = workouts.find((w) =>
       s.exercises.some((e) => w.sections.some((sec) => sec.exerciseName === e.name)),
     );
@@ -302,8 +297,6 @@ const WeekDots: React.FC<{ trainedDays: Set<string> }> = ({ trainedDays }) => {
 const WeeklyDigest: React.FC<Props> = ({ workouts }) => {
   const { accent } = useAccent();
   const { isWide, isMobile } = useResponsive();
-  // Pair the stat cards two-per-row only on mobile web (narrow browser <768px);
-  // native phones keep their single-column layout.
   const isMobileWeb = Platform.OS === 'web' && isMobile;
   const { profile } = useProfile();
   const { session: authSession } = useAuth();
@@ -364,10 +357,6 @@ const WeeklyDigest: React.FC<Props> = ({ workouts }) => {
     prevWeekSessions,
   } = summary;
 
-  // Native keeps its original single-column phone layout. The responsive grid
-  // below (desktop columns + narrow-browser pairing) is web-only; on a phone
-  // the rewritten grid collapses to half-width cards, so we render the
-  // original stacked card layout instead.
   if (Platform.OS !== 'web') {
     return (
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -698,7 +687,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     backgroundColor: colors.button3,
   },
-  // dotTrained backgroundColor now applied inline via the accent hook.
   dotToday: {
     borderWidth: 1.5,
     borderColor: colors.highlight,

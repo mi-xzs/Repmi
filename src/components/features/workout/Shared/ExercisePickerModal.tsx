@@ -27,13 +27,8 @@ type Props = {
   selectedRowIndex: number | null;
   onSelect: <K extends keyof ExerciseRowBase>(index: number, key: K, value: ExerciseRowBase[K]) => void;
   onClose: () => void;
-  // Hide entire muscle groups from results. Existing callers passed legacy
-  // section names like 'Warm Up' which no longer exist — those become no-ops.
   excludeSections?: string[];
-  // Optional title override (e.g. "Swap Exercise" vs default "Select Exercise").
   title?: string;
-  // Workout name / context (e.g. "Leg Day", "Push"). When provided, muscle
-  // groups matching the workout focus are surfaced at the top of the list.
   workoutContext?: string;
 };
 
@@ -50,22 +45,13 @@ export default function ExercisePickerModal({
 }: Props) {
   const { accent } = useAccent();
   const { height: winH } = useWindowDimensions();
-  // Give the sheet a definite pixel height so the inner flex:1 FlatList has a
-  // bounded container to scroll inside. On web, a percentage height can resolve
-  // to 0 inside the modal portal. On native, flex:1 children collapse when the
-  // parent has only maxHeight (no explicit height), so we need this everywhere.
   const sheetHeight = Math.round(winH * 0.85);
   const flatListRef = useRef<FlatList>(null);
   const [muscleFilter, setMuscleFilter] = useState<MuscleGroup | null>(null);
   const [equipmentFilter, setEquipmentFilter] = useState<Equipment | null>(null);
-  // Which dropdown is currently expanded — at most one at a time.
   const [openDropdown, setOpenDropdown] = useState<'muscle' | 'equipment' | null>(null);
-  // Long-press info popup: shows the exercise's primary muscle (large) and up
-  // to two likely secondary muscles (smaller). Works on app + web.
   const [infoExercise, setInfoExercise] = useState<Exercise | null>(null);
 
-  // Reset filters whenever the modal is reopened so it doesn't carry stale
-  // state across different rows / sections.
   useEffect(() => {
     if (visible) {
       setMuscleFilter(null);
@@ -89,8 +75,6 @@ export default function ExercisePickerModal({
       return true;
     });
 
-    // Group by muscle so headers reflect the category each result belongs to.
-    // Order follows MUSCLE_GROUPS so sections stay stable as filters change.
     const byMuscle = new Map<MuscleGroup, Exercise[]>();
     for (const ex of matches) {
       const bucket = byMuscle.get(ex.muscle) ?? [];
@@ -98,9 +82,6 @@ export default function ExercisePickerModal({
       byMuscle.set(ex.muscle, bucket);
     }
 
-    // Reorder muscle groups so workout-relevant ones appear first when a
-    // workout context is set. e.g. workoutContext "Leg Day" → Quads, Hams,
-    // Glutes, Calves, Adductors at top; the rest below in their normal order.
     const priority = getPriorityMuscles(workoutContext);
     const orderedGroups = (
       priority.size > 0
@@ -146,8 +127,6 @@ export default function ExercisePickerModal({
           pressed && pickerStyles.pickerRowActive,
           expanded && { backgroundColor: 'rgba(255,255,255,0.04)' },
         ]}
-        // Tap always picks the exercise; long-press toggles the muscle info
-        // pills under the row (and tapping any other row picks normally).
         onPress={() => handleSelectExercise(ex)}
         onLongPress={() => setInfoExercise(expanded ? null : ex)}
         delayLongPress={300}
@@ -342,10 +321,6 @@ export default function ExercisePickerModal({
             onChangeText={onSearchChange}
           />
 
-          {/* List — wrapped in a flex:1/minHeight:0 View so RN-web's outer
-              FlatList wrapper gets a definite parent height for scrolling.
-              Do NOT add overflow:'hidden' on the FlatList's own `style`: it
-              clips the inner scroller from outside on RN-web. */}
           <View style={{ flex: 1, minHeight: 0 }}>
             <FlatList
               ref={flatListRef}
@@ -442,7 +417,6 @@ const pickerStyles = StyleSheet.create({
   },
 
   dropdownActive: {
-    // borderColor applied inline via accent hook
   },
 
   dropdownLabel: {
@@ -469,7 +443,6 @@ const pickerStyles = StyleSheet.create({
   },
 
   dropdownValueActive: {
-    // color applied inline via accent hook
   },
 
   clearButton: {
@@ -514,7 +487,6 @@ const pickerStyles = StyleSheet.create({
 
   dropdownOptionTextActive: {
     fontWeight: '700',
-    // color applied inline via accent hook
   },
 
   searchInput: {
@@ -599,8 +571,6 @@ const pickerStyles = StyleSheet.create({
   },
 });
 
-// Inline muscle pills shown under the row when long-pressed.
-// Primary is the largest; up to 2 smaller secondaries follow.
 const inlineMuscleStyles = StyleSheet.create({
   row: {
     flexDirection: 'row',

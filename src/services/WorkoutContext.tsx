@@ -1,4 +1,3 @@
-// src/services/WorkoutContext.tsx
 import React, { createContext, useState, ReactNode, useContext, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { WorkoutData } from '../types/exercise';
@@ -13,13 +12,8 @@ import { secureGet, secureSet, secureRemove } from './secureUserCache';
 import { logError, logCacheCorruption } from './logger';
 import { WorkoutsCacheSchema, safeJsonParse } from './cacheSchemas';
 
-// SECURITY (H3): Workouts cache contains exercise/training history —
-// sensitive enough to live in SecureStore rather than AsyncStorage. We
-// keep the legacy key + AsyncStorage as a one-time fallback so users
-// upgrading from a previous build don't lose their cache on first run.
 const CACHE_KEY = 'workouts';
 
-// Simple ID generator — no external package needed
 const generateId = (): string =>
   `w_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
@@ -40,10 +34,6 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
   const [workouts, setWorkouts] = useState<WorkoutData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // ── Hydrate from cache immediately so the UI isn't blank during the
-  //    Supabase round-trip. Authoritative data replaces this once it lands.
-  //    Reads SecureStore first; falls back to the legacy AsyncStorage
-  //    entry on first run of an upgraded build.
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -51,8 +41,6 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
         const secure = await secureGet(CACHE_KEY);
         const raw = secure ?? (await AsyncStorage.getItem(CACHE_KEY));
         if (cancelled || !raw) return;
-        // M6 — Zod-validate. On miss, drop the corrupt blob and let
-        // the Supabase sync re-populate.
         const parsedResult = WorkoutsCacheSchema.safeParse(safeJsonParse(raw));
         if (!parsedResult.success) {
           logCacheCorruption(CACHE_KEY);
@@ -63,9 +51,6 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
         const parsed = parsedResult.data as WorkoutData[];
         const migrated = parsed.map(w => (w.id ? w : { ...w, id: generateId() }));
         setWorkouts(migrated);
-        // If we only had the legacy copy, promote it to the secure
-        // cache and drop the plaintext one so future reads stay fast
-        // AND don't expose the workout list on disk.
         if (!secure) {
           await secureSet(CACHE_KEY, raw);
           await AsyncStorage.removeItem(CACHE_KEY).catch(() => {});
@@ -77,12 +62,10 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
     return () => { cancelled = true; };
   }, []);
 
-  // ── Once auth settles, sync with Supabase (migrate-up + fetch-down).
   useEffect(() => {
     if (authLoading) return;
 
     if (!userId) {
-      // Signed out — keep whatever's in cache, but mark loaded so screens render.
       setIsLoading(false);
       return;
     }
@@ -91,10 +74,8 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
 
     const sync = async () => {
       try {
-        // Push any local-only workouts to Supabase (one-time per device).
         await migrateWorkoutsFromAsyncStorage(userId);
 
-        // Pull the authoritative list and overwrite local state + cache.
         const remote = await fetchWorkouts(userId);
         if (cancelled) return;
 
@@ -111,7 +92,6 @@ export const WorkoutProvider = ({ children }: { children: ReactNode }) => {
     return () => { cancelled = true; };
   }, [userId, authLoading]);
 
-  // ── Write-through cache. Runs on every workouts change after first load.
   useEffect(() => {
     if (isLoading) return;
     secureSet(CACHE_KEY, JSON.stringify(workouts)).catch(e =>

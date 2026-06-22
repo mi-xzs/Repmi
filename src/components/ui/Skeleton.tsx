@@ -1,12 +1,3 @@
-// src/components/ui/Skeleton.tsx
-//
-// Neutral shimmer placeholder. One atom (<Skeleton />) plus a few
-// composed presets that mirror real screen silhouettes.
-//
-// The shimmer is a horizontal gradient sweep over a low-contrast
-// base. Animated via reanimated's useSharedValue. On reduce-motion
-// it falls back to the static base so the screen still has shape.
-
 import React, { useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
@@ -37,21 +28,10 @@ type SkeletonProps = {
   style?: StyleProp<ViewStyle>;
 };
 
-/**
- * Kept for backwards compat — now a no-op. The skeleton renders
- * immediately and `useStableLoading` handles the perception window.
- */
 export function useDelayedShow(_delayMs: number = 0): boolean {
   return true;
 }
 
-/**
- * Keep the skeleton on screen for at least `minMs` after `isLoading`
- * first flips true. Without this, cached / sub-100ms loads flash the
- * skeleton for a frame or skip it entirely. Mirrors what LinkedIn,
- * Stripe, Slack do — once you start a loading state, you commit to
- * it for a perceptible beat.
- */
 export function useStableLoading(isLoading: boolean, minMs: number = 500): boolean {
   const [visible, setVisible] = useState(isLoading);
   const startedAt = useRef<number | null>(isLoading ? Date.now() : null);
@@ -139,14 +119,9 @@ export function Skeleton({
 }
 
 // ── Composed presets ────────────────────────────────────────
-// Mirror the most common shapes in this app: workout list cards,
-// stat cards (2-col grid), and the analytics chart card. Each
-// preset matches the real component's height + spacing so the
-// final swap is a visual fill-in rather than a layout shift.
 
 const CARD_BORDER_RADIUS = 18;
 
-/** A single workout card silhouette — matches WorkoutCard layout. */
 export function SkeletonWorkoutCard() {
   return (
     <View style={presetStyles.workoutCard}>
@@ -166,7 +141,6 @@ export function SkeletonWorkoutCard() {
   );
 }
 
-/** Section label silhouette — matches HomeScreen's SectionLabel row. */
 export function SkeletonSectionLabel() {
   return (
     <View style={presetStyles.sectionLabelRow}>
@@ -176,7 +150,6 @@ export function SkeletonSectionLabel() {
   );
 }
 
-/** 2-column row of stat cards — matches AnalyticsScreen's cardRow. */
 export function SkeletonStatRow() {
   return (
     <View style={presetStyles.statCardRow}>
@@ -186,12 +159,10 @@ export function SkeletonStatRow() {
   );
 }
 
-/** A taller chart card silhouette. */
 export function SkeletonChartCard({ height = 220 }: { height?: number }) {
   return <Skeleton height={height} radius={14} />;
 }
 
-/** Achievements hex card silhouette (3-up grid). */
 export function SkeletonHexCard({ size }: { size: number }) {
   return (
     <View style={[presetStyles.hexCard, { width: size }]}>
@@ -266,6 +237,4 @@ const presetStyles = StyleSheet.create({
   },
 });
 
-// Note CARD_BORDER_RADIUS is exported so screens can match the
-// rest of the card silhouette if they want a bigger block.
 export { CARD_BORDER_RADIUS };

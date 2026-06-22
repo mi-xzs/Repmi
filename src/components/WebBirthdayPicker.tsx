@@ -1,12 +1,3 @@
-// Web-only birthday picker. The native <input type="date"> opens the
-// browser's own calendar popup, which can't be themed and a month-grid is
-// poor UX for birthdays (hundreds of "prev month" taps to reach a decade
-// ago). This is a custom, on-brand popover with a Year -> Month -> Day
-// drill-down: fast to reach any year, and styled to match the app's dark
-// sheets. react-native-web renders to the DOM, so this uses plain DOM nodes.
-//
-// Native (iOS/Android) keeps the wheel spinner in OnboardingScreen; this
-// component is only mounted on web.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { colors } from '../theme/colors';
 
@@ -35,8 +26,6 @@ const fmtLong = (d: Date) =>
   d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 const atMidnight = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
-// Class-scoped CSS for things inline styles can't express: keyframes,
-// :hover / :focus-visible, and the scrollbar. Injected once.
 const STYLE_ID = 'bdp-styles';
 function ensureStyles() {
   if (typeof document === 'undefined' || document.getElementById(STYLE_ID)) return;
@@ -98,7 +87,6 @@ export default function WebBirthdayPicker({
   const [hover, setHover] = useState(false);
   const [focused, setFocused] = useState(false);
 
-  // Pending selection (committed only on Done).
   const [pY, setPY] = useState<number | null>(null);
   const [pM, setPM] = useState<number | null>(null);
   const [pD, setPD] = useState<number | null>(null);
@@ -136,7 +124,6 @@ export default function WebBirthdayPicker({
     setOpen(true);
   };
 
-  // Scroll the year list to the active/default year when the year view shows.
   useEffect(() => {
     if (open && view === 'year' && yearScrollRef.current) {
       const node = yearScrollRef.current.querySelector('[data-active-year="true"]');
@@ -148,7 +135,6 @@ export default function WebBirthdayPicker({
 
   const pickYear = (y: number) => {
     setPY(y);
-    // Keep month/day valid for the new year.
     if (pM != null && !allowedMonth(y, pM)) { setPM(null); setPD(null); }
     else if (pM != null && pD != null && !allowedDay(y, pM, pD)) setPD(null);
     setView('month');
@@ -253,9 +239,6 @@ export default function WebBirthdayPicker({
                   {yearsDescending(minYear, maxYear).map(y => {
                     const disabled = !allowedYear(y);
                     const selected = pY === y;
-                    // Only mark a scroll target when a year is already
-                    // chosen. Fresh open stays scrolled to the top (the most
-                    // recent year, today - 16), so users scroll down for older.
                     const isActive = pY === y;
                     return (
                       <button key={y} type="button" className="bdp-cell"

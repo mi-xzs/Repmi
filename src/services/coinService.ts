@@ -1,12 +1,3 @@
-// src/services/coinService.ts
-//
-// Pure coin economy helpers. No React, no Supabase. CoinContext sources the
-// inputs (sessions, level, earned achievements, longest streak) and passes
-// them to these functions.
-//
-// Tuning constants live at the top. Adjust them here; downstream UIs read
-// the derived totals.
-
 import { WorkoutSession } from '../screens/WorkoutScreen';
 import { dayKey } from '../utils/analyticsHelpers';
 import { getStreakMultiplier, rarityFromXP, Rarity } from './xpService';
@@ -40,10 +31,6 @@ export function getCoinsForAchievement(achievementXP: number): number {
 }
 
 // ─── Level-up coins ──────────────────────────────────────────────────────────
-//
-// Flat per regular level with jackpots at title-unlock milestones. Linear
-// scaling (level × constant) is deliberately avoided — it inflates the
-// economy at higher levels and dwarfs all other earn sources.
 
 export function getCoinsForLevelUp(levelReached: number): number {
   if (levelReached === 25) return 400;
@@ -99,7 +86,6 @@ export function computeSessionCoins(
 // ─── Session walk (workout coins + weekly bonus) ─────────────────────────────
 
 function isoWeekKey(date: Date): string {
-  // ISO-8601 week. Monday-anchored, same convention used by most habit apps.
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);
@@ -131,7 +117,6 @@ function walkSessionsForWorkoutCoins(sessions: readonly WorkoutSession[]): Sessi
     const isFirstOfDay = currKey !== lastDayKey;
 
     if (currKey === lastDayKey) {
-      // same day — streak unchanged
     } else if (lastDayKey !== null) {
       const last = new Date(lastDayKey + 'T00:00:00');
       const curr = new Date(currKey + 'T00:00:00');
@@ -159,8 +144,6 @@ function walkSessionsForWorkoutCoins(sessions: readonly WorkoutSession[]): Sessi
       }
     }
 
-    // No working sets = same treatment as XP: 0 reward, but the day still
-    // counts toward streak. Matches xpService.computeSessionXP behavior.
     if (workingSetCount > 0) {
       const { multiplier } = getStreakMultiplier(streak);
       workoutCoins += computeSessionCoins(multiplier, hasPR, isFirstOfDay).total;

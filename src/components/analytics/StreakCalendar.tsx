@@ -177,7 +177,7 @@ const StreakCalendar: React.FC<Props> = ({ sessions }) => {
                       ? (inStreak ? accent : accent + '50')
                       : colors.button3,
                     borderWidth:     day.isToday && !trained ? 1 : 0,
-                    borderColor:     colors.titleTextz
+                    borderColor:     colors.titleText,
                     opacity:         day.isFuture ? 0.3 : 1,
                   },
                 ]}

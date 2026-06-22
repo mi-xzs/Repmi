@@ -16,15 +16,15 @@ export default function DeleteButton({ onPress }: DeleteButtonProps) {
 
 const styles = StyleSheet.create({
   button: {
-    width: 24,             // smaller width
-    height: 24,            // smaller height
+    width: 24,
+    height: 24,
     backgroundColor: colors.container,
-    borderRadius: 12,      // half of width/height for perfect circle
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   text: {
-    fontSize: 12,          // smaller font to fit the smaller circle
+    fontSize: 12,
     color: colors.button2,
     fontWeight: 'bold',
   },

@@ -1,15 +1,3 @@
-// src/screens/HealthDataConsentScreen.tsx
-//
-// H4 — GDPR Art. 9(2)(a) explicit consent flow.
-//
-// Shown the FIRST time a user attempts to save bodyweight, height, age,
-// or RPE — and any subsequent time the user has not yet granted (or
-// has revoked) the corresponding consent kind. Two distinct checkboxes,
-// because Art. 9 requires consent be granular per purpose.
-//
-// Decline → navigates back; the upstream save call is cancelled by the
-// caller (which checks `hasConsent()` before persisting).
-
 import React, { useCallback, useEffect, useState } from 'react';
 import {
   View,
@@ -42,7 +30,6 @@ export default function HealthDataConsentScreen() {
   const { accent } = useAccent();
   const userId = session?.user.id;
 
-  // H9 — prevent screenshots of the consent decision UI.
   useFocusEffect(
     useCallback(() => {
       preventScreenCaptureAsync().catch(() => {});

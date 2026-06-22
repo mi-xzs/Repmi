@@ -1,11 +1,9 @@
-// src/types/analytics.ts
-
 import { WorkoutData } from "./exercise";
 
 //session set
 
 export interface SessionSet {
-  label: string;       // "W" for warm-up set, "1", "2", "3"… for working sets
+  label: string;
   kg?: number;
   reps?: number;
   minutes?: number;
@@ -29,9 +27,9 @@ export interface HeatmapEntry {
   allSets: SessionSet[];
   topKg: number;
   topReps?: number;
-  topBwReps?: number;   // bodyweight: max reps in a working set
-  topSeconds?: number;  // timed: max duration in seconds in a working set
-  topMeters?: number;   // distance: max meters in a working set
+  topBwReps?: number;
+  topSeconds?: number;
+  topMeters?: number;
   mode?: AnalyticsMode;
 }
 
@@ -46,13 +44,13 @@ export interface RadarPoint {
 
 export interface OverallData {
   totalSessions: number;
-  totalDuration: number;          // secs
-  totalVolume: number;            // sum of kg × reps across all working sets
+  totalDuration: number;
+  totalVolume: number;
   totalReps: number;
   totalSets: number;
   topExercisesByVolume: { name: string; volume: number }[];
   topExercisesByFreq: RadarPoint[];
-  weeklyFrequency: number;        // avg sessions per week over last 4 weeks
+  weeklyFrequency: number;
 }
 
 

@@ -1,4 +1,3 @@
-// src/screens/WorkoutScreen.tsx
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import {
   Text,
@@ -134,9 +133,6 @@ export default function WorkoutScreen() {
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scrollRef      = useRef<ScrollView>(null);
 
-  // Scroll-to-first-row tracking, mirrors the CreateWorkoutScreen error flow.
-  // We compute target content y via measureInWindow + UIManager.measure on
-  // the scrollable node, plus a live scroll offset.
   const scrollOffsetY        = useRef<number>(0);
   const warmupCardRef        = useRef<View | null>(null);
   const firstWorkingViewRef  = useRef<View | null>(null);
@@ -263,8 +259,6 @@ export default function WorkoutScreen() {
   const handleStart = () => {
     if (!workoutData) return;
     setElapsed(0);
-    // If the user edited the template after the last session, their edit
-    // should override the "previous set" seeding.
     const templateOverrides =
       !!workoutData.editedAt &&
       !!prevSessionDate &&
@@ -274,10 +268,6 @@ export default function WorkoutScreen() {
     );
     setActiveSections(
       workoutData.sections.map(sec => {
-        // Seed each row's kg / reps from the previous session when available,
-        // falling back to the template's planned values otherwise.
-        // Positional matching keeps this in sync with the "Prev" column,
-        // which renders previousSets?.[index] in MainWorkout.
         const prev = templateOverrides ? undefined : prevSetsMap[sec.exerciseName];
         return sec.rows.map((r, i) => {
           const prevSet = prev?.[i];
@@ -292,11 +282,6 @@ export default function WorkoutScreen() {
     );
     setLevelBeforeWorkout(getLevelFromXP(totalXP));
     setIsActive(true);
-    // Auto-scroll to the first interactive section (warm-up if present,
-    // otherwise the first working section) so the first Done button is in
-    // view rather than the Start button at the bottom of the screen.
-    // requestAnimationFrame waits for the active layout to render so
-    // measureInWindow returns post-layout coordinates.
     requestAnimationFrame(async () => {
       const target = (workoutData.showWarmUp ? warmupCardRef.current : null)
         ?? firstWorkingViewRef.current;
@@ -310,9 +295,6 @@ export default function WorkoutScreen() {
   const handleFinish = async () => {
     if (!workoutData) return;
 
-    // Cooldown reminder: only nag when the plan includes a cooldown and the
-    // user hasn't ticked any of it. Destructive label on "Finish anyway" makes
-    // it deliberately easier to back out than to push through.
     if (workoutData.showCooldown && activeCooldown.length > 0) {
       const anyDone = activeCooldown.some(r => r.done);
       if (!anyDone) {
@@ -364,8 +346,6 @@ export default function WorkoutScreen() {
       exercises,
     };
 
-    // PR detection: load prior history before saving so the just-completed
-    // session isn't in the comparison set.
     if (userId) {
       try {
         const prior = await sbLoadAllSessions(userId);
@@ -381,7 +361,6 @@ export default function WorkoutScreen() {
     if (userId) {
       try {
         await saveSession(userId, workoutId, session);
-        // Opportunistic drain of any sessions that previously failed to push.
         flushPendingSessions(userId).catch(e =>
           logError('workout.pendingFlush.failed', { name: (e as Error)?.name }),
         );
@@ -395,8 +374,6 @@ export default function WorkoutScreen() {
     exercises.forEach((ex) => { newMap[ex.name] = ex.sets; });
     setPrevSetsMap(newMap);
 
-    // Persist any kg/reps the user adjusted mid-session back into the workout
-    // template, so view/edit mode reflects what was actually performed.
     const cleanWorkout: WorkoutData = {
       ...workoutData,
       warmUp:   (workoutData.warmUp   ?? []).map(r => ({ ...r, done: false })),
@@ -433,9 +410,6 @@ export default function WorkoutScreen() {
       exercises: xpExercises,
     };
 
-    // Compute current streak from all sessions in Supabase. Also surface
-    // whether the just-saved session is the FIRST of today, used to gate
-    // per-workout coin earning (anti-grind soft cap).
     let streak = 0;
     let isFirstOfDay = true;
     if (userId) {
@@ -453,7 +427,6 @@ export default function WorkoutScreen() {
           daySet.add(key);
           if (key === todayKey) todayCount++;
         }
-        // The just-saved session is in allSessions; only "first" if it's alone today.
         isFirstOfDay = todayCount <= 1;
 
         const check = new Date();
@@ -478,7 +451,6 @@ export default function WorkoutScreen() {
       breakdown,
     };
 
-    // Coins are gated on a real workout (matches XP — 0 working sets = 0 XP).
     const sessionCoinBreakdown = baseXP > 0
       ? computeSessionCoins(multiplier, lastPRDeltas.size > 0, isFirstOfDay)
       : { base: 0, streakBonus: 0, prBonus: 0, total: 0 };
@@ -527,7 +499,6 @@ export default function WorkoutScreen() {
   const getHighlightNextSet = (i: number): boolean => {
     if (!isActive) return false;
 
-    // Build sequential groups (standalone = [i], superset = [i, i+1, ...])
     const groups: number[][] = [];
     let j = 0;
     while (j < workoutData.sections.length) {
@@ -546,14 +517,11 @@ export default function WorkoutScreen() {
         return rows.every(r => r.done);
       });
 
-    // Only the first incomplete group gets a highlight
     const activeGroup = groups.find(g => !isGroupComplete(g));
     if (!activeGroup || !activeGroup.includes(i)) return false;
 
-    // Standalone exercise — always highlight its next row
     if (activeGroup.length === 1) return true;
 
-    // Superset — alternate: whoever has fewest done sets goes next
     const doneCounts = activeGroup.map(idx => {
       const rows = activeSections[idx] ?? workoutData.sections[idx].rows;
       return rows.filter(r => r.done).length;
@@ -653,8 +621,6 @@ export default function WorkoutScreen() {
                               copy[i] = updated;
                               return copy;
                             });
-                            // Persist immediately so kg/reps edits and Done
-                            // toggles survive navigation-away / app-kill.
                             updateWorkout(workoutIndex, {
                               ...workoutData,
                               sections: workoutData.sections.map((sec, idx) =>
@@ -754,7 +720,7 @@ export default function WorkoutScreen() {
             </View>
           )}
 
-          {/* Last / Avg duration — flows with content rather than sticking */}
+          {/* Last / Avg duration */}
           {(lastDuration !== null || avgDuration !== null) && (
             <View style={styles.statsRow}>
               {lastDuration !== null && (
@@ -901,7 +867,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     borderWidth: 1,
     backgroundColor: colors.button3,
-    marginTop: -4,   // tucks up slightly under the section card
+    marginTop: -4,
     marginBottom: 10,
   },
   restTimerBtnText: {

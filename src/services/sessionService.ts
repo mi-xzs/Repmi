@@ -28,16 +28,6 @@ export async function saveSession(
   workoutId: string,
   session: WorkoutSession,
 ): Promise<void> {
-  // SECURITY (H3) — strict payload validation. `workout_sessions.exercises`
-  // is JSONB with no column-level constraints; without this gate a
-  // tampered client could insert sessions with absurd weights/reps/duration
-  // that flow into PR / volume / leaderboard derivations. The schema
-  // caps string lengths, array sizes, numeric ranges, and rejects unknown
-  // keys.
-  //
-  // NOTE: This is the FIRST line of defence. A proper server-side check
-  // (pg_jsonschema constraint or SECURITY DEFINER RPC) is still the
-  // long-term fix — TypeScript is not a security boundary.
   const validated = WorkoutSessionPayloadSchema.safeParse(session);
   if (!validated.success) {
     logError('session.save.invalidPayload', { workoutId });
@@ -145,7 +135,6 @@ export async function migrateFromAsyncStorage(
 
   const activeIds = workouts.map(w => w.id).filter((id): id is string => !!id);
   const deletedRaw = await AsyncStorage.getItem('deletedWorkoutIds');
-  // M6 — schema-validate; treat a corrupt blob as an empty list.
   const deletedParsed = deletedRaw ? DeletedWorkoutIdsSchema.safeParse(safeJsonParse(deletedRaw)) : null;
   const deletedIds: string[] = deletedParsed?.success ? deletedParsed.data : [];
   if (deletedRaw && deletedParsed && !deletedParsed.success) {
@@ -160,12 +149,9 @@ export async function migrateFromAsyncStorage(
   for (const id of allIds) {
     const rawSessions = await AsyncStorage.getItem(`sessions_${id}`);
     if (rawSessions) {
-      // M6 — Zod-validate. On miss, drop the legacy key and skip.
       const parsed = z.array(WorkoutSessionSchema).safeParse(safeJsonParse(rawSessions));
       if (parsed.success) {
         for (const s of parsed.data as WorkoutSession[]) {
-          // H3 — same strict-payload gate as `saveSession`. Skip rows
-          // that don't pass; the legacy cache is best-effort migrated.
           const strict = WorkoutSessionPayloadSchema.safeParse(s);
           if (!strict.success) {
             logCacheCorruption(`sessions_${id}`, { reason: 'strictSchemaMiss' });
@@ -220,25 +206,12 @@ export async function migrateFromAsyncStorage(
       .then(({ error }) => { if (error) throw error; });
   }
 
-  // Only flip the one-shot flag if we actually pushed something. Otherwise a
-  // device that signed in before any local data was written (e.g. logged-out
-  // upgrade flow) would be permanently marked "done" without ever migrating.
   if (sessionInserts.length > 0 || rpeInserts.length > 0) {
     await AsyncStorage.setItem(MIGRATION_KEY, 'true');
   }
 }
 
 // ─── Offline-tolerant retry queue for live session saves ─────────────────────
-//
-// When `saveSession` fails (network blip, brief outage, etc.) we stash the
-// session in SecureStore so it isn't lost. The queue is drained on app
-// launch (XPContext) and after each successful save (WorkoutScreen).
-//
-// SECURITY (H3): The pending queue contains raw workout data (exercise
-// breakdowns, durations, dates) — same sensitivity as the sessions on
-// the server side. Previously kept in AsyncStorage (plain JSON on disk);
-// now in SecureStore via `secureUserCache`. The legacy AsyncStorage key
-// is still drained on first run for back-compat.
 
 const PENDING_KEY = 'pending_sessions_v1';
 
@@ -248,14 +221,6 @@ interface PendingSession {
 }
 
 async function readPendingQueue(): Promise<PendingSession[]> {
-  // Prefer the SecureStore value; fall back to the legacy AsyncStorage
-  // entry on the first launch of an upgraded build (which we then move
-  // across so subsequent reads hit the secure path only).
-  //
-  // SECURITY (M6): The cache is locally-writeable so we Zod-validate
-  // every blob before letting it back into the queue. A schema miss
-  // drops the cache rather than throwing — a tampered or corrupted
-  // pending-queue must not brick the app.
   try {
     const secure = await secureGet(PENDING_KEY);
     if (secure) {
@@ -279,7 +244,6 @@ async function readPendingQueue(): Promise<PendingSession[]> {
         return [];
       }
       const items = parsed.data as PendingSession[];
-      // Migrate to SecureStore and remove the plaintext copy.
       if (items.length > 0) {
         await secureSet(PENDING_KEY, JSON.stringify(items));
       }
@@ -295,7 +259,6 @@ async function readPendingQueue(): Promise<PendingSession[]> {
 async function writePendingQueue(queue: PendingSession[]): Promise<void> {
   if (queue.length === 0) {
     await secureRemove(PENDING_KEY);
-    // Defensive — drop any legacy copy too.
     await AsyncStorage.removeItem(PENDING_KEY).catch(() => {});
     return;
   }

@@ -16,7 +16,7 @@ export default function AddExerciseButton({ onPress }: AddExerciseButtonProps) {
       onPressOut={() => setPressed(false)}
       style={[
         styles.button,
-        pressed && styles.pressed, // apply opacity when pressed
+        pressed && styles.pressed,
       ]}
     >
       <Text style={styles.text}>+ Add</Text>

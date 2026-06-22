@@ -47,8 +47,6 @@ function formatSetMain(s: SessionSet, mode?: 'weight' | 'bodyweight' | 'timed' |
 
 function formatSetReps(s: SessionSet, mode?: 'weight' | 'bodyweight' | 'timed' | 'distance'): string | null {
   if (mode === 'distance') {
-    // For paced cardio, surface time as the secondary metric. Carries
-    // (sled push, farmer's walk) usually have no time, so we hide it.
     const secs = (s.minutes ?? 0) * 60 + (s.seconds ?? 0);
     if (secs <= 0) return null;
     const m = Math.floor(secs / 60);
@@ -60,7 +58,7 @@ function formatSetReps(s: SessionSet, mode?: 'weight' | 'bodyweight' | 'timed' |
   if ((s.kg ?? 0) > 0) return `×${reps}`;
   const secs = (s.minutes ?? 0) * 60 + (s.seconds ?? 0);
   if (secs > 0) return `×${reps}`;
-  return null; // bodyweight-only: reps live in main
+  return null;
 }
 
 function splitDuration(seconds: number): { value: string; unit: string } {
@@ -80,13 +78,10 @@ function extractTopSets(
     if (ex.name === 'Warm-up' || ex.name === 'Cooldown') continue;
     const working = ex.sets.filter((s) => s.label !== 'W');
     if (working.length === 0) continue;
-    // Pick the heaviest single set (max kg, longest distance for distance
-    // exercises, or longest/most reps for non-weighted).
     const mode = getExerciseMode(ex.name);
     const best = working.reduce((acc, s) => (setMetric(s, mode) > setMetric(acc, mode) ? s : acc));
     candidates.push({ exercise: ex.name, set: best, score: setScore(best) });
   }
-  // Float PR rows to the top so they catch the eye, then sort the rest by score.
   return candidates
     .sort((a, b) => {
       const aPR = prDeltas.has(a.exercise) ? 1 : 0;

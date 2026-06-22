@@ -39,8 +39,6 @@ export function ProfileProvider({ children }: { children: React.ReactNode }) {
   async function updateProfile(data: Partial<UserProfile>) {
     if (!session || !profile) return;
     const updated = { ...profile, ...data };
-    // Optimistic — flip local state first so toggles feel instant.
-    // Roll back on network failure so the UI doesn't lie.
     const previous = profile;
     setProfile(updated);
     try {

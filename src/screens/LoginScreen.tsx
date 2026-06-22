@@ -26,24 +26,9 @@ export default function LoginScreen({ navigation }: any) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  // H2 — Per-email failed-login throttle. `lockoutSeconds > 0` disables
-  // the button and shows a countdown until another attempt is allowed.
-  // The counter is persisted in AsyncStorage (see loginThrottle.ts), so
-  // refreshing the page does NOT reset it — defeats the trivial F5 bypass.
   const [lockoutSeconds, setLockoutSeconds] = useState(0);
-  // Avoid stomping on a fresh countdown when the user toggles back to an
-  // older email mid-tick.
   const lastCheckedEmailRef = useRef('');
 
-  // M6 — login is explicit-tap only. The previous auto-submit useEffect
-  // (fired when password-manager autofill populated both fields) was
-  // removed: it caused surprise logins on autofill and made failed-attempt
-  // throttling harder to reason about. The user must press "Log In".
-
-  // H2 — Re-check the lockout window whenever the email field changes
-  // (typing a new email starts fresh; returning to a locked email
-  // resurfaces the countdown). Also ticks once per second while locked
-  // to keep the displayed countdown live.
   useEffect(() => {
     const trimmed = email.trim().toLowerCase();
     lastCheckedEmailRef.current = trimmed;
@@ -74,8 +59,6 @@ export default function LoginScreen({ navigation }: any) {
       setError('Please fill in all fields.');
       return;
     }
-    // H2 — short-circuit if locked. Re-read from storage in case the lock
-    // was set by another tab / a previous mount we don't have state for.
     const trimmedEmail = email.trim();
     const remaining = await getLockoutSecondsRemaining(trimmedEmail);
     if (remaining > 0) {
@@ -88,7 +71,6 @@ export default function LoginScreen({ navigation }: any) {
     const err = await signIn(trimmedEmail, password);
     setLoading(false);
     if (err) {
-      // H2 — record the failure and surface the new lockout if any.
       const { lockoutSeconds: lock } = await recordFailedAttempt(trimmedEmail);
       if (lock > 0) {
         setLockoutSeconds(lock);
@@ -97,14 +79,10 @@ export default function LoginScreen({ navigation }: any) {
         setError(err);
       }
     } else {
-      // H2 — successful login clears any prior failure count for this email.
       await clearThrottle(trimmedEmail);
     }
   }
 
-  // One-click sign-in to the shared demo account for recruiters / portfolio
-  // reviewers. The account is pre-seeded with workouts + sessions so the app
-  // appears fully-populated without requiring a signup.
   async function handleDemoLogin() {
     setError('');
     setLoading(true);
@@ -163,9 +141,6 @@ export default function LoginScreen({ navigation }: any) {
         )}
       </TouchableOpacity>
 
-      {/* Demo-mode quick login — appears only when EXPO_PUBLIC_DEMO_EMAIL is
-          set at build time. Lets recruiters skip signup and see the app
-          fully populated with sample data. */}
       {DEMO_ENABLED && (
         <>
           <View style={styles.dividerRow}>
@@ -185,9 +160,6 @@ export default function LoginScreen({ navigation }: any) {
         </>
       )}
 
-      {/* H2 — Forgot password? Routes to PasswordResetScreen which calls
-          supabase.auth.resetPasswordForEmail with a `repmi://auth/reset`
-          redirect, then on tap returns the user to PasswordResetConfirmScreen. */}
       <TouchableOpacity onPress={() => navigation.navigate('PasswordReset')}>
         <Text style={[styles.link, { marginBottom: 12 }]}>
           <Text style={[styles.linkAccent, { color: accent }]}>Forgot password?</Text>
@@ -210,10 +182,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     backgroundColor: colors.background,
   },
-  // Centered, max-width form column so the login form sits in a tidy
-  // card-width block on wide web viewports instead of stretching across
-  // the whole screen. On mobile the maxWidth is wider than the viewport,
-  // so it's effectively full-width.
   formCol: {
     width: '100%',
     maxWidth: 400,

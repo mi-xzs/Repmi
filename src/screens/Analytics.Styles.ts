@@ -1,5 +1,3 @@
-// src/screens/Analytics.Styles.ts
-
 import { StyleSheet } from "react-native";
 import { colors } from "../theme/colors";
 
@@ -119,7 +117,6 @@ export const styles = StyleSheet.create({
     letterSpacing: 0.6,
   },
 
-  // Compact override — used for the original smaller stat-card look (Consistency row)
   statCardCompact: {
     borderRadius: 10,
     padding: 12,
@@ -325,7 +322,6 @@ export const styles = StyleSheet.create({
   },
   weightLogBarFill: {
     height: 6,
-    // NOTE: non-component module — can't react to the equipped cosmetic theme.
     backgroundColor: '#00FA9A',
     borderRadius: 3,
   },
@@ -403,7 +399,6 @@ export const styles = StyleSheet.create({
   },
   barFill: {
     height: 6,
-    // NOTE: non-component module — can't react to the equipped cosmetic theme.
     backgroundColor: '#00FA9A',
     borderRadius: 3,
   },
@@ -476,7 +471,6 @@ export const styles = StyleSheet.create({
       height: 15,
     },
 
-    // subtle edge definition
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.06)",
   },
@@ -562,7 +556,6 @@ export const styles = StyleSheet.create({
     width: "100%",
   },
   radarCountdown: {
-    // NOTE: non-component module — can't react to the equipped cosmetic theme.
     color: '#00FA9A',
     fontSize: 12,
     fontWeight: "600",
@@ -664,7 +657,7 @@ export const styles = StyleSheet.create({
     gap: 10,
   },
   pillTableRowAlt: {
-    backgroundColor: colors.button2 + "33", // subtle alternating row tint
+    backgroundColor: colors.button2 + "33",
   },
   pillTableDate: {
     color: colors.titleText,

@@ -1,10 +1,3 @@
-// src/services/CoinContext.tsx
-//
-// Coins are fully derived from `workout_sessions` plus the level from
-// XPContext, so they transfer across devices automatically. CoinProvider
-// must be mounted INSIDE XPProvider — it consumes `useXP()` for the
-// current level.
-
 import React, {
   createContext,
   useContext,
@@ -65,8 +58,6 @@ export function CoinProvider({ children }: { children: ReactNode }) {
     }
   }, [userId]);
 
-  // Re-runs on auth change. XPContext handles the same migration/flush
-  // routines — we don't repeat them here, just re-fetch sessions.
   const initializedForRef = useRef<string | 'no-user' | null>(null);
   useEffect(() => {
     if (authLoading || workoutsLoading) return;

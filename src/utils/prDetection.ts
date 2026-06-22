@@ -2,11 +2,8 @@ import { WorkoutSession, SessionSet } from '../screens/WorkoutScreen';
 import { getExerciseMode } from '../constants/exerciseCatalog';
 import { ExerciseMode } from '../types/exercise';
 
-// Minimum distance for pace PRs. Avoids treating tiny "test" sets (e.g. a
-// 50m calibration row at sprint pace) as a legitimate pace record.
 export const MIN_PACE_DISTANCE_M = 200;
 
-// Volume-style score used to rank which sets to feature on the share card.
 export function setScore(s: SessionSet): number {
   const kg = s.kg ?? 0;
   const reps = s.reps ?? 0;
@@ -16,16 +13,10 @@ export function setScore(s: SessionSet): number {
   return reps * 10;
 }
 
-// Strength-style metric used for PR detection. Mode-aware: for a distance
-// exercise (rower, ski erg, treadmill, sled push, carries) the canonical
-// axis is meters, so a 2000m row beats an 8-minute row of 1500m. For
-// everything else: kg for weighted, seconds for timed, reps for bodyweight.
 export function setMetric(s: SessionSet, mode?: ExerciseMode): number {
   if (mode === 'distance') {
     const m = s.meters ?? 0;
     if (m > 0) return m;
-    // Distance set without meters: fall through to time/reps so we still
-    // detect a PR (e.g. a treadmill row that only logged time).
   }
   const kg = s.kg ?? 0;
   if (kg > 0) return kg;
@@ -58,7 +49,6 @@ function bestWorkingSet(sets: SessionSet[], mode?: ExerciseMode): SessionSet | n
   return best;
 }
 
-// Sum of meters across working sets. Used for session-aggregate distance PRs.
 function sumWorkingMeters(sets: SessionSet[]): number {
   let total = 0;
   for (const s of sets) {
@@ -68,8 +58,6 @@ function sumWorkingMeters(sets: SessionSet[]): number {
   return total;
 }
 
-// Best (fastest) pace across working sets, expressed as meters per second.
-// Higher is better. Returns 0 if no qualifying set exists.
 function bestWorkingPace(sets: SessionSet[]): { paceMs: number; set: SessionSet | null } {
   let bestMs = 0;
   let bestSet: SessionSet | null = null;
@@ -89,9 +77,6 @@ function bestWorkingPace(sets: SessionSet[]): { paceMs: number; set: SessionSet 
 
 export type PRUnit = 'kg' | 'sec' | 'reps' | 'm' | 'pace';
 
-// Distinguishes a per-set best from a per-session aggregate. Lets a single
-// session emit both "Longest Set" (scope: 'set') and "Session Distance"
-// (scope: 'session') for the same exercise without overwriting one another.
 export type PRScope = 'set' | 'session';
 
 export interface PRDelta {
@@ -99,7 +84,7 @@ export interface PRDelta {
   unit: PRUnit;
   prevBest: number;
   newBest: number;
-  scope?: PRScope; // defaults to 'set' if absent — keeps legacy callers compat
+  scope?: PRScope;
 }
 
 function unitOf(s: SessionSet, mode?: ExerciseMode): PRUnit {
@@ -109,9 +94,6 @@ function unitOf(s: SessionSet, mode?: ExerciseMode): PRUnit {
   return 'reps';
 }
 
-// Convert meters/second to seconds-per-500m, the rowing-standard pace
-// display. Works for any cardio distance unit even if not strictly
-// idiomatic for runs.
 function paceMsToSecPer500(paceMs: number): number {
   if (paceMs <= 0) return 0;
   return 500 / paceMs;
@@ -141,9 +123,6 @@ export function formatPRDelta(d: PRDelta): string {
   }
   if (d.unit === 'm') return `+${formatMeters(d.delta)}`;
   if (d.unit === 'pace') {
-    // Pace deltas are stored in m/s. Convert to "seconds saved per 500m"
-    // for display: smaller sec/500m means faster, so the saving is
-    // prev_sec_per_500 minus new_sec_per_500.
     const prevSec = paceMsToSecPer500(d.prevBest);
     const newSec = paceMsToSecPer500(d.newBest);
     const saved = prevSec - newSec;
@@ -173,10 +152,6 @@ export function formatPRValue(d: PRDelta): string {
   return `${d.newBest} ${d.newBest === 1 ? 'rep' : 'reps'}`;
 }
 
-// Headline ranking. The "most effortful" PR wins: kg first (heaviest lift
-// is the canonical strength flex), then pace (a faster pace is harder
-// than just covering more distance), then meters, then duration, then
-// reps. A session with both a kg PR and a distance PR shows kg.
 const PR_UNIT_RANK: Record<PRUnit, number> = {
   kg: 0,
   pace: 1,
@@ -201,12 +176,11 @@ export function pickHeadlinePR(
   return best;
 }
 
-// Internal helper: build the prior-session aggregates keyed by exercise name.
 type PriorAggregates = {
-  bestSet: Record<string, number>;            // per-set best metric (mode-axis)
-  bestSetMeters: Record<string, number>;      // per-set best meters (distance only)
-  bestPaceMs: Record<string, number>;         // per-set best pace, m/s
-  bestSessionMeters: Record<string, number>;  // per-session summed meters
+  bestSet: Record<string, number>;
+  bestSetMeters: Record<string, number>;
+  bestPaceMs: Record<string, number>;
+  bestSessionMeters: Record<string, number>;
 };
 
 function buildPriorAggregates(priorSessions: WorkoutSession[]): PriorAggregates {
@@ -221,9 +195,6 @@ function buildPriorAggregates(priorSessions: WorkoutSession[]): PriorAggregates 
       const best = bestWorkingMetric(ex.sets, mode);
       if (best > (bestSet[ex.name] ?? 0)) bestSet[ex.name] = best;
       if (mode === 'distance') {
-        // Track meters-specific bests separately so we still detect a
-        // "Longest Set" PR even when the canonical metric falls back to
-        // seconds (e.g. an old session that never logged meters).
         let maxMeters = 0;
         for (const s of ex.sets) {
           if (s.label === 'W') continue;
@@ -270,11 +241,6 @@ export function findPRDeltas(
       }
     }
 
-    // For distance exercises, also evaluate pace and session-aggregate
-    // distance. We pick the most "headline-worthy" PR per exercise so the
-    // PR map stays keyed by exercise name (existing consumers rely on
-    // that shape). Headline ranking: pace beats meters beats sec/reps,
-    // kg is unreachable here since mode is distance.
     if (mode === 'distance') {
       // ── 2. Fastest Pace PR ──
       const prevPaceMs = prior.bestPaceMs[ex.name] ?? 0;
@@ -287,8 +253,6 @@ export function findPRDeltas(
           newBest: paceMs,
           scope: 'set',
         };
-        // Pace ranks above meters in our headline order, so prefer it
-        // over a distance candidate.
         if (!candidate || PR_UNIT_RANK['pace'] < PR_UNIT_RANK[candidate.unit]) {
           candidate = pacePR;
         }
@@ -305,11 +269,6 @@ export function findPRDeltas(
           newBest: currentSessionMeters,
           scope: 'session',
         };
-        // Per the brief: when a session emits both a Longest Set ('set')
-        // and a Session Distance ('session') PR, prefer Longest Set
-        // because a single hardest effort beats total volume aesthetically.
-        // So we only fall back to the session PR if there is no
-        // per-set candidate at all.
         if (!candidate) {
           candidate = sessionPR;
         }

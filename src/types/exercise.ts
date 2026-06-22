@@ -1,5 +1,3 @@
-// src/types/exercise.ts
-
 // --- Phase row mode (for warmup/cooldown rows) ---
 export type PhaseRowMode = 'timed' | 'reps' | 'distance';
 
@@ -47,7 +45,7 @@ export type WorkoutSectionData = {
 
 // --- Full Workout Type ---
 export type WorkoutData = {
-  id: string;            // stable unique ID — used as AsyncStorage key prefix
+  id: string;
   workoutName: string;
   showWarmUp: boolean;
   showCooldown: boolean;
@@ -55,8 +53,5 @@ export type WorkoutData = {
   warmUp?: WarmUpData;
   cooldown?: CooldownData;
   imported?: boolean;
-  // ISO timestamp set whenever the user explicitly saves an edit. Compared
-  // against the last session date so template edits override "previous set"
-  // seeding when the user has just changed the plan.
   editedAt?: string;
 };

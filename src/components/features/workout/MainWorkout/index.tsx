@@ -1,5 +1,3 @@
-// src/components/features/workout/MainWorkout/index.tsx
-
 import React, {
   useState, useMemo, useEffect, useRef,
   forwardRef, useImperativeHandle,
@@ -20,8 +18,6 @@ import QuickAdjustModal from '../Shared/QuickAdjustModal';
 import RestTimerModal from '../../RestTimerModal';
 import { findExercise } from '../../../../constants/exerciseCatalog';
 
-// On web, drum-wheel pickers are awkward — let reps be typed directly,
-// like the kg field already is. Mobile keeps the drum-wheel modal.
 const isWeb = Platform.OS === 'web';
 
 export type PreviousSet = {
@@ -50,14 +46,10 @@ type Props = {
   previousSets?: PreviousSet[];
   exerciseMode?: ExerciseMode;
   onExerciseModeChange?: (mode: ExerciseMode) => void;
-  // Mid-workout swap. Only meaningful when `active` — fires when the user
-  // picks a replacement exercise via long-press or the header kebab.
   onSwap?: (name: string, mode: ExerciseMode) => void;
   linkedFromPrev?: boolean;
   linkedToNext?: boolean;
   highlightNextSet?: boolean;
-  // Overall workout title (e.g. "Leg Day") — passed to the exercise picker so
-  // it can surface workout-relevant muscle groups at the top.
   workoutTitle?: string;
 };
 
@@ -150,19 +142,13 @@ const WorkoutSection = forwardRef<WorkoutSectionHandle, Props>(function WorkoutS
     return assignSets(value);
   });
 
-  // Mirror the current rows so the sync effect can recognise our own echo:
-  // when this component edits a row it calls onChange(copy), the parent
-  // stores that same array and passes it straight back as `value`. Without
-  // this guard the effect would rebuild every row (new object identities)
-  // on each keystroke, remounting the controlled TextInputs and dropping
-  // focus on web.
   const rowsRef = useRef(rows);
   rowsRef.current = rows;
 
   useEffect(() => {
     if (!Array.isArray(value) || value.length === 0) return;
     if (value.length === 1 && isBlank(value[0])) return;
-    if (value === rowsRef.current) return; // our own echo — don't rebuild
+    if (value === rowsRef.current) return;
     setRows(assignSets(value));
   }, [value]);
 
@@ -221,8 +207,6 @@ const WorkoutSection = forwardRef<WorkoutSectionHandle, Props>(function WorkoutS
   const [nameError, setNameError] = useState(false);
   const [rowErrors, setRowErrors] = useState<boolean[]>([]);
 
-  // Per-row View refs + first-invalid index — let the parent ScrollView land
-  // precisely on the offending row, not just the section header.
   const rowViewRefs = useRef<(View | null)[]>([]);
   const firstInvalidIdxRef = useRef<number | null>(null);
 
@@ -235,8 +219,6 @@ const WorkoutSection = forwardRef<WorkoutSectionHandle, Props>(function WorkoutS
       setNameError(nameInvalid);
       if (nameInvalid) {
         valid = false;
-        // Name lives in the section header — row 0 sits right under it, so
-        // scrolling there lands the name near the top of the viewport.
         firstInvalid = 0;
       }
 
@@ -276,8 +258,6 @@ const WorkoutSection = forwardRef<WorkoutSectionHandle, Props>(function WorkoutS
 
   const cellStyle = (readonly || active) ? { backgroundColor: 'transparent' } : {};
 
-  // Per-mode column flex weights — Sets/Done are narrow (number / icon),
-  // Prev scales with how long the formatted string can get.
   const COLUMN_FLEX: Record<ExerciseMode, { sets: number; prev: number; mid: number; done: number }> = {
     weight:     { sets: 1.0, prev: 1.4, mid: 1.4, done: 1.0 },
     bodyweight: { sets: 1.0, prev: 1.2, mid: 2.0, done: 1.0 },
@@ -290,7 +270,6 @@ const WorkoutSection = forwardRef<WorkoutSectionHandle, Props>(function WorkoutS
   const midFlex  = cf.mid;
   const doneFlex = cf.done;
 
-  // Adapter: map WorkoutRowData[] → ExerciseRowBase[] for TimePickerModal
   const timedRows = useMemo<ExerciseRowBase[]>(
     () => rows.map(r => ({
       name: '',
