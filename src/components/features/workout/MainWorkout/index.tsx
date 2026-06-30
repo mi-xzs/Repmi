@@ -504,7 +504,7 @@ const WorkoutSection = forwardRef<WorkoutSectionHandle, Props>(function WorkoutS
                   style={[
                     styles.inputCell,
                     styles.inputText,
-                    { flex: midFlex, textAlign: 'center', textAlignVertical: 'center', padding: 0 },
+                    { flex: midFlex, minWidth: 0, textAlign: 'center', textAlignVertical: 'center', padding: 0 },
                     rowIsInvalid && { color: 'red' },
                   ]}
                   keyboardType="numeric"
@@ -551,7 +551,7 @@ const WorkoutSection = forwardRef<WorkoutSectionHandle, Props>(function WorkoutS
                     style={[
                       styles.inputCell,
                       styles.inputText,
-                      { flex: midFlex, textAlign: 'center', textAlignVertical: 'center', padding: 0 },
+                      { flex: midFlex, minWidth: 0, textAlign: 'center', textAlignVertical: 'center', padding: 0 },
                       rowIsInvalid && row.reps === 0 && { color: 'red' },
                     ]}
                     keyboardType="numeric"
@@ -613,7 +613,7 @@ const WorkoutSection = forwardRef<WorkoutSectionHandle, Props>(function WorkoutS
                   style={[
                     styles.inputCell,
                     styles.inputText,
-                    { flex: midFlex, textAlign: 'center', textAlignVertical: 'center', padding: 0 },
+                    { flex: midFlex, minWidth: 0, textAlign: 'center', textAlignVertical: 'center', padding: 0 },
                     rowIsInvalid && { color: 'red' },
                   ]}
                   keyboardType="numeric"
