@@ -379,14 +379,21 @@ const AnalyticsScreen: React.FC = () => {
                       <View
                         style={
                           isWide
-                            ? { flexDirection: 'row', gap: 14, alignItems: 'stretch' }
+                            ? { flexDirection: 'row', flexWrap: 'wrap', gap: 14, alignItems: 'stretch' }
                             : { gap: 14 }
                         }
                       >
                         <View
                           style={
                             isWide
-                              ? { flex: 1, flexDirection: 'row', gap: 14, alignItems: 'stretch' }
+                              ? {
+                                  flex: 1,
+                                  minWidth: 500,
+                                  flexDirection: 'row',
+                                  flexWrap: 'wrap',
+                                  gap: 14,
+                                  alignItems: 'stretch',
+                                }
                               : { gap: 14 }
                           }
                         >
@@ -413,7 +420,7 @@ const AnalyticsScreen: React.FC = () => {
                             </View>
                           </View>
 
-                          <View style={[{ gap: 14 }, isWide && { flex: 1 }]}>
+                          <View style={[{ gap: 14 }, isWide && { flex: 1, minWidth: 200 }]}>
                             {warmUpStats && warmUpStats.count > 0 && (
                               <View style={[styles.section, { paddingTop: 12 }]}>
                                 <View style={[styles.cardHeader, { marginBottom: 8 }]}>
@@ -528,7 +535,7 @@ const AnalyticsScreen: React.FC = () => {
                         </View>
 
                         {hasMuscleSets && (
-                          <View style={isWide ? { flex: 1 } : undefined}>
+                          <View style={isWide ? { flex: 1, minWidth: 220 } : undefined}>
                             <View style={[styles.section, isWide && { flex: 1 }]}>
                               <View style={[styles.cardHeader, { marginBottom: 8 }]}>
                                 <Feather name="target" size={14} color={accent} />

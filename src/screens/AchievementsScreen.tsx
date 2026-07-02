@@ -1994,7 +1994,7 @@ function PodiumPillar({
         <View
           style={{
             position: 'absolute',
-            top: isFirst ? -60 : -14,
+            top: -14,
             zIndex: 3,
             alignItems: 'center',
           }}
@@ -2002,7 +2002,9 @@ function PodiumPillar({
           {isFirst && (
             <View
               style={{
-                marginBottom: 2,
+                position: 'absolute',
+                top: -29,
+                left: -3,
                 width: 44,
                 height: 44,
                 alignItems: 'center',
