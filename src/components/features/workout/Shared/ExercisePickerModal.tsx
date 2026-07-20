@@ -12,9 +12,25 @@ import {
   Exercise,
   MuscleGroup,
   Equipment,
+  ExerciseStyle,
   getExerciseMuscles,
   getPriorityMuscles,
 } from '../../../../constants/exerciseCatalog';
+
+// Human-readable labels for the optional `style` tag on catalog entries.
+const STYLE_LABELS: Record<ExerciseStyle, string> = {
+  plyometric: 'Plyometric',
+  calisthenics: 'Calisthenics',
+  olympic: 'Olympic',
+  powerlifting: 'Powerlifting',
+  cardio: 'Cardio',
+  mobility: 'Rehab',
+};
+
+// Only surface styles that actually appear in the catalog.
+const STYLE_OPTIONS: ExerciseStyle[] = Array.from(
+  new Set(EXERCISE_CATALOG.map((e) => e.style).filter((s): s is ExerciseStyle => !!s)),
+);
 
 type ExerciseRow =
   | { type: 'header'; label: string }
@@ -49,18 +65,21 @@ export default function ExercisePickerModal({
   const flatListRef = useRef<FlatList>(null);
   const [muscleFilter, setMuscleFilter] = useState<MuscleGroup | null>(null);
   const [equipmentFilter, setEquipmentFilter] = useState<Equipment | null>(null);
-  const [openDropdown, setOpenDropdown] = useState<'muscle' | 'equipment' | null>(null);
+  const [styleFilter, setStyleFilter] = useState<ExerciseStyle | null>(null);
+  const [openDropdown, setOpenDropdown] = useState<'muscle' | 'equipment' | 'style' | null>(null);
   const [infoExercise, setInfoExercise] = useState<Exercise | null>(null);
 
   useEffect(() => {
     if (visible) {
       setMuscleFilter(null);
       setEquipmentFilter(null);
+      setStyleFilter(null);
       setOpenDropdown(null);
     }
   }, [visible]);
 
-  const hasActiveFilter = muscleFilter !== null || equipmentFilter !== null;
+  const hasActiveFilter =
+    muscleFilter !== null || equipmentFilter !== null || styleFilter !== null;
 
   const filteredItems: ExerciseRow[] = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
@@ -71,6 +90,7 @@ export default function ExercisePickerModal({
       if (excluded.has(ex.muscle)) return false;
       if (muscleFilter && ex.muscle !== muscleFilter) return false;
       if (equipmentFilter && ex.equipment !== equipmentFilter) return false;
+      if (styleFilter && ex.style !== styleFilter) return false;
       if (query && !ex.name.toLowerCase().includes(query)) return false;
       return true;
     });
@@ -100,7 +120,7 @@ export default function ExercisePickerModal({
       items.forEach((exercise) => result.push({ type: 'item', exercise }));
     }
     return result;
-  }, [searchQuery, muscleFilter, equipmentFilter, excludeSections, workoutContext]);
+  }, [searchQuery, muscleFilter, equipmentFilter, styleFilter, excludeSections, workoutContext]);
 
   const handleSelectExercise = (exercise: Exercise) => {
     if (selectedRowIndex !== null) {
@@ -226,12 +246,37 @@ export default function ExercisePickerModal({
               </View>
             </Pressable>
 
+            <Pressable
+              style={[pickerStyles.dropdown, styleFilter !== null && pickerStyles.dropdownActive, styleFilter !== null && { borderColor: accent }]}
+              onPress={() => setOpenDropdown(openDropdown === 'style' ? null : 'style')}
+            >
+              <Text style={pickerStyles.dropdownLabel}>Style</Text>
+              <View style={pickerStyles.dropdownValueRow}>
+                <Text
+                  style={[
+                    pickerStyles.dropdownValue,
+                    styleFilter !== null && pickerStyles.dropdownValueActive,
+                    styleFilter !== null && { color: accent },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {styleFilter ? STYLE_LABELS[styleFilter] : 'All'}
+                </Text>
+                <Feather
+                  name={openDropdown === 'style' ? 'chevron-up' : 'chevron-down'}
+                  size={16}
+                  color={styleFilter !== null ? accent : colors.titleText}
+                />
+              </View>
+            </Pressable>
+
             {hasActiveFilter && (
               <Pressable
                 style={pickerStyles.clearButton}
                 onPress={() => {
                   setMuscleFilter(null);
                   setEquipmentFilter(null);
+                  setStyleFilter(null);
                   setOpenDropdown(null);
                 }}
                 hitSlop={6}
@@ -242,75 +287,75 @@ export default function ExercisePickerModal({
           </View>
 
           {/* Expanded dropdown panel */}
-          {openDropdown !== null && (
-            <View style={pickerStyles.dropdownPanel}>
-              <ScrollView
-                style={pickerStyles.dropdownPanelScroll}
-                showsVerticalScrollIndicator={false}
-                nestedScrollEnabled
-              >
-                <Pressable
-                  style={pickerStyles.dropdownOption}
-                  onPress={() => {
-                    if (openDropdown === 'muscle') setMuscleFilter(null);
-                    else setEquipmentFilter(null);
-                    setOpenDropdown(null);
-                  }}
+          {openDropdown !== null && (() => {
+            const currentValue =
+              openDropdown === 'muscle'
+                ? muscleFilter
+                : openDropdown === 'equipment'
+                ? equipmentFilter
+                : styleFilter;
+            const options: string[] =
+              openDropdown === 'muscle'
+                ? MUSCLE_GROUPS.filter((m) => !(excludeSections ?? []).includes(m))
+                : openDropdown === 'equipment'
+                ? EQUIPMENT_TYPES
+                : STYLE_OPTIONS;
+            const labelFor = (opt: string) =>
+              openDropdown === 'style' ? STYLE_LABELS[opt as ExerciseStyle] : opt;
+            const selectOption = (opt: string | null) => {
+              if (openDropdown === 'muscle') setMuscleFilter(opt as MuscleGroup | null);
+              else if (openDropdown === 'equipment') setEquipmentFilter(opt as Equipment | null);
+              else setStyleFilter(opt as ExerciseStyle | null);
+              setOpenDropdown(null);
+            };
+            return (
+              <View style={pickerStyles.dropdownPanel}>
+                <ScrollView
+                  style={pickerStyles.dropdownPanelScroll}
+                  showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled
                 >
-                  <Text
-                    style={[
-                      pickerStyles.dropdownOptionText,
-                      ((openDropdown === 'muscle' && muscleFilter === null) ||
-                        (openDropdown === 'equipment' && equipmentFilter === null)) &&
-                        pickerStyles.dropdownOptionTextActive,
-                      ((openDropdown === 'muscle' && muscleFilter === null) ||
-                        (openDropdown === 'equipment' && equipmentFilter === null)) &&
-                        { color: accent },
-                    ]}
+                  <Pressable
+                    style={pickerStyles.dropdownOption}
+                    onPress={() => selectOption(null)}
                   >
-                    All
-                  </Text>
-                  {((openDropdown === 'muscle' && muscleFilter === null) ||
-                    (openDropdown === 'equipment' && equipmentFilter === null)) && (
-                    <Feather name="check" size={16} color={accent} />
-                  )}
-                </Pressable>
-
-                {(openDropdown === 'muscle'
-                  ? MUSCLE_GROUPS.filter((m) => !(excludeSections ?? []).includes(m))
-                  : EQUIPMENT_TYPES
-                ).map((opt) => {
-                  const isSelected =
-                    openDropdown === 'muscle' ? muscleFilter === opt : equipmentFilter === opt;
-                  return (
-                    <Pressable
-                      key={opt}
-                      style={pickerStyles.dropdownOption}
-                      onPress={() => {
-                        if (openDropdown === 'muscle') {
-                          setMuscleFilter(opt as MuscleGroup);
-                        } else {
-                          setEquipmentFilter(opt as Equipment);
-                        }
-                        setOpenDropdown(null);
-                      }}
+                    <Text
+                      style={[
+                        pickerStyles.dropdownOptionText,
+                        currentValue === null && pickerStyles.dropdownOptionTextActive,
+                        currentValue === null && { color: accent },
+                      ]}
                     >
-                      <Text
-                        style={[
-                          pickerStyles.dropdownOptionText,
-                          isSelected && pickerStyles.dropdownOptionTextActive,
-                          isSelected && { color: accent },
-                        ]}
+                      All
+                    </Text>
+                    {currentValue === null && <Feather name="check" size={16} color={accent} />}
+                  </Pressable>
+
+                  {options.map((opt) => {
+                    const isSelected = currentValue === opt;
+                    return (
+                      <Pressable
+                        key={opt}
+                        style={pickerStyles.dropdownOption}
+                        onPress={() => selectOption(opt)}
                       >
-                        {opt}
-                      </Text>
-                      {isSelected && <Feather name="check" size={16} color={accent} />}
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          )}
+                        <Text
+                          style={[
+                            pickerStyles.dropdownOptionText,
+                            isSelected && pickerStyles.dropdownOptionTextActive,
+                            isSelected && { color: accent },
+                          ]}
+                        >
+                          {labelFor(opt)}
+                        </Text>
+                        {isSelected && <Feather name="check" size={16} color={accent} />}
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            );
+          })()}
 
           {/* Search */}
           <TextInput

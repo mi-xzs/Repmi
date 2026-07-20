@@ -632,7 +632,23 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Sandbag Carry', muscle: 'Cardio', equipment: 'Other', mode: 'distance', tags: ['compound'] },
   { name: 'Tire Flip', muscle: 'Cardio', equipment: 'Other', mode: 'weight', tags: ['compound'] },
 
-  //Full Body 
+  // change-of-direction & deceleration
+  { name: '505 Agility Test', muscle: 'Cardio', equipment: 'Bodyweight', mode: 'distance' },
+  { name: 'L-Drill (3-Cone Test)', muscle: 'Cardio', equipment: 'Bodyweight', mode: 'distance' },
+  { name: 'Deceleration Sprint (Sprint-Stop)', muscle: 'Cardio', equipment: 'Bodyweight', mode: 'distance' },
+  { name: '45-Degree Cutting Drill', muscle: 'Cardio', equipment: 'Bodyweight', mode: 'distance' },
+  { name: 'Crossover Hop Test', muscle: 'Cardio', equipment: 'Bodyweight', mode: 'distance', tags: ['unilateral'] },
+
+  // sprint mechanics, overspeed & resisted sprint
+  { name: 'Downhill Sprint', muscle: 'Cardio', equipment: 'Bodyweight', mode: 'distance' },
+  { name: 'Assisted Sprint (Bungee)', muscle: 'Cardio', equipment: 'Other', mode: 'distance' },
+  { name: 'Parachute Sprint', muscle: 'Cardio', equipment: 'Other', mode: 'distance', tags: ['compound'] },
+  { name: 'Band-Resisted Sprint', muscle: 'Cardio', equipment: 'Bands', mode: 'distance', tags: ['compound'] },
+  { name: 'Sprint Wickets', muscle: 'Cardio', equipment: 'Other', mode: 'distance' },
+  { name: 'Wall Drill (Sprint Mechanics)', muscle: 'Cardio', equipment: 'Bodyweight', mode: 'timed' },
+  { name: 'Weighted Vest Sprint', muscle: 'Cardio', equipment: 'Other', mode: 'distance', tags: ['compound'] },
+
+  //Full Body
   
   // olympic & variants
   { name: 'Snatch', muscle: 'Full Body', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
@@ -733,8 +749,33 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Keg Carry', muscle: 'Full Body', equipment: 'Other', mode: 'distance', tags: ['compound'] },
   { name: 'Sandbag Clean', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
   { name: 'Sandbag-Over-Bar', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
+  { name: 'Sandbag Shouldering', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
 
-  // plyometrics  
+  // isometric strength testing
+  { name: 'Isometric Mid-Thigh Pull', muscle: 'Full Body', equipment: 'Barbell', mode: 'timed', tags: ['compound'] },
+  { name: 'Isometric Squat (Pins)', muscle: 'Quads', equipment: 'Barbell', mode: 'timed', tags: ['compound'] },
+  { name: 'Isometric Deadlift (Pins)', muscle: 'Back', equipment: 'Barbell', mode: 'timed', tags: ['compound'] },
+
+  // jump & reactive strength battery
+  { name: 'Single-Leg Triple Hop Test', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'distance', tags: ['compound', 'unilateral'] },
+  { name: 'Hurdle Bound (Distance)', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'distance', tags: ['compound'] },
+  { name: 'Repeated Jump Test (RSI)', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'timed', tags: ['compound'] },
+  { name: 'Contrast Complex (Squat to Jump)', muscle: 'Full Body', equipment: 'Barbell', mode: 'weight', tags: ['compound'] },
+  { name: 'Single-Leg Depth Jump', muscle: 'Full Body', equipment: 'Other', mode: 'bodyweight', tags: ['compound', 'unilateral'] },
+  { name: 'Single-Leg Landing Drill (Deceleration)', muscle: 'Quads', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'] },
+
+  // throwing & rotational power
+  { name: 'Medicine Ball Shot Put Throw (Standing)', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
+  { name: 'Half-Kneeling Rotational Med Ball Throw', muscle: 'Obliques', equipment: 'Other', mode: 'weight', tags: ['compound', 'unilateral'] },
+  { name: 'Seated Medicine Ball Chest Pass Test', muscle: 'Chest', equipment: 'Other', mode: 'distance', tags: ['compound'] },
+  { name: 'Overhead Medicine Ball Throw (Forward)', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
+
+  // GPP / conditioning complexes
+  { name: 'Devil Press', muscle: 'Full Body', equipment: 'Dumbbell', mode: 'weight', tags: ['compound'] },
+  { name: 'Wall Ball Shot', muscle: 'Full Body', equipment: 'Other', mode: 'weight', tags: ['compound'] },
+  { name: 'Reactive Medicine Ball Drop', muscle: 'Core', equipment: 'Other', mode: 'weight', tags: ['compound'] },
+
+  // plyometrics
   { name: 'Depth Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'plyometric' },
   { name: 'Hand-Release Plyo Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'], style: 'plyometric' },
   { name: 'Single-Arm Plyo Push-Up', muscle: 'Chest', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'], style: 'plyometric' },
@@ -809,6 +850,66 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Side Lever Hold', muscle: 'Obliques', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'V-Sit Hold', muscle: 'Core', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
   { name: 'Manna Hold', muscle: 'Core', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'calisthenics' },
+
+  // ────────────────────────── Rehab & Prehab ──────────────────────────
+
+  // shoulder / rotator cuff
+  { name: 'Banded External Rotation', muscle: 'Shoulders', equipment: 'Bands', mode: 'weight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Banded Internal Rotation', muscle: 'Shoulders', equipment: 'Bands', mode: 'weight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Side-Lying External Rotation', muscle: 'Shoulders', equipment: 'Dumbbell', mode: 'weight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Sleeper Stretch', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Wall Slide', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'], style: 'mobility' },
+  { name: 'Serratus Wall Slide', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'], style: 'mobility' },
+  { name: 'Prone Y Raise', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'], style: 'mobility' },
+  { name: 'Prone T Raise', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'], style: 'mobility' },
+  { name: 'Prone W Raise', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'], style: 'mobility' },
+  { name: 'Scapular Push-Up', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'], style: 'mobility' },
+  { name: 'Band Shoulder Dislocate', muscle: 'Shoulders', equipment: 'Bands', mode: 'bodyweight', tags: ['isolation'], style: 'mobility' },
+
+  // knee
+  { name: 'Terminal Knee Extension', muscle: 'Quads', equipment: 'Bands', mode: 'weight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Spanish Squat', muscle: 'Quads', equipment: 'Bands', mode: 'timed', tags: ['isolation'], style: 'mobility' },
+  { name: 'Peterson Step-Up', muscle: 'Quads', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Eccentric Step-Down', muscle: 'Quads', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Short-Arc Quad Extension', muscle: 'Quads', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Straight-Leg Raise', muscle: 'Quads', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+
+  // ankle / foot
+  { name: 'Knee-to-Wall Ankle Mobilization', muscle: 'Calves', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Banded Ankle Eversion', muscle: 'Calves', equipment: 'Bands', mode: 'weight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Banded Ankle Inversion', muscle: 'Calves', equipment: 'Bands', mode: 'weight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Banded Ankle Dorsiflexion', muscle: 'Calves', equipment: 'Bands', mode: 'weight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Eccentric Heel Drop', muscle: 'Calves', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Single-Leg Balance', muscle: 'Calves', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Heel Walk', muscle: 'Calves', equipment: 'Bodyweight', mode: 'distance', tags: ['isolation'], style: 'mobility' },
+  { name: 'Toe Walk', muscle: 'Calves', equipment: 'Bodyweight', mode: 'distance', tags: ['isolation'], style: 'mobility' },
+
+  // hip
+  { name: 'Banded Monster Walk', muscle: 'Glutes', equipment: 'Bands', mode: 'weight', tags: ['isolation'], style: 'mobility' },
+  { name: 'Hip Airplane', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: '90/90 Hip Switch', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'], style: 'mobility' },
+  { name: 'Banded Hip Flexor March', muscle: 'Quads', equipment: 'Bands', mode: 'weight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Couch Stretch', muscle: 'Quads', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: '90/90 Hip Stretch', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation', 'unilateral'], style: 'mobility' },
+  { name: 'Pigeon Stretch', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation', 'unilateral'], style: 'mobility' },
+
+  // lower back / core (McGill-style stability & mobility)
+  { name: 'McGill Curl-Up', muscle: 'Core', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'mobility' },
+  { name: 'Prone Press-Up', muscle: 'Lower Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'], style: 'mobility' },
+  { name: 'Posterior Pelvic Tilt', muscle: 'Core', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'], style: 'mobility' },
+  { name: 'Quadruped Thoracic Rotation', muscle: 'Core', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation', 'unilateral'], style: 'mobility' },
+
+  // neck / postural
+  { name: 'Chin Tuck', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'], style: 'mobility' },
+  { name: 'Neck Isometric Hold', muscle: 'Shoulders', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'mobility' },
+  { name: 'Thoracic Extension over Foam Roller', muscle: 'Back', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['isolation'], style: 'mobility' },
+
+  // general mobility / prehab
+  { name: "World's Greatest Stretch", muscle: 'Full Body', equipment: 'Bodyweight', mode: 'bodyweight', style: 'mobility' },
+  { name: 'Deep Squat Hold', muscle: 'Adductors', equipment: 'Bodyweight', mode: 'timed', style: 'mobility' },
+  { name: 'Wrist Flexor Stretch', muscle: 'Forearms', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'mobility' },
+  { name: 'Wrist Extensor Stretch', muscle: 'Forearms', equipment: 'Bodyweight', mode: 'timed', tags: ['isolation'], style: 'mobility' },
+  { name: 'Hip CARs', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'bodyweight', style: 'mobility' },
 ];
 
 export const MUSCLE_GROUPS: MuscleGroup[] = [

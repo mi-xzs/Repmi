@@ -16,7 +16,7 @@ import { Feather } from '@expo/vector-icons';
 import { colors } from '../../../../theme/colors';
 import { useAccent } from '../../../../services/SettingsContext';
 
-type Category = 'Muscle Groups' | 'Training Styles' | 'Conditioning';
+type Category = 'Muscle Groups' | 'Training Styles' | 'Sports' | 'Conditioning';
 
 const WORKOUT_TYPE_SECTIONS: { category: Category; items: string[] }[] = [
   {
@@ -33,6 +33,10 @@ const WORKOUT_TYPE_SECTIONS: { category: Category; items: string[] }[] = [
       'Strength', 'Hypertrophy', 'Deload', 'Functional Training',
       'Olympic Lifting', 'Calisthenics', 'Plyometrics',
     ],
+  },
+  {
+    category: 'Sports',
+    items: ['Volleyball'],
   },
   {
     category: 'Conditioning',
