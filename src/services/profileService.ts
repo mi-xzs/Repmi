@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { supabase } from './supabase';
 import { UserProfile } from '../types/user';
 import * as Crypto from 'expo-crypto';
@@ -80,28 +81,53 @@ export async function uploadProfileImage(
   uri: string,
 ): Promise<{ url: string; path: string } | null> {
   try {
-    const info = await FileSystem.getInfoAsync(uri, { size: true } as any);
-    const size = (info as { size?: number }).size;
-    if (typeof size === 'number' && size > MAX_UPLOAD_BYTES) {
-      throw new Error('Only JPEG, PNG, or WebP up to 5 MB');
-    }
+    let mime: string;
+    let ext: string;
+    let webBlob: Blob | null = null;
 
-    const head = await FileSystem.readAsStringAsync(uri, {
-      encoding: 'base64' as any,
-      length: 12,
-      position: 0,
-    } as any);
-    const bytes = base64ToBytes(head);
-    const detected = isImageMagic(bytes);
-    if (!detected) {
-      throw new Error('Only JPEG, PNG, or WebP up to 5 MB');
+    if (Platform.OS === 'web') {
+      // expo-file-system can't read the blob: URI the web picker returns, so
+      // pull the bytes straight from the object URL and validate the Blob.
+      const resp = await fetch(uri);
+      webBlob = await resp.blob();
+      if (webBlob.size > MAX_UPLOAD_BYTES) {
+        throw new Error('Only JPEG, PNG, or WebP up to 5 MB');
+      }
+      const headBytes = new Uint8Array(await webBlob.slice(0, 12).arrayBuffer());
+      const detected = isImageMagic(headBytes);
+      if (!detected) {
+        throw new Error('Only JPEG, PNG, or WebP up to 5 MB');
+      }
+      mime =
+        detected === 'png'  ? 'image/png'  :
+        detected === 'webp' ? 'image/webp' : 'image/jpeg';
+      ext =
+        detected === 'png'  ? 'png'  :
+        detected === 'webp' ? 'webp' : 'jpg';
+    } else {
+      const info = await FileSystem.getInfoAsync(uri, { size: true } as any);
+      const size = (info as { size?: number }).size;
+      if (typeof size === 'number' && size > MAX_UPLOAD_BYTES) {
+        throw new Error('Only JPEG, PNG, or WebP up to 5 MB');
+      }
+
+      const head = await FileSystem.readAsStringAsync(uri, {
+        encoding: 'base64' as any,
+        length: 12,
+        position: 0,
+      } as any);
+      const bytes = base64ToBytes(head);
+      const detected = isImageMagic(bytes);
+      if (!detected) {
+        throw new Error('Only JPEG, PNG, or WebP up to 5 MB');
+      }
+      mime =
+        detected === 'png'  ? 'image/png'  :
+        detected === 'webp' ? 'image/webp' : 'image/jpeg';
+      ext =
+        detected === 'png'  ? 'png'  :
+        detected === 'webp' ? 'webp' : 'jpg';
     }
-    const mime =
-      detected === 'png'  ? 'image/png'  :
-      detected === 'webp' ? 'image/webp' : 'image/jpeg';
-    const ext =
-      detected === 'png'  ? 'png'  :
-      detected === 'webp' ? 'webp' : 'jpg';
 
     const id =
       typeof (Crypto as { randomUUID?: () => string }).randomUUID === 'function'
@@ -109,12 +135,18 @@ export async function uploadProfileImage(
         : `${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
     const path = `${userId}/${id}.${ext}`;
 
-    const formData = new FormData();
-    formData.append('file', { uri, name: `${id}.${ext}`, type: mime } as any);
+    let body: Blob | FormData;
+    if (Platform.OS === 'web') {
+      body = webBlob as Blob;
+    } else {
+      const formData = new FormData();
+      formData.append('file', { uri, name: `${id}.${ext}`, type: mime } as any);
+      body = formData;
+    }
 
     const { error } = await supabase.storage
       .from(bucket)
-      .upload(path, formData, { contentType: mime, upsert: false });
+      .upload(path, body, { contentType: mime, upsert: false });
 
     if (error) {
       logError('profile.upload.failed', { bucket, supabaseCode: (error as { code?: string }).code });

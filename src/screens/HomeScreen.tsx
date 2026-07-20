@@ -13,6 +13,7 @@ import {
   Share,
   StyleProp,
   ViewStyle,
+  Platform,
 } from 'react-native';
 import Reanimated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -46,6 +47,26 @@ import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 type HomeNavProp = NativeStackNavigationProp<HomeStackParamList, 'HomeMain'>;
+
+// RN's Alert is a no-op on react-native-web, so fall back to the browser dialogs there.
+function notify(title: string, message?: string) {
+  if (Platform.OS === 'web') {
+    window.alert(message ? `${title}\n\n${message}` : title);
+    return;
+  }
+  Alert.alert(title, message);
+}
+
+function confirmDestructive(title: string, message: string, onConfirm: () => void) {
+  if (Platform.OS === 'web') {
+    if (window.confirm(message ? `${title}\n\n${message}` : title)) onConfirm();
+    return;
+  }
+  Alert.alert(title, message, [
+    { text: 'Cancel', style: 'cancel' },
+    { text: 'Delete', style: 'destructive', onPress: onConfirm },
+  ]);
+}
 
 const CARD_BORDER_RADIUS = 18;
 const ACTION_WIDTH = 90;
@@ -157,13 +178,10 @@ function SwipeableWorkoutCard({
   const handleDelete = () => {
     closeAll();
     if (!demoGuard('Deleting a workout')) return;
-    Alert.alert(
+    confirmDestructive(
       'Delete workout',
       `Delete "${workout.name ?? 'this workout'}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: onDelete },
-      ]
+      onDelete,
     );
   };
 
@@ -350,7 +368,7 @@ export default function HomeScreen() {
         message: `Check out my workout "${workout.workoutName}"!\n${link}`,
       });
     } catch {
-      Alert.alert('Error', 'Failed to share workout. Please try again.');
+      notify('Error', 'Failed to share workout. Please try again.');
     }
   };
 
@@ -378,13 +396,13 @@ export default function HomeScreen() {
         importedName = `${importedName} ${toRoman(num)}`;
       }
       saveWorkout({ ...fetched, id: newId, workoutName: importedName, imported: true });
-      Alert.alert('Imported!', `"${importedName}" added to your workouts.`);
+      notify('Imported!', `"${importedName}" added to your workouts.`);
     } catch (e: any) {
       const msg =
         e?.message === 'Invalid share link'
           ? "That doesn't look like a valid share link."
           : 'Could not import workout. Check the link and try again.';
-      Alert.alert('Import failed', msg);
+      notify('Import failed', msg);
     }
   };
 
