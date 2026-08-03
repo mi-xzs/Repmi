@@ -5,7 +5,6 @@ import {
   ScrollView,
   View,
   Pressable,
-  Alert,
   UIManager,
 } from 'react-native';
 import {
@@ -35,6 +34,7 @@ import { computeSessionXP, getStreakMultiplier, getLevelFromXP, getLevelTitle, X
 import { computeSessionCoins } from '../services/coinService';
 import { findPRDeltas, PRDelta } from '../utils/prDetection';
 import { logError } from '../services/logger';
+import { confirmDestructive } from '../utils/alert';
 
 type WorkoutScreenRouteProp = RouteProp<HomeStackParamList, 'WorkoutScreen'>;
 type WorkoutScreenNavProp = NativeStackNavigationProp<HomeStackParamList, 'WorkoutScreen'>;
@@ -298,13 +298,11 @@ export default function WorkoutScreen() {
     if (workoutData.showCooldown && activeCooldown.length > 0) {
       const anyDone = activeCooldown.some(r => r.done);
       if (!anyDone) {
-        Alert.alert(
+        confirmDestructive(
           'Skip cooldown?',
           "You haven't checked off any cooldown rows. Take a minute to cool down, or finish anyway.",
-          [
-            { text: 'Go cool down', style: 'cancel' },
-            { text: 'Finish anyway', style: 'destructive', onPress: () => { finishNow(); } },
-          ],
+          () => { finishNow(); },
+          'Finish anyway',
         );
         return;
       }

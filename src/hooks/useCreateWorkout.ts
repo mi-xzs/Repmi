@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Alert } from 'react-native';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useWorkouts } from '../services/WorkoutContext';
@@ -13,6 +12,7 @@ import {
   ExerciseMode,
 } from '../types/exercise';
 import { DEFAULT_WARMUP_ROW, DEFAULT_COOLDOWN_ROW } from '../constants/workoutData';
+import { confirmDestructive } from '../utils/alert';
 
 type CreateWorkoutNavProp = NativeStackNavigationProp<HomeStackParamList, 'CreateWorkout'>;
 type CreateWorkoutRouteProp = RouteProp<HomeStackParamList, 'CreateWorkout'>;
@@ -178,13 +178,12 @@ export function useCreateWorkout() {
 
     if (duplicate) {
       const renamedName = getNextRomanName(workoutName);
-      Alert.alert(
+      confirmDestructive(
         'Duplicate Name',
         `You already have a workout named "${workoutName}". It will be saved as "${renamedName}" to keep them distinct.`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'OK', onPress: () => performSave(renamedName) },
-        ]
+        () => performSave(renamedName),
+        'OK',
+        false,
       );
       return;
     }
@@ -193,20 +192,13 @@ export function useCreateWorkout() {
   };
 
   const handleDelete = () => {
-    Alert.alert(
+    confirmDestructive(
       'Delete Workout',
       `Are you sure you want to delete "${workoutName}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            deleteWorkout(workoutIndex!);
-            navigation.pop(2);
-          },
-        },
-      ]
+      () => {
+        deleteWorkout(workoutIndex!);
+        navigation.pop(2);
+      },
     );
   };
 

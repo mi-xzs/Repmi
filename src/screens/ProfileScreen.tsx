@@ -10,9 +10,11 @@ import {
   TextInput,
   Modal,
   Pressable,
+  Platform,
   useWindowDimensions,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { notify } from '../utils/alert';
 import { loadAllSessions as sbLoadAllSessions } from '../services/sessionService';
 import { logError } from '../services/logger';
 import { Feather } from '@expo/vector-icons';
@@ -53,6 +55,33 @@ const GOAL_META: Record<string, { label: string; icon: string; color: string; bg
 };
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
+
+// expo-image-picker's web shim ignores `quality`, `allowsEditing` and `aspect`,
+// so the browser hands back the untouched original file. Phone photos routinely
+// clear the 5 MB upload cap that way, and the upload then fails silently. Scale
+// and re-encode here so web matches what native's `quality: 0.8` already does.
+// Returns an object URL the caller owns (and must revoke), or null on failure.
+async function compressOnWeb(uri: string, maxEdge: number): Promise<string | null> {
+  try {
+    const blob = await (await fetch(uri)).blob();
+    const bitmap = await createImageBitmap(blob);
+    const scale = Math.min(1, maxEdge / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width  = Math.round(bitmap.width  * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const out = await new Promise<Blob | null>(res =>
+      canvas.toBlob(res, 'image/jpeg', 0.8),
+    );
+    return out ? URL.createObjectURL(out) : null;
+  } catch (e) {
+    logError('profile.compress.web.failed', { name: (e as Error)?.name });
+    return null;
+  }
+}
 
 function formatTonnes(kg: number): string {
   const t = kg / 1000;
@@ -327,13 +356,22 @@ const ProfileScreen: React.FC = () => {
     });
     if (result.canceled || !result.assets[0] || !session?.user.id) return;
     setUploading(true);
+    let compressedUri: string | null = null;
     try {
-      const out = await uploadProfileImage(session.user.id, bucket, result.assets[0].uri);
+      let uri = result.assets[0].uri;
+      if (Platform.OS === 'web') {
+        compressedUri = await compressOnWeb(uri, bucket === 'avatars' ? 512 : 1600);
+        if (compressedUri) uri = compressedUri;
+      }
+      const out = await uploadProfileImage(session.user.id, bucket, uri);
       if (out) {
         const pathKey = profileKey === 'avatar_url' ? 'avatar_path' : 'cover_path';
         await updateProfile({ [profileKey]: out.url, [pathKey]: out.path } as any);
+      } else {
+        notify('Upload failed', 'Please try a different image, or try again.');
       }
     } finally {
+      if (compressedUri) URL.revokeObjectURL(compressedUri);
       setUploading(false);
     }
   }, [session?.user.id, updateProfile, demoGuard]);

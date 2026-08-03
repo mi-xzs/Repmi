@@ -625,9 +625,10 @@ const styles = StyleSheet.create({
 
   // Hidden off-screen ShareCard container
   hiddenCardWrap: {
+    // Off-screen only — no `opacity: 0`. html2canvas honours computed opacity,
+    // so a transparent wrapper makes the web capture come out blank.
     position: 'absolute',
     left: -10000,
     top: 0,
-    opacity: 0,
   },
 });

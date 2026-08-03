@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Alert,
   View,
   Text,
   Image,
@@ -12,6 +11,7 @@ import {
   Pressable,
   Modal,
 } from 'react-native';
+import { notify, confirmDestructive } from '../utils/alert';
 import {
   blockUser,
   reportUser,
@@ -159,24 +159,18 @@ export default function UserProfileScreen() {
   const handleBlock = useCallback(() => {
     setMenuOpen(false);
     if (!demoGuard('Blocking users')) return;
-    Alert.alert(
+    confirmDestructive(
       `Block ${profile?.username ?? 'this user'}?`,
       `They won't be able to see your profile, follow you, or appear in your search results. You'll also unfollow each other.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Block',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await blockUser(targetId);
-              navigation.goBack();
-            } catch (e) {
-              Alert.alert('Block failed', e instanceof Error ? e.message : 'Unknown error');
-            }
-          },
-        },
-      ],
+      async () => {
+        try {
+          await blockUser(targetId);
+          navigation.goBack();
+        } catch (e) {
+          notify('Block failed', e instanceof Error ? e.message : 'Unknown error');
+        }
+      },
+      'Block',
     );
   }, [profile, targetId, navigation, demoGuard]);
 
@@ -188,7 +182,7 @@ export default function UserProfileScreen() {
 
   const submitReport = useCallback(async () => {
     if (!reportReason) {
-      Alert.alert('Pick a reason', 'Tell us what the problem is so we can review it.');
+      notify('Pick a reason', 'Tell us what the problem is so we can review it.');
       return;
     }
     setSubmitting(true);
@@ -197,9 +191,9 @@ export default function UserProfileScreen() {
       setReportOpen(false);
       setReportReason(null);
       setReportDetails('');
-      Alert.alert('Thanks for reporting', 'We review reports within 24 hours.');
+      notify('Thanks for reporting', 'We review reports within 24 hours.');
     } catch (e) {
-      Alert.alert('Report failed', e instanceof Error ? e.message : 'Unknown error');
+      notify('Report failed', e instanceof Error ? e.message : 'Unknown error');
     } finally {
       setSubmitting(false);
     }

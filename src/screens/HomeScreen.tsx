@@ -6,14 +6,12 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   TouchableWithoutFeedback,
-  Alert,
   Animated,
   TextInput,
   Keyboard,
   Share,
   StyleProp,
   ViewStyle,
-  Platform,
 } from 'react-native';
 import Reanimated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
@@ -42,31 +40,12 @@ import { shareWorkout, importWorkoutFromLink } from '../services/sharingService'
 import { useProfile } from '../services/ProfileContext';
 import { useSettings, useAccent } from '../services/SettingsContext';
 import { useDemoGuard } from '../services/demoMode';
+import { notify, confirmDestructive } from '../utils/alert';
 
 import Swipeable from 'react-native-gesture-handler/Swipeable';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 type HomeNavProp = NativeStackNavigationProp<HomeStackParamList, 'HomeMain'>;
-
-// RN's Alert is a no-op on react-native-web, so fall back to the browser dialogs there.
-function notify(title: string, message?: string) {
-  if (Platform.OS === 'web') {
-    window.alert(message ? `${title}\n\n${message}` : title);
-    return;
-  }
-  Alert.alert(title, message);
-}
-
-function confirmDestructive(title: string, message: string, onConfirm: () => void) {
-  if (Platform.OS === 'web') {
-    if (window.confirm(message ? `${title}\n\n${message}` : title)) onConfirm();
-    return;
-  }
-  Alert.alert(title, message, [
-    { text: 'Cancel', style: 'cancel' },
-    { text: 'Delete', style: 'destructive', onPress: onConfirm },
-  ]);
-}
 
 const CARD_BORDER_RADIUS = 18;
 const ACTION_WIDTH = 90;

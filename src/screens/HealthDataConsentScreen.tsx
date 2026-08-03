@@ -6,8 +6,8 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
+import { notify } from '../utils/alert';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { Feather } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
@@ -69,7 +69,7 @@ export default function HealthDataConsentScreen() {
   const onContinue = useCallback(async () => {
     if (!userId) return;
     if (!bodyChecked && !trainingChecked) {
-      Alert.alert('No consent given', 'Tick at least one option to continue, or use Decline to go back.');
+      notify('No consent given', 'Tick at least one option to continue, or use Decline to go back.');
       return;
     }
     setLoading(true);
@@ -82,7 +82,7 @@ export default function HealthDataConsentScreen() {
       }
       navigation.goBack();
     } catch (e) {
-      Alert.alert('Could not save consent', e instanceof Error ? e.message : 'Unknown error');
+      notify('Could not save consent', e instanceof Error ? e.message : 'Unknown error');
     } finally {
       setLoading(false);
     }

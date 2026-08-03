@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
-import { Alert, Platform } from 'react-native';
 import { useAuth } from './AuthContext';
+import { notify } from '../utils/alert';
 
 export const DEMO_EMAIL = process.env.EXPO_PUBLIC_DEMO_EMAIL ?? '';
 export const DEMO_PASSWORD = process.env.EXPO_PUBLIC_DEMO_PASSWORD ?? '';
@@ -22,12 +22,7 @@ export function useDemoGuard() {
       const message = `${
         actionLabel ?? 'This action'
       } is disabled in the demo account so it stays usable for everyone. Sign up for free to try it yourself.`;
-      if (Platform.OS === 'web') {
-        // eslint-disable-next-line no-alert
-        window.alert(`Demo mode\n\n${message}`);
-      } else {
-        Alert.alert('Demo mode', message, [{ text: 'OK' }]);
-      }
+      notify('Demo mode', message);
       return false;
     },
     [isDemo],

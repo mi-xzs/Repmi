@@ -7,8 +7,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   ScrollView,
-  Alert,
 } from 'react-native';
+import { notify } from '../utils/alert';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import QRCode from 'react-native-qrcode-svg';
 import { supabase } from '../services/supabase';
@@ -96,7 +96,7 @@ export default function MFAEnrollScreen() {
         return;
       }
       logAuditEvent('mfa_enrolled', null, { factorType: 'totp' });
-      Alert.alert('Two-factor authentication enabled', 'You\'ll be asked for a code on your next sign-in.');
+      notify('Two-factor authentication enabled', 'You\'ll be asked for a code on your next sign-in.');
       navigation.goBack();
     } finally {
       setVerifying(false);
