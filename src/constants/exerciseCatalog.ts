@@ -369,6 +369,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Smith Machine Lunge', muscle: 'Quads', equipment: 'Smith Machine', mode: 'weight', tags: ['compound', 'unilateral'] },
   { name: 'Curtsy Lunge', muscle: 'Quads', equipment: 'Dumbbell', mode: 'weight', tags: ['compound', 'unilateral'] },
   { name: 'Dumbbell Step-Up', muscle: 'Quads', equipment: 'Dumbbell', mode: 'weight', tags: ['compound', 'unilateral'] },
+  { name: 'Barbell Step-Up', muscle: 'Quads', equipment: 'Barbell', mode: 'weight', tags: ['compound', 'unilateral'] },
   { name: 'Bodyweight Squat', muscle: 'Quads', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'] },
   { name: 'Bodyweight Lunge', muscle: 'Quads', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'] },
   { name: 'Cossack Squat', muscle: 'Quads', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'] },
