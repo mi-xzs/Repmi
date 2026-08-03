@@ -33,23 +33,29 @@ async function shareOnWeb(dataUri: string) {
   }
 
   const objectUrl = URL.createObjectURL(blob);
-  try {
-    const a = document.createElement('a');
-    a.href = objectUrl;
-    a.download = FILE_NAME;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
+  const a = document.createElement('a');
+  a.href = objectUrl;
+  a.download = FILE_NAME;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  // The download is async — revoking in this tick invalidates the URL before
+  // the browser has fetched it, which silently cancels the download.
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
 }
 
 export function useShareWorkoutCard(cardRef: RefObject<View | null>) {
   const [loading, setLoading] = useState(false);
 
   const share = useCallback(async () => {
-    if (!cardRef.current || loading) return;
+    if (loading) return;
+    if (!cardRef.current) {
+      // Never fail mutely — a press that does nothing is indistinguishable
+      // from a broken button.
+      logError('share.workoutCard.noCard', {});
+      notify('Could not share', 'The workout card is not ready yet. Try again in a moment.');
+      return;
+    }
     setLoading(true);
     try {
       const uri = await captureRef(cardRef, {
