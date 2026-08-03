@@ -10,6 +10,25 @@ const TARGET_WIDTH = 1080;
 const TARGET_HEIGHT = TARGET_WIDTH * (SHARE_CARD_HEIGHT / SHARE_CARD_WIDTH);
 const FILE_NAME = 'repmi-workout.png';
 
+// react-native-view-shot's captureRef() calls findNodeHandle(), which throws
+// unconditionally on react-native-web — so its own web shim is unreachable
+// through the public API. Drive html2canvas ourselves instead; under
+// react-native-web the ref already holds the DOM node. `useCORS` matters:
+// the shim passes no options, so the cross-origin avatar would taint the
+// canvas and make toDataURL() throw.
+async function captureOnWeb(node: HTMLElement): Promise<string> {
+  const html2canvas = (await import('html2canvas')).default;
+  const rendered = await html2canvas(node, { useCORS: true, backgroundColor: null, scale: 1 });
+
+  const out = document.createElement('canvas');
+  out.width = TARGET_WIDTH;
+  out.height = TARGET_HEIGHT;
+  const ctx = out.getContext('2d');
+  if (!ctx) throw new Error('canvas 2d context unavailable');
+  ctx.drawImage(rendered, 0, 0, out.width, out.height);
+  return out.toDataURL('image/png');
+}
+
 // Web has no share sheet for files unless the browser implements the Web Share
 // API *with* file support (mobile Safari/Chrome, HTTPS only). Everywhere else —
 // which is most desktop browsers — downloading the PNG is the honest equivalent.
@@ -58,20 +77,19 @@ export function useShareWorkoutCard(cardRef: RefObject<View | null>) {
     }
     setLoading(true);
     try {
+      if (Platform.OS === 'web') {
+        const dataUri = await captureOnWeb(cardRef.current as unknown as HTMLElement);
+        await shareOnWeb(dataUri);
+        return;
+      }
+
       const uri = await captureRef(cardRef, {
         format: 'png',
         quality: 1,
-        // 'tmpfile' isn't implemented on web — it warns and hands back a data
-        // URI anyway, so ask for what we actually get.
-        result: Platform.OS === 'web' ? 'data-uri' : 'tmpfile',
+        result: 'tmpfile',
         width: TARGET_WIDTH,
         height: TARGET_HEIGHT,
       });
-
-      if (Platform.OS === 'web') {
-        await shareOnWeb(uri);
-        return;
-      }
 
       const available = await Sharing.isAvailableAsync();
       if (!available) {
