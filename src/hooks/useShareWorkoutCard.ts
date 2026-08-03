@@ -84,8 +84,13 @@ export function useShareWorkoutCard(cardRef: RefObject<View | null>) {
         dialogTitle: 'Share workout',
       });
     } catch (e: any) {
-      logError('share.workoutCard.failed', { name: (e as Error)?.name });
-      notify('Could not share', 'Please try again.');
+      const name = (e as Error)?.name ?? 'Error';
+      const msg = ((e as Error)?.message ?? '').slice(0, 140);
+      logError('share.workoutCard.failed', { name });
+      // Name the failure. A generic "try again" gives the user nothing to
+      // report and gives us nothing to debug — production logs go to Sentry
+      // only, so this dialog is the only visible signal on web.
+      notify('Could not share', msg ? `${name}: ${msg}` : name);
     } finally {
       setLoading(false);
     }
