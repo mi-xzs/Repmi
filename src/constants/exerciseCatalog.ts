@@ -456,6 +456,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Lateral Bound', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'distance', tags: ['compound', 'unilateral'] },
   { name: 'Single-Leg Bound', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'distance', tags: ['compound', 'unilateral'] },
   { name: 'Single-Leg Box Jump', muscle: 'Glutes', equipment: 'Other', mode: 'bodyweight', tags: ['compound', 'unilateral'] },
+  { name: 'Explosive Step-Up (Box)', muscle: 'Glutes', equipment: 'Other', mode: 'bodyweight', tags: ['compound', 'unilateral'] },
   { name: 'Single-Leg Broad Jump', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'distance', tags: ['compound', 'unilateral'] },
   { name: 'Split Squat Jump', muscle: 'Glutes', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound', 'unilateral'] },
   { name: 'Kettlebell Swing to Jump', muscle: 'Glutes', equipment: 'Kettlebell', mode: 'weight', tags: ['compound'] },
@@ -724,6 +725,7 @@ export const EXERCISE_CATALOG: Exercise[] = [
   { name: 'Cyclical Tuck Jump', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'] },
   { name: 'Knee-to-Feet Jump', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'] },
   { name: 'Approach Jump Drill', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'] },
+  { name: 'Approach Box Jump', muscle: 'Full Body', equipment: 'Other', mode: 'bodyweight', tags: ['compound'] },
   { name: 'Plyo Push-Up', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'] },
   { name: 'Clap Push-Up', muscle: 'Full Body', equipment: 'Bodyweight', mode: 'bodyweight', tags: ['compound'] },
   
