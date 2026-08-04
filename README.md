@@ -297,7 +297,7 @@ npm run web               # or: npm run ios / npm run android
 - [ ] Import workouts by scanning from other media
 - [ ] Expanded social feed
 
-## 📄 License
+## License
 
 This project is **source-available for viewing and evaluation only** — see [`LICENSE`](./LICENSE).
 You're welcome to read and run it locally to assess it; it is not open-source and may not
